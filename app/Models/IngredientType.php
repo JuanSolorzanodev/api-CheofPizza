@@ -7,17 +7,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class IdentificationType extends Model
+class IngredientType extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'identification_name',
-        'code',
+        'type_name',
     ];
 
-    public function customers(): HasMany
+    public function ingredients(): HasMany
     {
-        return $this->hasMany(Customer::class, 'identification_type_id');
+        return $this->hasMany(Ingredient::class, 'ingredient_type_id');
     }
 }
