@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\Public\CatalogController;
+use App\Http\Controllers\Api\V1\Auth\AuthController;
 
 Route::prefix('v1/public')->group(function () {
     Route::get('catalog', [CatalogController::class, 'index']);
@@ -19,3 +20,8 @@ Route::prefix('v1/public')->group(function () {
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+Route::prefix('v1')->group(function () {
+    Route::prefix('auth')->group(function () {
+        Route::post('firebase/google', [AuthController::class, 'loginWithGoogle']);
+    });
+});
