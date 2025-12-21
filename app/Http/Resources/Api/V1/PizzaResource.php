@@ -14,10 +14,10 @@ class PizzaResource extends JsonResource
             'name'        => $this->pizza_name,
             'description' => $this->description,
             'image_url'   => $this->image_url,
-            'category'    => $this->whenLoaded('category', fn () => [
-                'id'   => $this->category?->id,
-                'name' => $this->category?->category_name,
-            ]),
+
+            // ✅ Aquí ya vendrá: "Sencillas/Especiales" + size_prices (con size y price)
+            'category'    => new CategoryResource($this->whenLoaded('category')),
+
             'ingredients' => $this->whenLoaded('ingredients', function () {
                 return $this->ingredients->map(fn ($i) => [
                     'id'   => $i->id,

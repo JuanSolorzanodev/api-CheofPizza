@@ -2,67 +2,71 @@
 
 namespace App\Http\Controllers\Api\V1\Public;
 
-use App\Services\Catalog\CatalogService;
 use App\Http\Resources\Api\V1\CategoryResource;
-use App\Http\Resources\Api\V1\PromotionResource;
-use App\Http\Resources\Api\V1\SizeResource;
 use App\Http\Resources\Api\V1\IngredientResource;
 use App\Http\Resources\Api\V1\PizzaResource;
+use App\Services\Catalog\CatalogService;
 use Illuminate\Http\Request;
 
 class CatalogController
 {
-
     public function __construct(private readonly CatalogService $service) {}
 
     /**
-     * Display a listing of the resource.
+     * GET /api/v1/public/catalog/categories
      */
-    public function index(Request $request)
+    public function categories()
     {
-                $categoryId = $request->integer('category_id') ?: null;
-        $search = trim((string) $request->query('q', '')) ?: null;
-
-        $payload = $this->service->payload($categoryId, $search);
-
-        return response()->json([
-            'categories'  => CategoryResource::collection($payload['categories']),
-            'sizes'       => SizeResource::collection($payload['sizes']),
-            'ingredients' => IngredientResource::collection($payload['ingredients']),
-            'pizzas'      => PizzaResource::collection($payload['pizzas']),
-            'promotions'  => PromotionResource::collection($payload['promotions']),
-        ]);
+        return CategoryResource::collection(
+            $this->service->categories()
+        );
     }
-
-
-
-        public function categories()
-    {
-        return CategoryResource::collection($this->service->categories());
-    }
-
-    public function sizes()
-    {
-        return SizeResource::collection($this->service->sizes());
-    }
-
+    /**
+     * GET /api/v1/public/catalog/ingredients
+     */
     public function ingredients()
     {
-        return IngredientResource::collection($this->service->ingredients());
+        return IngredientResource::collection(
+            $this->service->ingredients()
+        );
     }
 
-    public function pizzas(Request $request)
+    // ✅ 1) Todas las pizzas
+    public function pizzas()
     {
-        $categoryId = $request->integer('category_id') ?: null;
-        $search = trim((string) $request->query('q', '')) ?: null;
-
-        return PizzaResource::collection($this->service->pizzas($categoryId, $search));
+        return PizzaResource::collection(
+            $this->service->allPizzas()
+        );
     }
 
-    public function promotions()
+    // ✅ 2) Solo pizzas sencillas
+    public function pizzasSencillas()
     {
-        return PromotionResource::collection($this->service->activePromotions());
+        return PizzaResource::collection(
+            $this->service->pizzasByCategoryName('Sencillas')
+        );
     }
 
-    
+    // ✅ 3) Solo pizzas especiales
+    public function pizzasEspeciales()
+    {
+        return PizzaResource::collection(
+            $this->service->pizzasByCategoryName('Especiales')
+        );
+    }
+
+      public function searchPizzasByName(string $name)
+    {
+        $name = trim(urldecode($name));
+
+        if ($name === '') {
+            return response()->json([
+                'message' => 'El nombre de búsqueda no puede estar vacío.'
+            ], 422);
+        }
+
+        return PizzaResource::collection(
+            $this->service->searchPizzasByName($name)
+        );
+    }
 }

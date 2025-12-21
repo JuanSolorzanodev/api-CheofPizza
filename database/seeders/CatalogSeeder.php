@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
 use App\Models\Category;
 use App\Models\CategorySizePrice;
 use App\Models\Ingredient;
@@ -12,7 +12,6 @@ use App\Models\PersonalizationAction;
 use App\Models\Pizza;
 use App\Models\PizzaIngredient;
 use App\Models\Size;
-use Illuminate\Database\Seeder;
 
 class CatalogSeeder extends Seeder
 {
@@ -21,6 +20,12 @@ class CatalogSeeder extends Seeder
      */
     public function run(): void
     {
+        /**
+         * ✅ Imagen por defecto (temporal) para todas las pizzas
+         * Pega aquí tu URL real de Cloudinary
+         */
+        $defaultPizzaImageUrl = 'https://res.cloudinary.com/dertc9kiq/image/upload/v1766285135/pizza_test_flwrtw.png';
+
         /**
          * 1) Categorías (según menú)
          */
@@ -139,7 +144,6 @@ class CatalogSeeder extends Seeder
 
         /**
          * 6) Precios extra por ingrediente y tamaño (NO viene en el menú)
-         * Te dejo un valor estándar para que el sistema funcione; luego lo ajustas.
          */
         $extraBySize = [
             'Pequeña' => 1.00,
@@ -147,7 +151,6 @@ class CatalogSeeder extends Seeder
             'Familiar' => 2.00,
             'Gigante' => 2.50,
         ];
-
 
         foreach ($ingredientModels as $ing) {
             foreach ($sizeModels as $sizeName => $size) {
@@ -266,17 +269,23 @@ class CatalogSeeder extends Seeder
                 [
                     'category_id' => $p['category_id'],
                     'description' => $desc,
-                    'image_url' => null,
                     'is_visible' => true,
                 ]
             );
+
+            /**
+             * ✅ Asignar imagen por defecto
+             * - No pisa si ya tiene imagen (para cuando luego cargues imágenes reales)
+             */
+            if (blank($pizza->image_url)) {
+                $pizza->update(['image_url' => $defaultPizzaImageUrl]);
+            }
 
             // Vincular ingredientes en pivot pizza_ingredients
             foreach ($p['ingredients'] as $ingredientName) {
                 $ingredient = $ingredientModels[$ingredientName] ?? null;
 
                 if (!$ingredient) {
-                    // Si por alguna razón falta el ingrediente, lo ignoramos para no romper seed.
                     continue;
                 }
 
