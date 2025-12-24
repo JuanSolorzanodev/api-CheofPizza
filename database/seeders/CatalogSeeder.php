@@ -44,6 +44,7 @@ class CatalogSeeder extends Seeder
          * Pequeña 8, Mediana 10, Familiar 12, Gigante 14
          */
         $sizes = [
+            'Personal' =>4,
             'Pequeña' => 8,
             'Mediana' => 10,
             'Familiar' => 12,
@@ -65,6 +66,7 @@ class CatalogSeeder extends Seeder
          */
         $priceMatrix = [
             'Sencillas' => [
+                'Personal' =>2.00,
                 'Pequeña' => 5.00,
                 'Mediana' => 9.00,
                 'Familiar' => 12.00,
@@ -112,10 +114,8 @@ class CatalogSeeder extends Seeder
 
             // Vegetales
             ['type' => 'Vegetales', 'name' => 'Rodajas de tomate'],
-            ['type' => 'Vegetales', 'name' => 'Tomate'],
             ['type' => 'Vegetales', 'name' => 'Champiñones'],
             ['type' => 'Vegetales', 'name' => 'Piña'],
-            ['type' => 'Vegetales', 'name' => 'Durazno'],
             ['type' => 'Vegetales', 'name' => 'Cebolla'],
             ['type' => 'Vegetales', 'name' => 'Pimiento'],
             ['type' => 'Vegetales', 'name' => 'Jalapeño'],
@@ -129,7 +129,6 @@ class CatalogSeeder extends Seeder
             ['type' => 'Carnes', 'name' => 'Salami'],
             ['type' => 'Carnes', 'name' => 'Carne'],
             ['type' => 'Carnes', 'name' => 'Peperoni'],
-            ['type' => 'Carnes', 'name' => 'Salchichas'],
             ['type' => 'Carnes', 'name' => 'Salchichas especiales'],
             ['type' => 'Carnes', 'name' => 'Longaniza 100% Chonera'],
         ];
@@ -146,6 +145,7 @@ class CatalogSeeder extends Seeder
          * 6) Precios extra por ingrediente y tamaño (NO viene en el menú)
          */
         $extraBySize = [
+            'Personal' =>0.50,
             'Pequeña' => 1.00,
             'Mediana' => 1.50,
             'Familiar' => 2.00,
@@ -205,7 +205,7 @@ class CatalogSeeder extends Seeder
             [
                 'category_id' => $catSencillas->id,
                 'name' => 'Hawallana',
-                'ingredients' => ['Piña', 'Durazno', 'Queso mosarela'],
+                'ingredients' => ['Piña','Queso mosarela'],
             ],
             [
                 'category_id' => $catSencillas->id,
@@ -242,7 +242,7 @@ class CatalogSeeder extends Seeder
             [
                 'category_id' => $catEspeciales->id,
                 'name' => '4 Estaciones',
-                'ingredients' => ['Jamón', 'Salami', 'Tocino', 'Salchichas', 'Queso mosarela'],
+                'ingredients' => ['Jamón', 'Salami', 'Tocino', 'Salchichas especiales', 'Queso mosarela'],
             ],
             [
                 'category_id' => $catEspeciales->id,
