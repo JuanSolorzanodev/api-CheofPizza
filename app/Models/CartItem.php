@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,6 +15,8 @@ class CartItem extends Model
         'cart_id',
         'item_type',
         'pizza_id',
+        'pizza_id_second',
+        'is_half_and_half',
         'promotion_id',
         'size_id',
         'quantity',
@@ -26,6 +27,8 @@ class CartItem extends Model
     protected $casts = [
         'cart_id' => 'integer',
         'pizza_id' => 'integer',
+        'pizza_id_second' => 'integer',
+        'is_half_and_half' => 'boolean',
         'promotion_id' => 'integer',
         'size_id' => 'integer',
         'quantity' => 'integer',
@@ -41,6 +44,11 @@ class CartItem extends Model
     public function pizza(): BelongsTo
     {
         return $this->belongsTo(Pizza::class, 'pizza_id');
+    }
+
+    public function pizzaSecond(): BelongsTo
+    {
+        return $this->belongsTo(Pizza::class, 'pizza_id_second');
     }
 
     public function promotion(): BelongsTo

@@ -8,6 +8,8 @@ use App\Models\CartStatus;
 use App\Models\DeliveryType;
 use App\Models\OrderStatus;
 use App\Models\PaymentMethod;
+use App\Models\BankAccount;
+use App\Models\WhatsAppSetting;
 
 class CommerceSeeder extends Seeder
 {
@@ -16,7 +18,7 @@ class CommerceSeeder extends Seeder
      */
     public function run(): void
     {
-         // Cart statuses
+        // Cart statuses
         foreach (['active', 'ordered', 'abandoned'] as $name) {
             CartStatus::updateOrCreate(['status_name' => $name], []);
         }
@@ -53,5 +55,29 @@ class CommerceSeeder extends Seeder
                 ['description' => $m['description'], 'active' => $m['active']]
             );
         }
+
+
+        BankAccount::updateOrCreate(
+            ['bank_name' => 'Banco Pichincha', 'account_number' => '3337643104'],
+            [
+                'active' => true,
+                'priority' => 1,
+                'account_type' => 'Corriente',
+                'holder_name' => 'Lenny Patricia Cedeño Rodriguez',
+                'holder_id' => '1313173682',
+                'qr_image_url' => null,
+            ]
+        );
+        // WhatsApp settings (operativo para validar transferencias)
+        WhatsAppSetting::updateOrCreate(
+            ['id' => 1],
+            [
+                'active' => true,
+                'phone' => '+593939917715',
+                'receipt_template' =>
+                'Hola, envío el comprobante de transferencia del pedido {ORDER_NUMBER}. Total: {TOTAL}. ' .
+                    'Entrega: {DELIVERY_TYPE}. Dirección: {ADDRESS}.',
+            ]
+        );
     }
 }

@@ -13,6 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         //
+        $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
+        $middleware->alias([
+        'auth.optional' => \App\Http\Middleware\OptionalSanctumAuth::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

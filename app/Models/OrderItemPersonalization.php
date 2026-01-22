@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,6 +15,7 @@ class OrderItemPersonalization extends Model
         'ingredient_id',
         'ingredient_name',
         'personalization_action_id',
+        'applies_to', // ALL | A | B
         'modification_type',
         'extra_price',
     ];
@@ -24,6 +24,7 @@ class OrderItemPersonalization extends Model
         'order_item_id' => 'integer',
         'ingredient_id' => 'integer',
         'personalization_action_id' => 'integer',
+        'applies_to' => 'string',
         'extra_price' => 'decimal:2',
     ];
 

@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +14,7 @@ class CartItemPersonalization extends Model
         'cart_item_id',
         'ingredient_id',
         'personalization_action_id',
+        'applies_to', // ALL | A | B
         'extra_price',
     ];
 
@@ -22,6 +22,7 @@ class CartItemPersonalization extends Model
         'cart_item_id' => 'integer',
         'ingredient_id' => 'integer',
         'personalization_action_id' => 'integer',
+        'applies_to' => 'string',
         'extra_price' => 'decimal:2',
     ];
 

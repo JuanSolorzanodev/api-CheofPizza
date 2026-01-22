@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,9 +17,13 @@ class OrderItem extends Model
         'promotion_name',
         'pizza_id',
         'pizza_name',
+        'pizza_id_second',
+        'pizza_name_second',
         'size_id',
         'size_name',
         'category_name',
+        'category_name_second',
+        'is_half_and_half',
         'quantity',
         'unit_price',
         'subtotal',
@@ -30,7 +33,9 @@ class OrderItem extends Model
         'order_id' => 'integer',
         'promotion_id' => 'integer',
         'pizza_id' => 'integer',
+        'pizza_id_second' => 'integer',
         'size_id' => 'integer',
+        'is_half_and_half' => 'boolean',
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
@@ -49,6 +54,11 @@ class OrderItem extends Model
     public function pizza(): BelongsTo
     {
         return $this->belongsTo(Pizza::class, 'pizza_id');
+    }
+
+    public function pizzaSecond(): BelongsTo
+    {
+        return $this->belongsTo(Pizza::class, 'pizza_id_second');
     }
 
     public function size(): BelongsTo
