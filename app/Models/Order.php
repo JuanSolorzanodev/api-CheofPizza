@@ -19,6 +19,11 @@ class Order extends Model
         'total',
         'delivery_type_id',
         'address',
+        'delivery_lat',
+        'delivery_lng',
+        'delivery_maps_url',
+        'delivery_place_id',
+        'delivery_reference',
         'payment_method_id',
         'order_status_id',
     ];
@@ -28,6 +33,8 @@ class Order extends Model
         'ordered_at' => 'datetime',
         'total' => 'decimal:2',
         'delivery_type_id' => 'integer',
+        'delivery_lat' => 'decimal:7',
+        'delivery_lng' => 'decimal:7',
         'payment_method_id' => 'integer',
         'order_status_id' => 'integer',
     ];

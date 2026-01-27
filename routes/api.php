@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Public\BuilderController;
 use App\Http\Controllers\Api\V1\Public\CartController;
 use App\Http\Controllers\Api\V1\Orders\CheckoutController;
+use App\Http\Controllers\Api\V1\Public\GeoController;
 
 /* Route::prefix('v1/public')->group(function () {
     Route::get('catalog', [CatalogController::class, 'index']);
@@ -52,6 +53,10 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('firebase/google', [AuthController::class, 'loginWithGoogle']);
     });
+});
+
+Route::prefix('v1/public/geo')->group(function () {
+    Route::get('reverse', [GeoController::class, 'reverse']);
 });
 
 Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
