@@ -2,11 +2,13 @@
 
 namespace App\Services\Order;
 
+use App\Events\Operator\OrderCreated;
 use App\Models\Cart;
 use App\Models\CartStatus;
 use App\Models\DeliveryType;
 use App\Models\Order;
 use App\Models\OrderStatus;
+use App\Models\OrderStatusChange;
 use App\Models\PaymentMethod;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -40,12 +42,8 @@ class CheckoutService
 
             $orderStatus = OrderStatus::where('status_name', 'pending')->firstOrFail();
 
-            // Subtotal de items (sin delivery fee aún)
             $orderTotal = (float) $cart->cartItems()->sum('subtotal');
 
-            // -----------------------------
-            // Delivery location snapshot
-            // -----------------------------
             $isDelivery = ($payload['delivery_type'] ?? 'pickup') === 'delivery';
             $location = $payload['delivery_location'] ?? null;
 
@@ -59,7 +57,6 @@ class CheckoutService
                 $lat = array_key_exists('lat', $location) ? (float) $location['lat'] : null;
                 $lng = array_key_exists('lng', $location) ? (float) $location['lng'] : null;
 
-                // maps_url: si no viene, lo generamos
                 if ($lat !== null && $lng !== null) {
                     $mapsUrl = (isset($location['maps_url']) && is_string($location['maps_url']) && trim($location['maps_url']) !== '')
                         ? trim($location['maps_url'])
@@ -75,39 +72,42 @@ class CheckoutService
                 'user_id' => (int) $cart->user_id,
                 'ordered_at' => now(),
                 'total' => round($orderTotal, 2),
-
                 'delivery_type_id' => (int) $deliveryType->id,
-
-                // Texto amigable (si en el FormRequest copiaste formatted_address a address, aquí llegará ya)
                 'address' => $isDelivery ? ($payload['address'] ?? null) : null,
-
-                // Snapshot ubicación (solo delivery)
                 'delivery_lat' => $isDelivery ? $lat : null,
                 'delivery_lng' => $isDelivery ? $lng : null,
                 'delivery_maps_url' => $isDelivery ? $mapsUrl : null,
                 'delivery_place_id' => $isDelivery ? $placeId : null,
                 'delivery_reference' => $isDelivery ? $reference : null,
-
                 'payment_method_id' => (int) $paymentMethod->id,
                 'order_status_id' => (int) $orderStatus->id,
             ]);
+
+            OrderStatusChange::query()->firstOrCreate(
+                [
+                    'order_id' => (int) $order->id,
+                    'from_order_status_id' => null,
+                    'to_order_status_id' => (int) $orderStatus->id,
+                ],
+                [
+                    'changed_by_user_id' => null,
+                    'changed_at' => $order->ordered_at,
+                    'note' => null,
+                ]
+            );
 
             foreach ($cart->cartItems as $ci) {
                 $oi = $order->orderItems()->create([
                     'promotion_id' => null,
                     'promotion_name' => null,
-
                     'pizza_id' => $ci->pizza_id,
                     'pizza_name' => $ci->pizza?->pizza_name,
                     'pizza_id_second' => $ci->pizza_id_second,
                     'pizza_name_second' => $ci->pizzaSecond?->pizza_name,
-
                     'size_id' => $ci->size_id,
                     'size_name' => $ci->size?->size_name,
-
                     'category_name' => $ci->pizza?->category?->category_name,
                     'category_name_second' => $ci->pizzaSecond?->category?->category_name,
-
                     'is_half_and_half' => (bool) $ci->is_half_and_half,
                     'quantity' => (int) $ci->quantity,
                     'unit_price' => (float) $ci->unit_price,
@@ -126,7 +126,6 @@ class CheckoutService
                 }
             }
 
-            // Marcar carrito como ordered (para que ya no sea el activo)
             $orderedCartStatusId = (int) CartStatus::where('status_name', 'ordered')
                 ->firstOrFail()
                 ->id;
@@ -135,18 +134,31 @@ class CheckoutService
                 'cart_status_id' => $orderedCartStatusId,
             ])->save();
 
-            return $order->load([
-                'deliveryType',
-                'paymentMethod',
-                'orderStatus',
-                'orderItems.orderItemPersonalizations',
-            ]);
+            $freshOrder = Order::query()
+                ->with([
+                    'user',
+                    'deliveryType',
+                    'paymentMethod',
+                    'orderStatus',
+                    'orderItems',
+                    'orderItems.orderPromotionItems',
+                    'orderItems.pizza.ingredients',
+                    'orderItems.pizzaSecond.ingredients',
+                    'orderItems.orderItemPersonalizations.personalizationAction',
+                    'statusChanges.fromStatus',
+                    'statusChanges.toStatus',
+                    'statusChanges.changedBy',
+                ])
+                ->findOrFail($order->id);
+
+            event(new OrderCreated($freshOrder));
+
+            return $freshOrder;
         });
     }
 
     private function generateOrderNumber(): string
     {
-        // CH-YYYYMMDD-HHMMSS-XXXX
         for ($i = 0; $i < 5; $i++) {
             $num = 'CH-' . now()->format('Ymd-His') . '-' . Str::upper(Str::random(4));
             if (!Order::where('order_number', $num)->exists()) {
@@ -154,13 +166,11 @@ class CheckoutService
             }
         }
 
-        // Fallback ultra improbable
         return 'CH-' . Str::uuid()->toString();
     }
 
     private function buildMapsUrl(float $lat, float $lng): string
     {
-        // Link estándar: abre el pin directo
         return 'https://www.google.com/maps?q=' . $lat . ',' . $lng;
     }
 }

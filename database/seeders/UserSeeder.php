@@ -2,20 +2,18 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-         $adminRole = Role::where('role_name', 'admin')->firstOrFail();
+        $adminRole    = Role::where('role_name', 'admin')->firstOrFail();
         $customerRole = Role::where('role_name', 'customer')->firstOrFail();
+        $operatorRole = Role::where('role_name', 'operator')->firstOrFail();
 
         // Admin (para panel / pruebas)
         User::firstOrCreate(
@@ -25,7 +23,7 @@ class UserSeeder extends Seeder
                 'first_name' => 'Admin',
                 'last_name' => 'CheofPizza',
                 'phone' => '0999999999',
-                'password' => 'Admin123456!', // Se hashea por cast "hashed" en tu modelo
+                'password' => Hash::make('Admin123456!'),
             ]
         );
 
@@ -37,7 +35,20 @@ class UserSeeder extends Seeder
                 'first_name' => 'Cliente',
                 'last_name' => 'Demo',
                 'phone' => '0988888888',
-                'password' => 'Cliente123456!',
+                'password' => Hash::make('Cliente123456!'),
+            ]
+        );
+
+        // Operativo con Gmail (entra por Google, pero el rol ya viene en BD)
+        User::firstOrCreate(
+            ['email' => 'juansolorzanoc99@gmail.com'],
+            [
+                'role_id' => $operatorRole->id,
+                'first_name' => 'Operativo',
+                'last_name' => 'CheofPizza',
+                'phone' => '0980350189',
+                // password fuerte por si luego habilitas login tradicional
+                'password' => Hash::make('Operador99@'),
             ]
         );
     }

@@ -1,20 +1,30 @@
 <?php
 
-namespace App\Http\Resources\Api\V1;
+namespace App\Http\Resources\Api\V1\Operator;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Services\Order\WhatsAppReceiptLinkService;
+use App\Http\Resources\Api\V1\OrderItemResource;
 
-class OrderResource extends JsonResource
+class OperatorOrderResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $user = $this->user;
+
         return [
             'id' => $this->id,
             'order_number' => $this->order_number,
             'ordered_at' => optional($this->ordered_at)->toISOString(),
             'total' => (float) $this->total,
+
+            'customer' => $user ? [
+                'id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'phone' => $user->phone,
+                'email' => $user->email,
+            ] : null,
 
             'delivery_type' => $this->deliveryType?->delivery_type_name,
             'address' => $this->address,
@@ -33,15 +43,11 @@ class OrderResource extends JsonResource
             'payment_method' => $this->paymentMethod?->name,
             'status' => $this->orderStatus?->status_name,
 
-            'whatsapp_receipt_url' => ($this->paymentMethod?->name === 'transfer')
-                ? app(\App\Services\Order\WhatsAppReceiptLinkService::class)->build($this->resource)
-                : null,
-
             'items' => OrderItemResource::collection($this->whenLoaded('orderItems')),
-            'status_changes' => OrderStatusChangeResource::collection(
+
+            'status_changes' => OperatorOrderStatusChangeResource::collection(
                 $this->whenLoaded('statusChanges')
             ),
-
         ];
     }
 }

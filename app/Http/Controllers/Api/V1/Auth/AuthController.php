@@ -29,35 +29,54 @@ class AuthController
 
             [$firstName, $lastName] = $this->splitName($name);
 
-            $existing = User::where('email', $email)->first();
+            // 1) Buscar usuario existente
+            $user = User::where('email', $email)->first();
 
-            if (!$existing && !$request->filled('phone')) {
+            // 2) Si NO existe, obligar phone para completar registro (como ya lo haces)
+            if (!$user && !$request->filled('phone')) {
                 return response()->json([
                     'message' => 'Se requiere phone para completar el registro.',
                     'code' => 'PHONE_REQUIRED'
                 ], 422);
             }
 
-            $customerRoleId = Role::firstOrCreate(['role_name' => 'customer'])->id;
+            // 3) Rol customer debe existir por seeder (no lo crees en runtime)
+            $customerRoleId = Role::where('role_name', 'customer')->value('id');
+            if (!$customerRoleId) {
+                return response()->json([
+                    'message' => 'Configuración inválida: el rol "customer" no existe. Ejecuta RoleSeeder.',
+                    'code' => 'ROLE_NOT_CONFIGURED'
+                ], 500);
+            }
 
-            $user = User::updateOrCreate(
-                ['email' => $email],
-                [
+            // 4) Crear o actualizar SIN pisar role_id / phone / password
+            if ($user) {
+                // Actualiza solo datos no críticos (y sin borrar datos existentes)
+                $user->update([
+                    'first_name' => $firstName !== '' ? $firstName : $user->first_name,
+                    'last_name'  => $lastName !== '' ? $lastName : $user->last_name,
+                    // NO tocar: role_id, phone, password
+                ]);
+            } else {
+                $user = User::create([
+                    'email'      => $email,
                     'role_id'    => $customerRoleId,
                     'first_name' => $firstName !== '' ? $firstName : 'Cliente',
                     'last_name'  => $lastName !== '' ? $lastName : 'Google',
-                    'phone'      => $existing?->phone ?? $request->input('phone'),
+                    'phone'      => $request->input('phone'),
+                    // solo en create
                     'password'   => Str::random(40),
-                ]
-            );
+                ]);
+            }
 
+            // 5) Token
             $token = $user->createToken('google')->plainTextToken;
 
-            // Tomamos sesión del carrito desde header o body
+            // 6) Sesión del carrito (header o body)
             $sessionId = $request->header('X-Cart-Session')
                 ?? $request->input('cart_session_id');
 
-            // Esto hace claim/merge gracias al CartService modificado
+            // 7) Claim/merge carrito
             $cart = $cartService->getOrCreateActiveCart($user->id, $sessionId);
 
             return response()->json([
