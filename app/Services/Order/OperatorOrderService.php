@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use App\Events\Operator\OrderStatusChanged;
+use App\Events\Customer\OrderUpdated as CustomerOrderUpdated;
 
 class OperatorOrderService
 {
@@ -191,13 +192,15 @@ class OperatorOrderService
 
             $freshOrder = $this->findOrFail((int) $order->id);
 
-                event(new OrderStatusChanged(
-                    $freshOrder,
-                    $fromName,
-                    $toStatusName
-                ));
+            event(new OrderStatusChanged(
+                $freshOrder,
+                $fromName,
+                $toStatusName
+            ));
 
-                return $freshOrder;
+            event(new CustomerOrderUpdated($freshOrder, 'status_changed'));
+
+            return $freshOrder;
         });
     }
 

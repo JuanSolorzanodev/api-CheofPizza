@@ -12,6 +12,7 @@ use App\Models\OrderStatusChange;
 use App\Models\PaymentMethod;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Events\Customer\OrderUpdated as CustomerOrderUpdated;
 
 class CheckoutService
 {
@@ -152,6 +153,7 @@ class CheckoutService
                 ->findOrFail($order->id);
 
             event(new OrderCreated($freshOrder));
+            event(new CustomerOrderUpdated($freshOrder, 'created'));
 
             return $freshOrder;
         });

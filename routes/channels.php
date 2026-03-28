@@ -15,3 +15,16 @@ Broadcast::channel('operator.orders.{orderId}', function (User $user, int $order
 
     return Order::query()->whereKey($orderId)->exists();
 }, ['guards' => ['sanctum']]);
+
+Broadcast::channel('customer.orders.{userId}', function (User $user, int $userId) {
+    return $user->role?->role_name === 'customer'
+        && (int) $user->id === (int) $userId;
+}, ['guards' => ['sanctum']]);
+
+Broadcast::channel('customer.order.{orderId}', function (User $user, int $orderId) {
+    return $user->role?->role_name === 'customer'
+        && Order::query()
+            ->whereKey($orderId)
+            ->where('user_id', $user->id)
+            ->exists();
+}, ['guards' => ['sanctum']]);

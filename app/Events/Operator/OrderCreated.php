@@ -5,15 +5,19 @@ namespace App\Events\Operator;
 use App\Http\Resources\Api\V1\Operator\OperatorOrderDetailResource;
 use App\Http\Resources\Api\V1\Operator\OperatorOrderListResource;
 use App\Models\Order;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class OrderCreated implements ShouldBroadcastNow, ShouldDispatchAfterCommit
+class OrderCreated implements ShouldBroadcast, ShouldDispatchAfterCommit
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public string $connection = 'database';
+    public string $queue = 'broadcasts';
 
     public function __construct(public Order $order)
     {

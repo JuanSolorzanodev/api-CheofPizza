@@ -65,7 +65,7 @@ class CommerceSeeder extends Seeder
                 'account_type' => 'Corriente',
                 'holder_name' => 'Lenny Patricia Cedeño Rodriguez',
                 'holder_id' => '1313173682',
-                'qr_image_url' => null,
+                'qr_image_url' => 'https://res.cloudinary.com/dertc9kiq/image/upload/v1774654039/466d1735-aa30-454b-83c0-08bbfb27bc23.png',
             ]
         );
         // WhatsApp settings (operativo para validar transferencias)

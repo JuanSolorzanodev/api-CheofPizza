@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1\Operator;
 
+use App\Services\Order\WhatsAppDeliveryDispatchLinkService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -36,6 +37,10 @@ class OperatorOrderDetailResource extends JsonResource
                 'reference' => (string)($o->delivery_reference ?? ''),
             ],
 
+            'delivery_whatsapp_url' => ($o->deliveryType?->delivery_type_name === 'delivery')
+                ? app(WhatsAppDeliveryDispatchLinkService::class)->build($o)
+                : null,
+
             'kitchen' => [
                 'items' => $this->kitchenItems($o),
             ],
@@ -67,9 +72,6 @@ class OperatorOrderDetailResource extends JsonResource
                 'personalizations' => $this->personalizations($it),
             ];
 
-            // -------------------------
-            // PROMO
-            // -------------------------
             if (!empty($it->promotion_id)) {
                 $pizzas = $it->relationLoaded('orderPromotionItems')
                     ? $it->orderPromotionItems->map(function ($pi) {
@@ -93,9 +95,6 @@ class OperatorOrderDetailResource extends JsonResource
                 ]);
             }
 
-            // -------------------------
-            // MITAD Y MITAD
-            // -------------------------
             if ((bool)$it->is_half_and_half) {
                 $a = $it->pizza;
                 $b = $it->pizzaSecond;
@@ -117,9 +116,6 @@ class OperatorOrderDetailResource extends JsonResource
                 ]);
             }
 
-            // -------------------------
-            // PIZZA NORMAL
-            // -------------------------
             $pizza = $it->pizza;
 
             return array_merge($base, [
@@ -133,17 +129,10 @@ class OperatorOrderDetailResource extends JsonResource
         })->values()->all();
     }
 
-    /**
-     * Best practice:
-     * 1) Preferir relación normalizada: Pizza::ingredients() (belongsToMany)
-     * 2) Fallback: Pizza::pizzaIngredients()->ingredient
-     * 3) Último recurso: parsear Pizza.description (porque en tu BD está escrito ahí)
-     */
     private function extractPizzaIngredients($pizza): array
     {
         if (!$pizza) return [];
 
-        // 1) belongsToMany ingredients
         if ($pizza->relationLoaded('ingredients') && $pizza->ingredients?->isNotEmpty()) {
             return $pizza->ingredients
                 ->map(fn($ing) => trim((string)($ing->ingredient_name ?? '')))
@@ -152,7 +141,6 @@ class OperatorOrderDetailResource extends JsonResource
                 ->all();
         }
 
-        // 2) hasMany pizzaIngredients -> ingredient
         if ($pizza->relationLoaded('pizzaIngredients') && $pizza->pizzaIngredients?->isNotEmpty()) {
             return $pizza->pizzaIngredients
                 ->map(fn($pi) => trim((string)($pi->ingredient?->ingredient_name ?? '')))
@@ -161,7 +149,6 @@ class OperatorOrderDetailResource extends JsonResource
                 ->all();
         }
 
-        // 3) fallback description: "Tocino, Salami, Queso..."
         $desc = trim((string)($pizza->description ?? ''));
         if ($desc !== '') {
             return collect(explode(',', $desc))
@@ -182,7 +169,7 @@ class OperatorOrderDetailResource extends JsonResource
             'ingredient_id' => (int)($p->ingredient_id ?? 0),
             'ingredient_name' => (string)($p->ingredient_name ?? ''),
             'action' => (string)($p->personalizationAction?->action_name ?? ''),
-            'applies_to' => (string)($p->applies_to ?? 'ALL'), // ALL|A|B
+            'applies_to' => (string)($p->applies_to ?? 'ALL'),
             'extra_price' => (float)($p->extra_price ?? 0),
         ])->values()->all();
     }

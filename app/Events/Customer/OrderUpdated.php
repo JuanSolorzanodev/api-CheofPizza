@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Events\Operator;
+namespace App\Events\Customer;
 
-use App\Http\Resources\Api\V1\Operator\OperatorOrderDetailResource;
-use App\Http\Resources\Api\V1\Operator\OperatorOrderListResource;
+use App\Http\Resources\Api\V1\OrderResource;
 use App\Models\Order;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -12,7 +11,7 @@ use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class OrderStatusChanged implements ShouldBroadcast, ShouldDispatchAfterCommit
+class OrderUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -21,32 +20,37 @@ class OrderStatusChanged implements ShouldBroadcast, ShouldDispatchAfterCommit
 
     public function __construct(
         public Order $order,
-        public string $fromStatus,
-        public string $toStatus
-    ) {
-    }
+        public string $action = 'updated'
+    ) {}
 
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('operator.orders'),
-            new PrivateChannel('operator.orders.' . $this->order->id),
+            new PrivateChannel('customer.orders.' . $this->order->user_id),
+            new PrivateChannel('customer.order.' . $this->order->id),
         ];
     }
 
     public function broadcastAs(): string
     {
-        return 'operator.order.status-changed';
+        return 'customer.order.updated';
     }
 
     public function broadcastWith(): array
     {
+        $this->order->loadMissing([
+            'deliveryType',
+            'paymentMethod',
+            'orderStatus',
+            'orderItems.orderItemPersonalizations',
+            'statusChanges.fromStatus',
+            'statusChanges.toStatus',
+        ]);
+
         return [
+            'action' => $this->action,
             'order_id' => (int) $this->order->id,
-            'from_status' => $this->fromStatus,
-            'to_status' => $this->toStatus,
-            'summary' => (new OperatorOrderListResource($this->order))->resolve(),
-            'detail' => (new OperatorOrderDetailResource($this->order))->resolve(),
+            'order' => (new OrderResource($this->order))->resolve(),
         ];
     }
 }
