@@ -2,32 +2,28 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\Category;
 use App\Models\Promotion;
 use App\Models\PromotionDetail;
 use App\Models\Size;
 use Illuminate\Database\Seeder;
 
-
 class PromotionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $sencillas  = Category::where('category_name', 'Sencillas')->firstOrFail();
+        $sencillas = Category::where('category_name', 'Sencillas')->firstOrFail();
         $especiales = Category::where('category_name', 'Especiales')->firstOrFail();
 
-        $mediana  = Size::where('size_name', 'Mediana')->firstOrFail();
+        $mediana = Size::where('size_name', 'Mediana')->firstOrFail();
         $familiar = Size::where('size_name', 'Familiar')->firstOrFail();
 
-        // 2x1 MEDIANA (incluye 1 Sencilla + 1 Especial)
         $promoMediana = Promotion::updateOrCreate(
-            ['promotion_name' => '2x1 Mediana (1 Sencilla + 1 Especial)'],
+            ['slug' => '2x1-mediana'],
             [
+                'promotion_name' => '2x1 Mediana (1 Sencilla + 1 Especial)',
                 'description' => 'Incluye 1 pizza Sencilla + 1 pizza Especial tamaño Mediana',
+                'banner_image_url' => 'https://res.cloudinary.com/dertc9kiq/image/upload/v1766279154/cheofbanner2_acgkhf.png',
                 'promotion_price' => 15.00,
                 'starts_at' => now()->subDays(7),
                 'ends_at' => now()->addDays(60),
@@ -45,11 +41,12 @@ class PromotionSeeder extends Seeder
             ['required_quantity' => 1]
         );
 
-        // 2x1 FAMILIAR (incluye 1 Sencilla + 1 Especial)
         $promoFamiliar = Promotion::updateOrCreate(
-            ['promotion_name' => '2x1 Familiar (1 Sencilla + 1 Especial)'],
+            ['slug' => '2x1-familiar'],
             [
+                'promotion_name' => '2x1 Familiar (1 Sencilla + 1 Especial)',
                 'description' => 'Incluye 1 pizza Sencilla + 1 pizza Especial tamaño Familiar',
+                'banner_image_url' => 'https://res.cloudinary.com/dertc9kiq/image/upload/v1766279154/cheofbanner_jn6lak.png',
                 'promotion_price' => 20.00,
                 'starts_at' => now()->subDays(7),
                 'ends_at' => now()->addDays(60),

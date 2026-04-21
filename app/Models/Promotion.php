@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,7 +14,9 @@ class Promotion extends Model
 
     protected $fillable = [
         'promotion_name',
+        'slug',
         'description',
+        'banner_image_url',
         'promotion_price',
         'starts_at',
         'ends_at',

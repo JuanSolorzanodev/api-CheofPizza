@@ -11,8 +11,20 @@ class OrderItemResource extends JsonResource
     {
         return [
             'id' => $this->id,
-
+            'item_type' => $this->promotion_id ? 'promotion' : 'pizza',
             'is_half_and_half' => (bool) $this->is_half_and_half,
+
+            'promotion' => $this->promotion_id ? [
+                'id' => (int) $this->promotion_id,
+                'name' => $this->promotion_name,
+            ] : null,
+
+            'selected_pizzas' => $this->whenLoaded('orderPromotionItems', function () {
+                return $this->orderPromotionItems->map(fn ($pi) => [
+                    'id' => (int) $pi->pizza_id,
+                    'name' => $pi->pizza_name,
+                ])->values();
+            }),
 
             'pizza' => $this->pizza_id ? [
                 'id' => (int) $this->pizza_id,
@@ -43,7 +55,7 @@ class OrderItemResource extends JsonResource
                         'name' => $p->ingredient_name,
                     ],
                     'action_id' => $p->personalization_action_id,
-                    'applies_to' => $p->applies_to, // ALL|A|B
+                    'applies_to' => $p->applies_to,
                     'extra_price' => (float) $p->extra_price,
                 ])->values();
             }),

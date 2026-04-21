@@ -10,16 +10,19 @@ use App\Services\Builder\BuilderQuoteService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use App\Services\Promotion\PublicPromotionService;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use RuntimeException;
 
 class CartService
 {
     public function __construct(
-        private readonly BuilderQuoteService $quoteService
+        private readonly BuilderQuoteService $quoteService,
+        private readonly PublicPromotionService $promotionService
     ) {}
 
-       public function getOrCreateActiveCart(?int $userId, ?string $sessionId): Cart
+    public function getOrCreateActiveCart(?int $userId, ?string $sessionId): Cart
     {
         $activeStatusId = $this->activeStatusIdOrFail();
 
@@ -87,6 +90,72 @@ class CartService
     }
 
 
+    public function addPromotion(Cart $cart, array $payload): Cart
+    {
+        return $cart->getConnection()->transaction(function () use ($cart, $payload) {
+            $cart = $this->loadCart($cart);
+
+            $promotion = $this->promotionService->findActiveByIdOrFail((int) $payload['promotion_id']);
+
+            $validatedSelection = $this->promotionService->validateSelectedPizzasForPromotion(
+                $promotion,
+                array_map('intval', $payload['selected_pizza_ids'] ?? [])
+            );
+
+            $quantity = (int) ($payload['quantity'] ?? 1);
+            $sizeId = (int) $validatedSelection['size_id'];
+            $selectedPizzaIds = $validatedSelection['selected_pizzas']
+                ->pluck('id')
+                ->map(fn($id) => (int) $id)
+                ->values()
+                ->all();
+
+            $unitPrice = (float) $promotion->promotion_price;
+            $subTotal = round($unitPrice * $quantity, 2);
+
+            $existing = $this->findEquivalentPromotionItemInLoadedCart(
+                cart: $cart,
+                promotionId: (int) $promotion->id,
+                sizeId: $sizeId,
+                selectedPizzaIds: $selectedPizzaIds,
+            );
+
+            if ($existing) {
+                $existing->quantity = (int) $existing->quantity + $quantity;
+                $existing->unit_price = $unitPrice;
+                $existing->subtotal = round(((float) $existing->quantity) * $unitPrice, 2);
+                $existing->save();
+
+                $this->recalculateCartTotal($cart);
+
+                return $this->loadCart($cart);
+            }
+
+            /** @var CartItem $item */
+            $item = $cart->cartItems()->create([
+                'item_type' => 'promotion',
+                'is_half_and_half' => false,
+                'pizza_id' => null,
+                'pizza_id_second' => null,
+                'promotion_id' => (int) $promotion->id,
+                'size_id' => $sizeId,
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'subtotal' => $subTotal,
+            ]);
+
+            foreach ($validatedSelection['selected_pizzas'] as $pizza) {
+                $item->cartPromotionItems()->create([
+                    'pizza_id' => (int) $pizza->id,
+                ]);
+            }
+
+            $this->recalculateCartTotal($cart);
+
+            return $this->loadCart($cart);
+        });
+    }
+
     public function addPizza(Cart $cart, array $payload): Cart
     {
         // Transacción usando conexión del modelo (sin Facade DB)
@@ -146,13 +215,13 @@ class CartService
             $extraActionId = $this->extraActionIdOrFail();
 
             $breakdown = collect($quote['extras_breakdown'] ?? [])
-                ->keyBy(fn ($x) => ((int) $x['ingredient_id']).'|'.((string) $x['applies_to']));
+                ->keyBy(fn($x) => ((int) $x['ingredient_id']) . '|' . ((string) $x['applies_to']));
 
             foreach ($extras as $ex) {
                 $ingredientId = (int) ($ex['ingredient_id'] ?? 0);
                 $appliesTo    = (string) ($ex['applies_to'] ?? 'ALL');
 
-                $key = $ingredientId.'|'.$appliesTo;
+                $key = $ingredientId . '|' . $appliesTo;
                 $line = $breakdown->get($key);
 
                 $extraPrice = (float) ($line['line_total'] ?? 0);
@@ -234,12 +303,14 @@ class CartService
 
     private function loadCart(Cart $cart): Cart
     {
-        // Recarga el modelo con relaciones (Eloquent puro)
         $cart->load([
             'cartStatus',
             'cartItems.pizza.category',
             'cartItems.pizzaSecond.category',
+            'cartItems.promotion.promotionDetails.category',
+            'cartItems.promotion.promotionDetails.size',
             'cartItems.size',
+            'cartItems.cartPromotionItems.pizza.category',
             'cartItems.cartItemPersonalizations.ingredient',
             'cartItems.cartItemPersonalizations.personalizationAction',
         ]);
@@ -248,7 +319,10 @@ class CartService
             'cartStatus',
             'cartItems.pizza.category',
             'cartItems.pizzaSecond.category',
+            'cartItems.promotion.promotionDetails.category',
+            'cartItems.promotion.promotionDetails.size',
             'cartItems.size',
+            'cartItems.cartPromotionItems.pizza.category',
             'cartItems.cartItemPersonalizations.ingredient',
             'cartItems.cartItemPersonalizations.personalizationAction',
         ]) ?? $cart;
@@ -290,6 +364,35 @@ class CartService
     {
         return Str::uuid()->toString();
     }
+    private function findEquivalentPromotionItemInLoadedCart(
+        Cart $cart,
+        int $promotionId,
+        int $sizeId,
+        array $selectedPizzaIds
+    ): ?CartItem {
+        $wanted = $this->normalizePizzaIds($selectedPizzaIds);
+
+        $candidates = $cart->cartItems
+            ->where('item_type', 'promotion')
+            ->where('promotion_id', $promotionId)
+            ->where('size_id', $sizeId)
+            ->values();
+
+        foreach ($candidates as $item) {
+            $have = $item->cartPromotionItems
+                ->pluck('pizza_id')
+                ->map(fn($id) => (int) $id)
+                ->sort()
+                ->values()
+                ->all();
+
+            if ($have === $wanted) {
+                return $item;
+            }
+        }
+
+        return null;
+    }
 
     private function findEquivalentPizzaItemInLoadedCart(
         Cart $cart,
@@ -312,12 +415,12 @@ class CartService
         if ($isHalf) {
             $candidates = $candidates->where('pizza_id_second', $pizzaBId)->values();
         } else {
-            $candidates = $candidates->filter(fn (CartItem $i) => $i->pizza_id_second === null)->values();
+            $candidates = $candidates->filter(fn(CartItem $i) => $i->pizza_id_second === null)->values();
         }
 
         foreach ($candidates as $item) {
             $have = $item->cartItemPersonalizations
-                ->map(fn ($p) => [
+                ->map(fn($p) => [
                     'ingredient_id' => (int) $p->ingredient_id,
                     'applies_to' => (string) $p->applies_to,
                 ])
@@ -333,77 +436,107 @@ class CartService
         return null;
     }
 
+
+    private function normalizePizzaIds(array $pizzaIds): array
+    {
+        return collect($pizzaIds)
+            ->map(fn($id) => (int) $id)
+            ->filter(fn($id) => $id > 0)
+            ->sort()
+            ->values()
+            ->all();
+    }
     private function normalizeExtras(array $extras): array
     {
         return collect($extras)
-            ->map(fn ($e) => [
+            ->map(fn($e) => [
                 'ingredient_id' => (int) ($e['ingredient_id'] ?? 0),
                 'applies_to' => (string) ($e['applies_to'] ?? 'ALL'),
             ])
-            ->filter(fn ($e) => $e['ingredient_id'] > 0)
+            ->filter(fn($e) => $e['ingredient_id'] > 0)
             ->sortBy([['ingredient_id', 'asc'], ['applies_to', 'asc']])
             ->values()
             ->all();
     }
 
     private function mergeGuestCartIntoUserCart(Cart $guestCart, Cart $userCart): void
-{
-    // Cargamos ambos para comparar equivalencias y extras
-    $guestCart = $this->loadCart($guestCart);
-    $userCart  = $this->loadCart($userCart);
+    {
+        // Cargamos ambos para comparar equivalencias y extras
+        $guestCart = $this->loadCart($guestCart);
+        $userCart  = $this->loadCart($userCart);
 
-    foreach ($guestCart->cartItems as $guestItem) {
-        // Por ahora tu sistema maneja 'pizza'; si agregas otros tipos, los pasas tal cual
-        if ($guestItem->item_type !== 'pizza') {
-            $guestItem->cart_id = $userCart->id;
-            $guestItem->save();
-            continue;
+        foreach ($guestCart->cartItems as $guestItem) {
+            if ($guestItem->item_type === 'promotion') {
+                $selectedPizzaIds = $guestItem->cartPromotionItems
+                    ->pluck('pizza_id')
+                    ->map(fn($id) => (int) $id)
+                    ->values()
+                    ->all();
+
+                $existingPromotion = $this->findEquivalentPromotionItemInLoadedCart(
+                    cart: $userCart,
+                    promotionId: (int) $guestItem->promotion_id,
+                    sizeId: (int) $guestItem->size_id,
+                    selectedPizzaIds: $selectedPizzaIds
+                );
+
+                if ($existingPromotion) {
+                    $existingPromotion->quantity = (int) $existingPromotion->quantity + (int) $guestItem->quantity;
+                    $existingPromotion->unit_price = (float) $guestItem->unit_price;
+                    $existingPromotion->subtotal = round(((float) $existingPromotion->quantity) * (float) $existingPromotion->unit_price, 2);
+                    $existingPromotion->save();
+                    $guestItem->delete();
+                } else {
+                    $guestItem->cart_id = $userCart->id;
+                    $guestItem->save();
+                }
+
+                $userCart = $this->loadCart($userCart);
+                continue;
+            }
+
+            $extras = $guestItem->cartItemPersonalizations
+                ->map(fn($p) => [
+                    'ingredient_id' => (int) $p->ingredient_id,
+                    'applies_to' => (string) $p->applies_to,
+                ])
+                ->values()
+                ->all();
+
+            $existing = $this->findEquivalentPizzaItemInLoadedCart(
+                cart: $userCart,
+                pizzaAId: (int) $guestItem->pizza_id,
+                pizzaBId: $guestItem->is_half_and_half ? (int) $guestItem->pizza_id_second : null,
+                isHalf: (bool) $guestItem->is_half_and_half,
+                sizeId: (int) $guestItem->size_id,
+                extras: $extras
+            );
+
+            if ($existing) {
+                // Merge cantidad
+                $existing->quantity = (int) $existing->quantity + (int) $guestItem->quantity;
+                // Mantén el unit_price del guest si quieres priorizar lo más reciente
+                $existing->unit_price = (float) $guestItem->unit_price;
+                $existing->subtotal = round(((float) $existing->quantity) * (float) $existing->unit_price, 2);
+                $existing->save();
+
+                // El invitado ya se integró, borramos el item (y sus personalizaciones por FK/cascade si aplica)
+                $guestItem->delete();
+
+                // Importante: refrescar el userCart cargado para que equivalencias futuras consideren el merge
+                $userCart = $this->loadCart($userCart);
+            } else {
+                // No hay equivalente: movemos el item con sus personalizaciones intactas
+                $guestItem->cart_id = $userCart->id;
+                $guestItem->save();
+                $userCart = $this->loadCart($userCart);
+            }
         }
 
-        $extras = $guestItem->cartItemPersonalizations
-            ->map(fn ($p) => [
-                'ingredient_id' => (int) $p->ingredient_id,
-                'applies_to' => (string) $p->applies_to,
-            ])
-            ->values()
-            ->all();
+        // Recalcular total del carrito final
+        $this->recalculateCartTotal($userCart);
 
-        $existing = $this->findEquivalentPizzaItemInLoadedCart(
-            cart: $userCart,
-            pizzaAId: (int) $guestItem->pizza_id,
-            pizzaBId: $guestItem->is_half_and_half ? (int) $guestItem->pizza_id_second : null,
-            isHalf: (bool) $guestItem->is_half_and_half,
-            sizeId: (int) $guestItem->size_id,
-            extras: $extras
-        );
-
-        if ($existing) {
-            // Merge cantidad
-            $existing->quantity = (int) $existing->quantity + (int) $guestItem->quantity;
-            // Mantén el unit_price del guest si quieres priorizar lo más reciente
-            $existing->unit_price = (float) $guestItem->unit_price;
-            $existing->subtotal = round(((float) $existing->quantity) * (float) $existing->unit_price, 2);
-            $existing->save();
-
-            // El invitado ya se integró, borramos el item (y sus personalizaciones por FK/cascade si aplica)
-            $guestItem->delete();
-
-            // Importante: refrescar el userCart cargado para que equivalencias futuras consideren el merge
-            $userCart = $this->loadCart($userCart);
-        } else {
-            // No hay equivalente: movemos el item con sus personalizaciones intactas
-            $guestItem->cart_id = $userCart->id;
-            $guestItem->save();
-            $userCart = $this->loadCart($userCart);
-        }
+        // El carrito invitado queda vacío o ya no sirve: lo eliminamos
+        $guestCart->delete();
     }
-
-    // Recalcular total del carrito final
-    $this->recalculateCartTotal($userCart);
-
-    // El carrito invitado queda vacío o ya no sirve: lo eliminamos
-    $guestCart->delete();
-}
-
-
 }

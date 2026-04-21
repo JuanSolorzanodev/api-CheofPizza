@@ -23,7 +23,9 @@ class CheckoutService
             $cart->load([
                 'cartItems.pizza.category',
                 'cartItems.pizzaSecond.category',
+                'cartItems.promotion',
                 'cartItems.size',
+                'cartItems.cartPromotionItems.pizza.category',
                 'cartItems.cartItemPersonalizations.ingredient',
                 'cartItems.cartItemPersonalizations.personalizationAction',
             ]);
@@ -98,6 +100,34 @@ class CheckoutService
             );
 
             foreach ($cart->cartItems as $ci) {
+                if ($ci->item_type === 'promotion') {
+                    $oi = $order->orderItems()->create([
+                        'promotion_id' => $ci->promotion_id,
+                        'promotion_name' => $ci->promotion?->promotion_name,
+                        'pizza_id' => null,
+                        'pizza_name' => null,
+                        'pizza_id_second' => null,
+                        'pizza_name_second' => null,
+                        'size_id' => $ci->size_id,
+                        'size_name' => $ci->size?->size_name,
+                        'category_name' => null,
+                        'category_name_second' => null,
+                        'is_half_and_half' => false,
+                        'quantity' => (int) $ci->quantity,
+                        'unit_price' => (float) $ci->unit_price,
+                        'subtotal' => (float) $ci->subtotal,
+                    ]);
+
+                    foreach ($ci->cartPromotionItems as $promoPizza) {
+                        $oi->orderPromotionItems()->create([
+                            'pizza_id' => (int) $promoPizza->pizza_id,
+                            'pizza_name' => $promoPizza->pizza?->pizza_name,
+                        ]);
+                    }
+
+                    continue;
+                }
+
                 $oi = $order->orderItems()->create([
                     'promotion_id' => null,
                     'promotion_name' => null,

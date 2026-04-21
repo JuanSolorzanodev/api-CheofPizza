@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Public\CatalogController;
 use App\Http\Controllers\Api\V1\Public\BuilderController;
 use App\Http\Controllers\Api\V1\Public\CartController;
 use App\Http\Controllers\Api\V1\Public\GeoController;
+use App\Http\Controllers\Api\V1\Public\PromotionController;
 use App\Http\Controllers\Api\V1\Operator\OrdersController as OperatorOrdersController;
 
 // Orders
@@ -61,12 +62,19 @@ Route::prefix('v1/public/builder')->group(function () {
     Route::post('quote', [BuilderController::class, 'quote']);
 });
 
+// Promotions
+Route::prefix('v1/public/promotions')->group(function () {
+    Route::get('', [PromotionController::class, 'index']);
+    Route::get('{slug}', [PromotionController::class, 'show']);
+});
+
 // Cart (auth opcional: invitado o logueado)
 Route::prefix('v1/public/cart')
     ->middleware('auth.optional:sanctum')
     ->group(function () {
         Route::get('', [CartController::class, 'show']);
         Route::post('items/pizza', [CartController::class, 'addPizza']);
+        Route::post('items/promotion', [CartController::class, 'addPromotion']);
         Route::put('items/{itemId}', [CartController::class, 'updateQuantity']);
         Route::delete('items/{itemId}', [CartController::class, 'remove']);
         Route::delete('', [CartController::class, 'clear']);
@@ -81,6 +89,7 @@ Route::prefix('v1/public/checkout')->group(function () {
 Route::prefix('v1/public/geo')->group(function () {
     Route::get('reverse', [GeoController::class, 'reverse']);
 });
+
 
 
 // ---------------------------------------------------------------------

@@ -12,8 +12,25 @@ class CartItemResource extends JsonResource
         return [
             'id' => $this->id,
             'item_type' => $this->item_type,
-
             'is_half_and_half' => (bool) $this->is_half_and_half,
+
+            'promotion' => $this->whenLoaded('promotion', fn () => $this->promotion ? [
+                'id' => $this->promotion->id,
+                'slug' => $this->promotion->slug,
+                'name' => $this->promotion->promotion_name,
+                'description' => $this->promotion->description,
+                'banner_image_url' => $this->promotion->banner_image_url,
+                'price' => (float) $this->promotion->promotion_price,
+            ] : null),
+
+            'selected_pizzas' => $this->whenLoaded('cartPromotionItems', function () {
+                return $this->cartPromotionItems->map(fn ($pi) => [
+                    'id' => $pi->pizza?->id,
+                    'name' => $pi->pizza?->pizza_name,
+                    'image_url' => $pi->pizza?->image_url,
+                    'category' => $pi->pizza?->category?->category_name,
+                ])->values();
+            }),
 
             'pizza' => $this->whenLoaded('pizza', fn () => [
                 'id' => $this->pizza?->id,
@@ -50,7 +67,7 @@ class CartItemResource extends JsonResource
                         'id' => $p->personalizationAction?->id,
                         'name' => $p->personalizationAction?->action_name,
                     ],
-                    'applies_to' => $p->applies_to, // ALL|A|B
+                    'applies_to' => $p->applies_to,
                     'extra_price' => (float) $p->extra_price,
                 ])->values();
             }),

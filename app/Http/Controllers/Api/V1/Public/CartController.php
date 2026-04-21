@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Public;
 
 use App\Http\Requests\Api\V1\Public\CartAddPizzaRequest;
+use App\Http\Requests\Api\V1\Public\CartAddPromotionRequest;
 use App\Http\Requests\Api\V1\Public\CartUpdateQuantityRequest;
 use App\Http\Resources\Api\V1\CartResource;
 use App\Services\Cart\CartService;
@@ -26,6 +27,17 @@ class CartController
         $cart = $this->resolveCart($request);
 
         $cart = $this->cartService->addPizza($cart, $request->validated());
+
+        return (new CartResource($cart))
+            ->response()
+            ->header('X-Cart-Session', $cart->session_id);
+    }
+
+    public function addPromotion(CartAddPromotionRequest $request)
+    {
+        $cart = $this->resolveCart($request);
+
+        $cart = $this->cartService->addPromotion($cart, $request->validated());
 
         return (new CartResource($cart))
             ->response()
@@ -72,16 +84,18 @@ class CartController
     private function resolveCart(Request $request)
     {
         $sessionId = $request->header('X-Cart-Session');
-        $userId = $request->user()?->id; // si hay auth:sanctum en el futuro, aquí lo toma
+        $userId = $request->user()?->id;
 
         $cart = $this->cartService->getOrCreateActiveCart($userId, $sessionId);
 
-        // Siempre devolvemos session_id para invitado (y para consistencia)
         return $cart->load([
             'cartStatus',
             'cartItems.pizza.category',
             'cartItems.pizzaSecond.category',
+            'cartItems.promotion.promotionDetails.category',
+            'cartItems.promotion.promotionDetails.size',
             'cartItems.size',
+            'cartItems.cartPromotionItems.pizza.category',
             'cartItems.cartItemPersonalizations.ingredient',
             'cartItems.cartItemPersonalizations.personalizationAction',
         ]);
