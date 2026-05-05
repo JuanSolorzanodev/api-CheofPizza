@@ -12,14 +12,16 @@ class CartItemPersonalization extends Model
 
     protected $fillable = [
         'cart_item_id',
+        'cart_promotion_item_id',
         'ingredient_id',
         'personalization_action_id',
-        'applies_to', // ALL | A | B
+        'applies_to',
         'extra_price',
     ];
 
     protected $casts = [
         'cart_item_id' => 'integer',
+        'cart_promotion_item_id' => 'integer',
         'ingredient_id' => 'integer',
         'personalization_action_id' => 'integer',
         'applies_to' => 'string',
@@ -29,6 +31,11 @@ class CartItemPersonalization extends Model
     public function cartItem(): BelongsTo
     {
         return $this->belongsTo(CartItem::class, 'cart_item_id');
+    }
+
+    public function cartPromotionItem(): BelongsTo
+    {
+        return $this->belongsTo(CartPromotionItem::class, 'cart_promotion_item_id');
     }
 
     public function ingredient(): BelongsTo

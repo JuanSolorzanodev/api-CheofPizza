@@ -9,6 +9,10 @@ class PromotionResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $selectionCount = (int) ($this->relationLoaded('promotionDetails')
+            ? $this->promotionDetails->sum('required_quantity')
+            : 0);
+
         return [
             'id' => $this->id,
             'slug' => $this->slug,
@@ -21,11 +25,14 @@ class PromotionResource extends JsonResource
             'details' => PromotionDetailResource::collection($this->whenLoaded('promotionDetails')),
             'selection_rules' => [
                 'type' => 'fixed_combo',
-                'allows_extras' => false,
+                'allows_extras' => true,
+                'allows_remove_ingredients' => true,
                 'allows_half_and_half' => false,
-                'selection_count' => (int) ($this->relationLoaded('promotionDetails')
-                    ? $this->promotionDetails->sum('required_quantity')
-                    : 0),
+                'selection_count' => $selectionCount,
+
+                // reglas del builder
+                'max_extras_per_pizza' => 3,
+                'allow_duplicate_ingredients_as_extra' => false,
             ],
         ];
     }

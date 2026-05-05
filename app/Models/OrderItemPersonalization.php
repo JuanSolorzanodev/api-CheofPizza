@@ -12,16 +12,18 @@ class OrderItemPersonalization extends Model
 
     protected $fillable = [
         'order_item_id',
+        'order_promotion_item_id',
         'ingredient_id',
         'ingredient_name',
         'personalization_action_id',
-        'applies_to', // ALL | A | B
+        'applies_to',
         'modification_type',
         'extra_price',
     ];
 
     protected $casts = [
         'order_item_id' => 'integer',
+        'order_promotion_item_id' => 'integer',
         'ingredient_id' => 'integer',
         'personalization_action_id' => 'integer',
         'applies_to' => 'string',
@@ -31,6 +33,11 @@ class OrderItemPersonalization extends Model
     public function orderItem(): BelongsTo
     {
         return $this->belongsTo(OrderItem::class, 'order_item_id');
+    }
+
+    public function orderPromotionItem(): BelongsTo
+    {
+        return $this->belongsTo(OrderPromotionItem::class, 'order_promotion_item_id');
     }
 
     public function ingredient(): BelongsTo

@@ -20,10 +20,27 @@ class OrderItemResource extends JsonResource
             ] : null,
 
             'selected_pizzas' => $this->whenLoaded('orderPromotionItems', function () {
-                return $this->orderPromotionItems->map(fn ($pi) => [
-                    'id' => (int) $pi->pizza_id,
-                    'name' => $pi->pizza_name,
-                ])->values();
+                return $this->orderPromotionItems->map(function ($pi) {
+                    $customizations = $this->orderItemPersonalizations
+                        ->where('order_promotion_item_id', $pi->id)
+                        ->map(fn ($p) => [
+                            'id' => $p->id,
+                            'ingredient' => [
+                                'id' => $p->ingredient_id,
+                                'name' => $p->ingredient_name,
+                            ],
+                            'action_id' => $p->personalization_action_id,
+                            'applies_to' => $p->applies_to,
+                            'extra_price' => (float) $p->extra_price,
+                        ])
+                        ->values();
+
+                    return [
+                        'id' => (int) $pi->pizza_id,
+                        'name' => $pi->pizza_name,
+                        'customizations' => $customizations,
+                    ];
+                })->values();
             }),
 
             'pizza' => $this->pizza_id ? [
@@ -48,16 +65,23 @@ class OrderItemResource extends JsonResource
             'subtotal' => (float) $this->subtotal,
 
             'extras' => $this->whenLoaded('orderItemPersonalizations', function () {
-                return $this->orderItemPersonalizations->map(fn ($p) => [
-                    'id' => $p->id,
-                    'ingredient' => [
-                        'id' => $p->ingredient_id,
-                        'name' => $p->ingredient_name,
-                    ],
-                    'action_id' => $p->personalization_action_id,
-                    'applies_to' => $p->applies_to,
-                    'extra_price' => (float) $p->extra_price,
-                ])->values();
+                if ($this->promotion_id) {
+                    return [];
+                }
+
+                return $this->orderItemPersonalizations
+                    ->whereNull('order_promotion_item_id')
+                    ->map(fn ($p) => [
+                        'id' => $p->id,
+                        'ingredient' => [
+                            'id' => $p->ingredient_id,
+                            'name' => $p->ingredient_name,
+                        ],
+                        'action_id' => $p->personalization_action_id,
+                        'applies_to' => $p->applies_to,
+                        'extra_price' => (float) $p->extra_price,
+                    ])
+                    ->values();
             }),
         ];
     }

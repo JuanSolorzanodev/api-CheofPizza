@@ -2,6 +2,7 @@
 
 namespace App\Services\Order;
 
+use App\Events\Customer\OrderUpdated as CustomerOrderUpdated;
 use App\Events\Operator\OrderCreated;
 use App\Models\Cart;
 use App\Models\CartStatus;
@@ -12,14 +13,12 @@ use App\Models\OrderStatusChange;
 use App\Models\PaymentMethod;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use App\Events\Customer\OrderUpdated as CustomerOrderUpdated;
 
 class CheckoutService
 {
     public function checkout(Cart $cart, array $payload): Order
     {
         return $cart->getConnection()->transaction(function () use ($cart, $payload) {
-
             $cart->load([
                 'cartItems.pizza.category',
                 'cartItems.pizzaSecond.category',
@@ -36,13 +35,10 @@ class CheckoutService
                 ]);
             }
 
-            $deliveryType = DeliveryType::where('delivery_type_name', $payload['delivery_type'])
-                ->firstOrFail();
-
+            $deliveryType = DeliveryType::where('delivery_type_name', $payload['delivery_type'])->firstOrFail();
             $paymentMethod = PaymentMethod::where('name', $payload['payment_method'])
                 ->where('active', true)
                 ->firstOrFail();
-
             $orderStatus = OrderStatus::where('status_name', 'pending')->firstOrFail();
 
             $orderTotal = (float) $cart->cartItems()->sum('subtotal');
@@ -119,10 +115,26 @@ class CheckoutService
                     ]);
 
                     foreach ($ci->cartPromotionItems as $promoPizza) {
-                        $oi->orderPromotionItems()->create([
+                        $orderPromoItem = $oi->orderPromotionItems()->create([
                             'pizza_id' => (int) $promoPizza->pizza_id,
                             'pizza_name' => $promoPizza->pizza?->pizza_name,
                         ]);
+
+                        $promoPersonalizations = $ci->cartItemPersonalizations
+                            ->where('cart_promotion_item_id', $promoPizza->id)
+                            ->values();
+
+                        foreach ($promoPersonalizations as $p) {
+                            $oi->orderItemPersonalizations()->create([
+                                'order_promotion_item_id' => $orderPromoItem->id,
+                                'ingredient_id' => (int) $p->ingredient_id,
+                                'ingredient_name' => $p->ingredient?->ingredient_name,
+                                'personalization_action_id' => (int) $p->personalization_action_id,
+                                'applies_to' => $p->applies_to ?? 'ALL',
+                                'modification_type' => null,
+                                'extra_price' => (float) $p->extra_price,
+                            ]);
+                        }
                     }
 
                     continue;
@@ -145,8 +157,9 @@ class CheckoutService
                     'subtotal' => (float) $ci->subtotal,
                 ]);
 
-                foreach ($ci->cartItemPersonalizations as $p) {
+                foreach ($ci->cartItemPersonalizations->whereNull('cart_promotion_item_id') as $p) {
                     $oi->orderItemPersonalizations()->create([
+                        'order_promotion_item_id' => null,
                         'ingredient_id' => (int) $p->ingredient_id,
                         'ingredient_name' => $p->ingredient?->ingredient_name,
                         'personalization_action_id' => (int) $p->personalization_action_id,
@@ -157,9 +170,7 @@ class CheckoutService
                 }
             }
 
-            $orderedCartStatusId = (int) CartStatus::where('status_name', 'ordered')
-                ->firstOrFail()
-                ->id;
+            $orderedCartStatusId = (int) CartStatus::where('status_name', 'ordered')->firstOrFail()->id;
 
             $cart->forceFill([
                 'cart_status_id' => $orderedCartStatusId,
@@ -173,8 +184,6 @@ class CheckoutService
                     'orderStatus',
                     'orderItems',
                     'orderItems.orderPromotionItems',
-                    'orderItems.pizza.ingredients',
-                    'orderItems.pizzaSecond.ingredients',
                     'orderItems.orderItemPersonalizations.personalizationAction',
                     'statusChanges.fromStatus',
                     'statusChanges.toStatus',

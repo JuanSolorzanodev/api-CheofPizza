@@ -11,7 +11,7 @@ class CartItemResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'item_type' => $this->item_type,
+            'item_type' => $this->promotion_id ? 'promotion' : 'pizza',
             'is_half_and_half' => (bool) $this->is_half_and_half,
 
             'promotion' => $this->whenLoaded('promotion', fn () => $this->promotion ? [
@@ -24,12 +24,32 @@ class CartItemResource extends JsonResource
             ] : null),
 
             'selected_pizzas' => $this->whenLoaded('cartPromotionItems', function () {
-                return $this->cartPromotionItems->map(fn ($pi) => [
-                    'id' => $pi->pizza?->id,
-                    'name' => $pi->pizza?->pizza_name,
-                    'image_url' => $pi->pizza?->image_url,
-                    'category' => $pi->pizza?->category?->category_name,
-                ])->values();
+                return $this->cartPromotionItems->map(function ($pi) {
+                    $customizations = $this->cartItemPersonalizations
+                        ->where('cart_promotion_item_id', $pi->id)
+                        ->map(fn ($p) => [
+                            'id' => $p->id,
+                            'ingredient' => [
+                                'id' => $p->ingredient?->id,
+                                'name' => $p->ingredient?->ingredient_name,
+                            ],
+                            'action' => [
+                                'id' => $p->personalizationAction?->id,
+                                'name' => $p->personalizationAction?->action_name,
+                            ],
+                            'applies_to' => $p->applies_to,
+                            'extra_price' => (float) $p->extra_price,
+                        ])
+                        ->values();
+
+                    return [
+                        'id' => $pi->pizza?->id,
+                        'name' => $pi->pizza?->pizza_name,
+                        'image_url' => $pi->pizza?->image_url,
+                        'category' => $pi->pizza?->category?->category_name,
+                        'customizations' => $customizations,
+                    ];
+                })->values();
             }),
 
             'pizza' => $this->whenLoaded('pizza', fn () => [
@@ -46,30 +66,37 @@ class CartItemResource extends JsonResource
                 'category' => $this->pizzaSecond->category?->category_name,
             ] : null),
 
-            'size' => $this->whenLoaded('size', fn () => [
-                'id' => $this->size?->id,
-                'name' => $this->size?->size_name,
-                'portion' => $this->size?->portion,
-            ]),
+            'size' => $this->whenLoaded('size', fn () => $this->size ? [
+                'id' => $this->size->id,
+                'name' => $this->size->size_name,
+                'portion' => (int) ($this->size->portion ?? 0),
+            ] : null),
 
             'quantity' => (int) $this->quantity,
             'unit_price' => (float) $this->unit_price,
             'subtotal' => (float) $this->subtotal,
 
             'extras' => $this->whenLoaded('cartItemPersonalizations', function () {
-                return $this->cartItemPersonalizations->map(fn ($p) => [
-                    'id' => $p->id,
-                    'ingredient' => [
-                        'id' => $p->ingredient?->id,
-                        'name' => $p->ingredient?->ingredient_name,
-                    ],
-                    'action' => [
-                        'id' => $p->personalizationAction?->id,
-                        'name' => $p->personalizationAction?->action_name,
-                    ],
-                    'applies_to' => $p->applies_to,
-                    'extra_price' => (float) $p->extra_price,
-                ])->values();
+                if ($this->promotion_id) {
+                    return [];
+                }
+
+                return $this->cartItemPersonalizations
+                    ->whereNull('cart_promotion_item_id')
+                    ->map(fn ($p) => [
+                        'id' => $p->id,
+                        'ingredient' => [
+                            'id' => $p->ingredient?->id,
+                            'name' => $p->ingredient?->ingredient_name,
+                        ],
+                        'action' => [
+                            'id' => $p->personalizationAction?->id,
+                            'name' => $p->personalizationAction?->action_name,
+                        ],
+                        'applies_to' => $p->applies_to,
+                        'extra_price' => (float) $p->extra_price,
+                    ])
+                    ->values();
             }),
         ];
     }
