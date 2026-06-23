@@ -41,7 +41,7 @@ class UserSeeder extends Seeder
 
         // Operativo con Gmail (entra por Google, pero el rol ya viene en BD)
         User::firstOrCreate(
-            ['email' => 'juansolorzanoc99@gmail.com'],
+            ['email' => 'operationalemail@gmail.com'],
             [
                 'role_id' => $operatorRole->id,
                 'first_name' => 'Operativo',
