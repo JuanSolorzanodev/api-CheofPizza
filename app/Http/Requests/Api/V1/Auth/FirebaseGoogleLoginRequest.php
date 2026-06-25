@@ -6,13 +6,23 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class FirebaseGoogleLoginRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     public function rules(): array
     {
         return [
-            'id_token' => ['required', 'string'],
-            'phone'    => ['nullable', 'string', 'max:30'], 
+            'id_token' => [
+                'required',
+                'string'
+            ],
+            'phone' => [
+                'nullable',
+                'string',
+                'max:15'
+            ],
         ];
     }
 }

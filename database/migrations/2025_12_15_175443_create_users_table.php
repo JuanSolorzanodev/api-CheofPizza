@@ -16,11 +16,11 @@ return new class extends Migration
             $table->foreignId('role_id')
             ->constrained('roles')
             ->cascadeOnDelete();
-            $table->string('first_name', 100);         //
-            $table->string('last_name', 100);          //
-            $table->string('phone', 30);               //
-            $table->string('email')->unique();         //
-            $table->string('password'); 
+            $table->string('first_name', 100);
+            $table->string('last_name', 100);
+            $table->string('phone', 15);
+            $table->string('email')->unique();
+            $table->string('password');
             $table->timestamps();
         });
     }
