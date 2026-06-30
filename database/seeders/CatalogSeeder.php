@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Category;
-use App\Models\CategorySizePrice;
+use App\Models\CategorySize;
 use App\Models\Ingredient;
 use App\Models\IngredientSizePrice;
 use App\Models\IngredientType;
@@ -85,7 +85,7 @@ class CatalogSeeder extends Seeder
             foreach ($sizeModels as $sizeName => $size) {
                 $price = $priceMatrix[$cat->category_name][$sizeName] ?? 0;
 
-                CategorySizePrice::updateOrCreate(
+                CategorySize::updateOrCreate(
                     ['category_id' => $cat->id, 'size_id' => $size->id],
                     ['price' => $price]
                 );
