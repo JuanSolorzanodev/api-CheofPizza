@@ -20,23 +20,24 @@ class Size extends Model
         'portion' => 'integer',
     ];
 
-    public function categories(): BelongsToMany
+    public function categories()
     {
-        return $this->belongsToMany(Category::class, 'category_size_prices')
-            ->withPivot(['price'])
-            ->withTimestamps();
+        return $this->belongsToMany(Category::class)
+                    ->using(CategorySize::class)
+                    ->withPivot('price')
+                    ->withTimestamps();
     }
+
+    /* public function categorySizePrices(): HasMany
+    {
+        return $this->hasMany(CategorySizePrice::class, 'size_id');
+    } */
 
     public function ingredients(): BelongsToMany
     {
         return $this->belongsToMany(Ingredient::class, 'ingredient_size_prices')
             ->withPivot(['extra_price'])
             ->withTimestamps();
-    }
-
-    public function categorySizePrices(): HasMany
-    {
-        return $this->hasMany(CategorySizePrice::class, 'size_id');
     }
 
     public function ingredientSizePrices(): HasMany

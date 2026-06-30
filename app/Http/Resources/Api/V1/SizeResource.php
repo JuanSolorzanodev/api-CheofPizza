@@ -10,9 +10,9 @@ class SizeResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'      => $this->id,
-            'name'    => $this->size_name,
-            'portion' => (int) $this->portion,
+            'id' => $this->id,
+            'name' => $this->size_name,
+            'portion' => $this->portion,
         ];
     }
 }

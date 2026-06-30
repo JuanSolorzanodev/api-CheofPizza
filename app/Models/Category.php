@@ -17,17 +17,18 @@ class Category extends Model
         'description',
     ];
 
-    public function sizes(): BelongsToMany
+    public function sizes()
     {
-        return $this->belongsToMany(Size::class, 'category_size_prices')
-            ->withPivot(['price'])
-            ->withTimestamps();
+        return $this->belongsToMany(Size::class)
+                    ->using(CategorySize::class)
+                    ->withPivot('price')
+                    ->withTimestamps();
     }
 
-    public function categorySizePrices(): HasMany
+    /* public function categorySizePrices(): HasMany
     {
         return $this->hasMany(CategorySizePrice::class, 'category_id');
-    }
+    } */
 
     public function pizzas(): HasMany
     {

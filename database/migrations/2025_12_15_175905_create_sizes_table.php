@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('sizes', function (Blueprint $table) {
             $table->id();
             $table->string('size_name', 60);           // nombre_tamaño :contentReference[oaicite:5]{index=5}
-            $table->integer('portion'); 
+            $table->unsignedTinyInteger('portion');
             $table->timestamps();
         });
     }
