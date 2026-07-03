@@ -3,33 +3,39 @@
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Requests\Api\V1\Auth\FirebaseGoogleLoginRequest;
-use App\Services\Auth\AuthService;
-use Illuminate\Http\JsonResponse;
 use App\Http\Resources\Api\V1\CartResource;
-use App\Models\Role;
-use App\Models\User;
-use App\Services\Cart\CartService;
-use Illuminate\Support\Str;
-use Throwable;
+use App\Http\Resources\Api\V1\UserResource;
+use App\Services\Auth\AuthService;
+use App\Support\ApiResponse;
+use Illuminate\Http\JsonResponse;
 
 class AuthController
 {
     public function __construct(
-        private AuthService $authService
+        private readonly AuthService $authService,
+        private readonly ApiResponse $response
     ) {}
 
     public function loginWithGoogle(FirebaseGoogleLoginRequest $request): JsonResponse
     {
-        $result = $this->authService->loginWithGoogle(
-            $request->validated(),
-            $request->header('X-Cart-Session')
+
+        $login = $this->authService->loginWithGoogle(
+            data: $request->validated(),
+            sessionId: $request->attributes->get('cart_session')
         );
 
-        return response()
-            ->json($result['data'])
+        return $this->response
+            ->success(
+                data: [
+                    'token' => $login->token,
+                    'user' => new UserResource($login->user),
+                    'cart' => new CartResource($login->cart),
+                ],
+                message: 'Login successful.'
+            )
             ->header(
                 'X-Cart-Session',
-                $result['cart_session']
+                $login->cartSession
             );
     }
 }

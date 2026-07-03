@@ -25,6 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.optional' => \App\Http\Middleware\OptionalSanctumAuth::class,
             'role' => \App\Http\Middleware\EnsureRole::class,
         ]);
+
+        $middleware->alias([
+            'cart.session' => \App\Http\Middleware\CartSessionMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(

@@ -16,19 +16,19 @@ class UserResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'first_name' => $this->first_name,
-            'last_name' => $this->last_name,
-            'full_name' => trim(
-                "{$this->first_name} {$this->last_name}"
-            ),
-            'email' => $this->email,
-            'phone' => $this->phone,
             'role' => $this->whenLoaded('role', function () {
                 return [
                     'id' => $this->role->id,
                     'name' => $this->role->role_name,
                 ];
             }),
+            'phone' => $this->phone,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+            'email' => $this->email,
+            'full_name' => trim(
+                "{$this->first_name} {$this->last_name}"
+            ),
         ];
     }
 }

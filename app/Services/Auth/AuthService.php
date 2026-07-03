@@ -2,6 +2,9 @@
 
 namespace App\Services\Auth;
 
+use App\DTOs\Auth\LoginResponse;
+use App\Enums\UserRole;
+use App\Exceptions\PhoneRequiredException;
 use App\Models\User;
 use App\Models\Role;
 use App\Services\Cart\CartService;
@@ -11,77 +14,47 @@ use Throwable;
 class AuthService
 {
     public function __construct(
-        private CartService $cartService
+        private readonly CartService $cartService,
+        private readonly FirebaseService $firebaseService
     ) {}
 
-    public function loginWithGoogle(array $data, ?string $sessionId): array
+    public function loginWithGoogle(array $data, ?string $sessionId): LoginResponse
     {
-        try {
-            $claims = $this->verifyGoogleToken($data['id_token']);
+        $claims = $this->firebaseService->verifyGoogleToken($data['id_token']);
 
-            if (empty($claims['email'])) {
-                throw new \Exception(
-                    'Token válido pero sin email.'
-                );
-            }
+        $user = $this->findOrCreateUser($claims, $data['phone'] ?? null);
 
-            $user = $this->findOrCreateUser($claims, $data['phone'] ?? null);
+        $token = $user->createToken('google')->plainTextToken;
 
-            $token = $user->createToken('google')->plainTextToken;
+        $cart = $this->cartService->getOrCreateActiveCart($user->id, $sessionId);
 
-            $cart = $this->cartService->getOrCreateActiveCart($user->id, $sessionId);
-
-            return [
-                'data' => [
-                    'token' => $token,
-                    'user' => $user,
-                    'cart' => $cart
-                ],
-                'cart_session' => $cart->session_id
-            ];
-        } catch (Throwable $e) {
-            throw $e;
-        }
+        return new LoginResponse(
+            token: $token,
+            user: $user,
+            cart: $cart,
+            cartSession: $cart->session_id
+        );
     }
 
-    private function verifyGoogleToken(string $token): array
+    public function findOrCreateUser(array $data, ?string $phone): User
     {
-        $firebaseAuth = app('firebase.auth');
-
-        $verified = $firebaseAuth->verifyIdToken($token);
-
-        $claims = $verified->claims();
-
-        return [
-            'email' => (string) ($claims->get('email') ?? ''),
-            'name' => (string) ($claims->get('name') ?? ''),
-        ];
-    }
-
-    private function findOrCreateUser(array $data, ?string $phone): User
-    {
-
         $email = $data['email'];
+
         [$firstName, $lastName] = $this->splitName($data['name']);
 
         $user = User::where('email', $email)->first();
 
         if (!$user && empty($phone)) {
-            abort(
-                response()->json([
-                    'message' => 'Se requiere phone para completar el registro.',
-                    'code' => 'PHONE_REQUIRED'
-                ], 422)
-            );
+            throw new PhoneRequiredException();
         }
 
         if (!$user) {
             $newUser = User::create([
-                'email' => $email,
-                'role_id' => $this->getCustomerRoleId(),
+                'role_id' => UserRole::CUSTOMER->value,
+                'phone' => $phone,
                 'first_name' => $firstName !== '' ? $firstName : 'Cliente',
                 'last_name' => $lastName !== '' ? $lastName : 'Google',
-                'phone' => $phone,
+                'email' => $email,
                 'password' => Str::random(40),
             ]);
             return $newUser;
@@ -94,14 +67,7 @@ class AuthService
         return $user;
     }
 
-    private function getCustomerRoleId(): int
-    {
-        $customerRoleId = Role::where('role_name', 'customer')->value('id');
-
-        return $customerRoleId;
-    }
-
-    private function splitName(string $fullName): array
+    public function splitName(string $fullName): array
     {
         $parts = preg_split('/\s+/', trim($fullName));
 
