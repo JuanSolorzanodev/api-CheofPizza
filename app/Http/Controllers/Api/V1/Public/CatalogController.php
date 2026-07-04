@@ -18,7 +18,7 @@ class CatalogController
     public function categories()
     {
         return CategoryResource::collection(
-            $this->service->categories()
+            $this->service->getCategoriesWithPrices()
         );
     }
     /**
@@ -27,7 +27,7 @@ class CatalogController
     public function ingredients()
     {
         return IngredientResource::collection(
-            $this->service->ingredients()
+            $this->service->getIngredientsWithExtraPriceBySize()
         );
     }
 
@@ -35,7 +35,7 @@ class CatalogController
     public function pizzas()
     {
         return PizzaResource::collection(
-            $this->service->allPizzas()
+            $this->service->getAllPizzas()
         );
     }
 
@@ -55,7 +55,7 @@ class CatalogController
         );
     }
 
-      public function searchPizzasByName(string $name)
+    public function searchPizzasByName(string $name)
     {
         $name = trim(urldecode($name));
 

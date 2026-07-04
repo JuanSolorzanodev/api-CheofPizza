@@ -16,7 +16,7 @@ class CategorySizeResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
+            'name' => $this->size_name,
             'portion' => $this->portion,
             'price' => $this->whenPivotLoaded('category_size', function () {
                 return $this->pivot->price;
