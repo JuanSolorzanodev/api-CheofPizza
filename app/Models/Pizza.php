@@ -28,18 +28,13 @@ class Pizza extends Model
 
     public function ingredients(): BelongsToMany
     {
-        return $this->belongsToMany(Ingredient::class, 'pizza_ingredients')
+        return $this->belongsToMany(Ingredient::class)
             ->withTimestamps();
     }
 
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'category_id');
-    }
-
-    public function pizzaIngredients(): HasMany
-    {
-        return $this->hasMany(PizzaIngredient::class, 'pizza_id');
     }
 
     public function cartItems(): HasMany
