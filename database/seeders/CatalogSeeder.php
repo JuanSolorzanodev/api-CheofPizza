@@ -44,7 +44,7 @@ class CatalogSeeder extends Seeder
          * Pequeña 8, Mediana 10, Familiar 12, Gigante 14
          */
         $sizes = [
-            'Personal' =>4,
+            'Personal' => 4,
             'Pequeña' => 8,
             'Mediana' => 10,
             'Familiar' => 12,
@@ -66,7 +66,7 @@ class CatalogSeeder extends Seeder
          */
         $priceMatrix = [
             'Sencillas' => [
-                'Personal' =>2.00,
+                'Personal' => 2.00,
                 'Pequeña' => 5.00,
                 'Mediana' => 9.00,
                 'Familiar' => 12.00,
@@ -145,7 +145,7 @@ class CatalogSeeder extends Seeder
          * 6) Precios extra por ingrediente y tamaño (NO viene en el menú)
          */
         $extraBySize = [
-            'Personal' =>0.50,
+            'Personal' => 0.50,
             'Pequeña' => 1.00,
             'Mediana' => 1.50,
             'Familiar' => 2.00,
@@ -204,8 +204,8 @@ class CatalogSeeder extends Seeder
             ],
             [
                 'category_id' => $catSencillas->id,
-                'name' => 'Hawallana',
-                'ingredients' => ['Piña','Queso mosarela'],
+                'name' => 'Hawaiana',
+                'ingredients' => ['Piña', 'Queso mosarela'],
             ],
             [
                 'category_id' => $catSencillas->id,
@@ -252,7 +252,7 @@ class CatalogSeeder extends Seeder
             [
                 'category_id' => $catEspeciales->id,
                 'name' => 'Deli Pizza',
-                'ingredients' => ['Jamón', 'Salami', 'Tomate', 'Cebolla', 'Pimiento', 'Champiñones', 'Palmito', 'Aceitunas verdes', 'Queso mosarela'],
+                'ingredients' => ['Jamón', 'Salami', 'Rodajas de tomate', 'Cebolla', 'Pimiento', 'Champiñones', 'Palmito', 'Aceitunas verdes', 'Queso mosarela'],
             ],
             [
                 'category_id' => $catEspeciales->id,
@@ -281,8 +281,20 @@ class CatalogSeeder extends Seeder
                 $pizza->update(['image_url' => $defaultPizzaImageUrl]);
             }
 
-            // Vincular ingredientes en pivot pizza_ingredients
+            $ingredientIds = [];
+
             foreach ($p['ingredients'] as $ingredientName) {
+                $ingredient = $ingredientModels[$ingredientName] ?? null;
+
+                if ($ingredient) {
+                    $ingredientIds[] = $ingredient->id;
+                }
+            }
+
+            $pizza->ingredients()->syncWithoutDetaching($ingredientIds);
+            
+            // Vincular ingredientes en pivot pizza_ingredients
+            /*foreach ($p['ingredients'] as $ingredientName) {
                 $ingredient = $ingredientModels[$ingredientName] ?? null;
 
                 if (!$ingredient) {
@@ -293,7 +305,7 @@ class CatalogSeeder extends Seeder
                     'pizza_id' => $pizza->id,
                     'ingredient_id' => $ingredient->id,
                 ]);
-            }
+            }*/
         }
     }
 }

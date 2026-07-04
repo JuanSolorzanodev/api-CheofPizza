@@ -13,10 +13,9 @@ class IngredientResource extends JsonResource
             'id'   => $this->id,
             'name' => $this->ingredient_name,
             // tu relación: ingredientType
-            'type' => $this->whenLoaded('ingredientType', fn () => [
-                'id'   => $this->ingredientType?->id,
-                'name' => $this->ingredientType?->type_name,
-            ]),
+            'type' => new IngredientTypeResource(
+                $this->whenLoaded('ingredientType')
+            ),
             // tu relación: sizes con pivot extra_price
             'extra_prices' => $this->whenLoaded('sizes', function () {
                 return $this->sizes->map(fn ($s) => [

@@ -27,9 +27,8 @@ Route::prefix('v1')->group(function () {
         Route::get('categories', [CatalogController::class, 'categories']);
         Route::get('ingredients', [CatalogController::class, 'ingredients']);
         Route::get('pizzas', [CatalogController::class, 'pizzas']);
-        Route::get('pizzas/sencillas', [CatalogController::class, 'pizzasSencillas']);
-        Route::get('pizzas/especiales', [CatalogController::class, 'pizzasEspeciales']);
-        Route::get('pizzas/{name}/search', [CatalogController::class, 'searchPizzasByName']);
+        Route::get('categories/{category}', [CatalogController::class, 'searchCategory']);
+        Route::get('pizzas/{pizza}', [CatalogController::class, 'searchPizza']);
     });
 
     Route::prefix('builder')->group(function () {
