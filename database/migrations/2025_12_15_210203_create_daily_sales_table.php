@@ -17,7 +17,7 @@ return new class extends Migration
             $table->integer('total_orders');
             $table->integer('total_pizzas');
             $table->integer('total_promotions');
-            $table->decimal('total_amount', 10, 2); 
+            $table->decimal('total_amount', 10, 2);
             $table->timestamps();
         });
     }

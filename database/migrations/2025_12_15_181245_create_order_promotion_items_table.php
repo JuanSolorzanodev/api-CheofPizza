@@ -14,12 +14,12 @@ return new class extends Migration
         Schema::create('order_promotion_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_item_id')         // detalle_pedido_id
-            ->constrained('order_items')
-            ->cascadeOnDelete();
+                ->constrained('order_items')
+                ->cascadeOnDelete();
 
             $table->foreignId('pizza_id')
-            ->constrained('pizzas')
-            ->cascadeOnDelete();
+                ->constrained('pizzas')
+                ->cascadeOnDelete();
 
             $table->string('pizza_name', 150)->nullable();
             $table->timestamps();

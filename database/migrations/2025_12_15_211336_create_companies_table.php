@@ -23,12 +23,12 @@ return new class extends Migration
             $table->string('logo_path', 255)->nullable();     // logo_empresa (optional)
 
             $table->foreignId('environment_type_id')          // ambiente_id
-            ->constrained('environment_types')
-            ->restrictOnDelete();
+                ->constrained('environment_types')
+                ->restrictOnDelete();
 
             $table->foreignId('emission_type_id')             // emision_id
-            ->constrained('emission_types')
-            ->restrictOnDelete();
+                ->constrained('emission_types')
+                ->restrictOnDelete();
 
             $table->string('signature_path', 255);            // firma_path
             $table->string('signature_password', 255);

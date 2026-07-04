@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('ingredients', function (Blueprint $table) {
             $table->id();
-        // 🔗 FK a ingredient_types
-        $table->foreignId('ingredient_type_id')
-            ->constrained('ingredient_types')
-            ->cascadeOnDelete();
+            // 🔗 FK a ingredient_types
+            $table->foreignId('ingredient_type_id')
+                ->constrained('ingredient_types')
+                ->cascadeOnDelete();
 
-        $table->string('ingredient_name', 150); 
-        $table->timestamps();
+            $table->string('ingredient_name', 150);
+            $table->timestamps();
         });
     }
 

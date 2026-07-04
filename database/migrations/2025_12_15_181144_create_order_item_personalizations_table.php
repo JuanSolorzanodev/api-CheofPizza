@@ -14,18 +14,18 @@ return new class extends Migration
         Schema::create('order_item_personalizations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_item_id')         // detalle_pedido_id
-            ->constrained('order_items')
-            ->cascadeOnDelete();
+                ->constrained('order_items')
+                ->cascadeOnDelete();
 
             $table->foreignId('ingredient_id')
-            ->constrained('ingredients')
-            ->restrictOnDelete();
+                ->constrained('ingredients')
+                ->restrictOnDelete();
 
             $table->string('ingredient_name', 150)->nullable(); // ingrediente (snapshot)
 
             $table->foreignId('personalization_action_id') // accion_id
-            ->constrained('personalization_actions')
-            ->restrictOnDelete();
+                ->constrained('personalization_actions')
+                ->restrictOnDelete();
 
             $table->string('modification_type', 80)->nullable(); // tipo_modificacion
             $table->decimal('extra_price', 10, 2)->default(0);

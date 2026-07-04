@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('personalization_actions', function (Blueprint $table) {
             $table->id();
             $table->string('action_name', 80);         // nombre_accion :contentReference[oaicite:10]{index=10}
-            $table->text('description')->nullable(); 
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

@@ -14,27 +14,27 @@ return new class extends Migration
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')              // pedido_id
-            ->constrained('orders')
-            ->cascadeOnDelete();
+                ->constrained('orders')
+                ->cascadeOnDelete();
 
             $table->foreignId('promotion_id')
-            ->nullable()
-            ->constrained('promotions')
-            ->nullOnDelete();
+                ->nullable()
+                ->constrained('promotions')
+                ->nullOnDelete();
 
             $table->string('promotion_name', 150)->nullable(); // nombre_promocion
 
             $table->foreignId('pizza_id')
-            ->nullable()
-            ->constrained('pizzas')
-            ->nullOnDelete();
+                ->nullable()
+                ->constrained('pizzas')
+                ->nullOnDelete();
 
             $table->string('pizza_name', 150)->nullable();     // nombre_pizza
 
             $table->foreignId('size_id')
-            ->nullable()
-            ->constrained('sizes')
-            ->nullOnDelete();
+                ->nullable()
+                ->constrained('sizes')
+                ->nullOnDelete();
 
             $table->string('size_name', 60)->nullable();       // tamaño (snapshot)
             $table->string('category_name', 120)->nullable();  // categoria (snapshot)

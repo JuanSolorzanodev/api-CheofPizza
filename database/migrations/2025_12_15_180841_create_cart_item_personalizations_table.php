@@ -20,10 +20,10 @@ return new class extends Migration
             $table->foreignId('ingredient_id')
                 ->constrained('ingredients')
                 ->restrictOnDelete();
-                
+
             $table->foreignId('personalization_action_id') // accion_id
-            ->constrained('personalization_actions')
-            ->restrictOnDelete();
+                ->constrained('personalization_actions')
+                ->restrictOnDelete();
 
             $table->decimal('extra_price', 10, 2)->default(0);
             $table->timestamps();

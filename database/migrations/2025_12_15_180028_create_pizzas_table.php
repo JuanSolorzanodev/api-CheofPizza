@@ -14,16 +14,16 @@ return new class extends Migration
         Schema::create('pizzas', function (Blueprint $table) {
             $table->id();
 
-        // 🔗 FK a categories
-        $table->foreignId('category_id')
-            ->constrained('categories')
-            ->cascadeOnDelete();
+            // 🔗 FK a categories
+            $table->foreignId('category_id')
+                ->constrained('categories')
+                ->cascadeOnDelete();
 
-        $table->string('pizza_name', 150);         // nombre_pizza :contentReference[oaicite:7]{index=7}
-        $table->text('description')->nullable();   // descripcion
-        $table->text('image_url')->nullable();
-        $table->boolean('is_visible')->default(true); 
-        $table->timestamps();
+            $table->string('pizza_name', 150);         // nombre_pizza :contentReference[oaicite:7]{index=7}
+            $table->text('description')->nullable();   // descripcion
+            $table->text('image_url')->nullable();
+            $table->boolean('is_visible')->default(true);
+            $table->timestamps();
         });
     }
 

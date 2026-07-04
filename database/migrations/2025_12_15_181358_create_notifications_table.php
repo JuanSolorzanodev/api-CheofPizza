@@ -14,14 +14,14 @@ return new class extends Migration
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')               // usuario_id :contentReference[oaicite:23]{index=23}
-            ->constrained('users')
-            ->cascadeOnDelete();
+                ->constrained('users')
+                ->cascadeOnDelete();
 
             $table->foreignId('order_id')              // pedido_id
-            ->constrained('orders')
-            ->cascadeOnDelete();
+                ->constrained('orders')
+                ->cascadeOnDelete();
 
-            $table->text('message'); 
+            $table->text('message');
             $table->timestamps();
         });
     }
