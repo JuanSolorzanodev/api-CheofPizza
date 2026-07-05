@@ -4,12 +4,10 @@ namespace App\Services\Auth;
 
 use App\DTOs\Auth\LoginResponse;
 use App\Enums\UserRole;
-use App\Exceptions\PhoneRequiredException;
+use App\Exceptions\Auth\PhoneRequiredException;
 use App\Models\User;
-use App\Models\Role;
 use App\Services\Cart\CartService;
 use Illuminate\Support\Str;
-use Throwable;
 
 class AuthService
 {

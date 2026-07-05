@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Exceptions;
+namespace App\Exceptions\Auth;
 
-use Exception;
+use App\Exceptions\ApiException;
 
 class InvalidGoogleTokenException extends ApiException
 {

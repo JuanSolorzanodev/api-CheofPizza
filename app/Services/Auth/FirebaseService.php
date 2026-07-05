@@ -2,7 +2,7 @@
 
 namespace App\Services\Auth;
 
-use App\Exceptions\InvalidGoogleTokenException;
+use App\Exceptions\Auth\InvalidGoogleTokenException;
 
 class FirebaseService
 {
@@ -15,7 +15,7 @@ class FirebaseService
         $claims = $verified->claims();
 
         if (empty($claims->get('email'))) {
-            throw new InvalidGoogleTokenException;
+            throw new InvalidGoogleTokenException();
         }
 
         return [

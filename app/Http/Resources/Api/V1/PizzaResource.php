@@ -15,7 +15,6 @@ class PizzaResource extends JsonResource
             'description' => $this->description,
             'image_url'   => $this->image_url,
 
-            // ✅ Aquí ya vendrá: "Sencillas/Especiales" + size_prices (con size y price)
             'category'    => new CategoryResource($this->whenLoaded('category')),
 
             'ingredients' => IngredientResource::collection(
