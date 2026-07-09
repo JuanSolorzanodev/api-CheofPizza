@@ -18,9 +18,11 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::prefix('v1')->group(function () {
-    Route::prefix('auth')->group(function () {
-        Route::post('google', [AuthController::class, 'loginWithGoogle']);
-    });
+    Route::prefix('auth')
+        ->middleware('cart.session')
+        ->group(function () {
+            Route::post('google', [AuthController::class, 'loginWithGoogle']);
+        });
 
 
     Route::prefix('catalog')->group(function () {
@@ -41,7 +43,10 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::prefix('cart')
-        ->middleware('auth.optional:sanctum')
+        ->middleware([
+            'optional.auth:sanctum',
+            'cart.session'
+        ])
         ->group(function () {
             Route::get('', [CartController::class, 'show']);
             Route::post('items/pizza', [CartController::class, 'addPizza']);
@@ -51,22 +56,31 @@ Route::prefix('v1')->group(function () {
             Route::delete('', [CartController::class, 'clear']);
         });
 
-    Route::prefix('checkout')->group(function () {
-        Route::get('config', [CheckoutController::class, 'config']);
-    });
+    Route::prefix('checkout')
+        ->middleware('cart.session')
+        ->group(function () {
+            Route::get('config', [CheckoutController::class, 'config']);
+        });
 
     Route::prefix('geo')->group(function () {
         Route::get('reverse', [GeoController::class, 'reverse']);
     });
 
-    Route::middleware(['auth:sanctum', 'role:customer'])
+    Route::middleware([
+        'auth:sanctum',
+        'role:customer',
+        'cart.session',
+    ])
         ->group(function () {
             Route::post('checkout', [CheckoutController::class, 'checkout']);
             Route::get('my/orders', [MyOrdersController::class, 'index']);
             Route::get('my/orders/{orderId}', [MyOrdersController::class, 'show']);
         });
 
-    Route::middleware(['auth:sanctum', 'role:operator,admin'])
+    Route::middleware([
+        'auth:sanctum',
+        'role:operator,admin'
+    ])
         ->prefix('operator')
         ->group(function () {
             Route::get('orders', [OperatorOrdersController::class, 'index']);

@@ -83,7 +83,7 @@ class CartController
 
     private function resolveCart(Request $request)
     {
-        $sessionId = $request->header('X-Cart-Session');
+        $sessionId = $request->attributes->get('cart_session');//$request->header('X-Cart-Session');
         $userId = $request->user()?->id;
 
         $cart = $this->cartService->getOrCreateActiveCart($userId, $sessionId);

@@ -22,11 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
 
         $middleware->alias([
-            'auth.optional' => \App\Http\Middleware\OptionalSanctumAuth::class,
+            'optional.auth' => \App\Http\Middleware\OptionalSanctumAuth::class,
             'role' => \App\Http\Middleware\EnsureRole::class,
-        ]);
-
-        $middleware->alias([
             'cart.session' => \App\Http\Middleware\CartSessionMiddleware::class,
         ]);
     })

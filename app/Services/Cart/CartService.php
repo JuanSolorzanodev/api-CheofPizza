@@ -21,10 +21,10 @@ class CartService
         private readonly PublicPromotionService $promotionService
     ) {}
 
-    public function getOrCreateActiveCart(?int $userId, ?string $sessionId): Cart
+    public function getOrCreateActiveCart(?int $userId, string $sessionId): Cart
     {
+        //$sessionId = $sessionId ?: $this->newSessionId();
         $activeStatusId = $this->activeStatusIdOrFail();
-        $sessionId = $sessionId ?: $this->newSessionId();
 
         if ($userId) {
             $userCart = Cart::where('user_id', $userId)
@@ -73,6 +73,23 @@ class CartService
         }
 
         return $this->loadCart($cart);
+    }
+
+    //eliminar xq ya no es necesario
+    private function newSessionId(): string
+    {
+        return Str::uuid()->toString();
+    }
+
+    private function activeStatusIdOrFail(): int
+    {
+        $status = CartStatus::where('status_name', 'active')->first();
+
+        if (!$status) {
+            throw new RuntimeException("CartStatus 'active' no existe. Revisa seeders.");
+        }
+
+        return (int) $status->id;
     }
 
     public function addPizza(Cart $cart, array $payload): Cart
@@ -361,16 +378,7 @@ class CartService
         ])->save();
     }
 
-    private function activeStatusIdOrFail(): int
-    {
-        $status = CartStatus::where('status_name', 'active')->first();
 
-        if (!$status) {
-            throw new RuntimeException("CartStatus 'active' no existe. Revisa seeders.");
-        }
-
-        return (int) $status->id;
-    }
 
     private function personalizationActionIdOrFail(string $actionName): int
     {
@@ -383,10 +391,7 @@ class CartService
         return (int) $action->id;
     }
 
-    private function newSessionId(): string
-    {
-        return Str::uuid()->toString();
-    }
+
 
     private function normalizePizzaPayload(array $payload): array
     {

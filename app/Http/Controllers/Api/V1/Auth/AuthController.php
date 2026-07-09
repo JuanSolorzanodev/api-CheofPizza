@@ -21,21 +21,21 @@ class AuthController
 
         $login = $this->authService->loginWithGoogle(
             data: $request->validated(),
-            sessionId: $request->attributes->get('cart_session')
+            cartSession: $request->attributes->get('cart_session')
         );
 
-        return $this->response
-            ->success(
-                data: [
-                    'token' => $login->token,
-                    'user' => new UserResource($login->user),
-                    'cart' => new CartResource($login->cart),
-                ],
-                message: 'Login successful.'
-            )
-            ->header(
-                'X-Cart-Session',
-                $login->cartSession
-            );
+        $request->attributes->set(
+            'cart_session',
+            $login->cartSession
+        );
+
+        return $this->response->success(
+            data: [
+                'token' => $login->token,
+                'user'  => new UserResource($login->user),
+                'cart'  => new CartResource($login->cart),
+            ],
+            message: 'Login successful.'
+        );
     }
 }

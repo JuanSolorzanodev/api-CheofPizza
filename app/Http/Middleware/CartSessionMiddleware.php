@@ -16,18 +16,21 @@ class CartSessionMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $sessionId = $request->header('X-Cart-Session');
+        $cartSession = $request->header('X-Cart-Session');
 
-        if (empty($sessionId)) {
-            $sessionId = Str::uuid()->toString();
+        if (empty($cartSession)) {
+            $cartSession = (string) Str::uuid();
         }
 
-        // Guardamos el valor dentro del Request
-        $request->attributes->set(
-            'cart_session',
-            $sessionId
+        $request->attributes->set('cart_session', $cartSession);
+
+        $response = $next($request);
+
+        $response->headers->set(
+            'X-Cart-Session',
+            $request->attributes->get('cart_session')
         );
 
-        return $next($request);
+        return $response;
     }
 }

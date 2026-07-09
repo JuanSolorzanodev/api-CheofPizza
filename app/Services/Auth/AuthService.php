@@ -16,7 +16,7 @@ class AuthService
         private readonly FirebaseService $firebaseService
     ) {}
 
-    public function loginWithGoogle(array $data, ?string $sessionId): LoginResponse
+    public function loginWithGoogle(array $data, string $cartSession): LoginResponse
     {
         $claims = $this->firebaseService->verifyGoogleToken($data['id_token']);
 
@@ -24,7 +24,7 @@ class AuthService
 
         $token = $user->createToken('google')->plainTextToken;
 
-        $cart = $this->cartService->getOrCreateActiveCart($user->id, $sessionId);
+        $cart = $this->cartService->getOrCreateActiveCart($user->id, $cartSession);
 
         return new LoginResponse(
             token: $token,
