@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 
 namespace App\Models;
 
@@ -11,7 +12,8 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory;
+    use HasApiTokens;
+    use HasFactory;
 
     protected $fillable = [
         'role_id',
@@ -33,21 +35,41 @@ class User extends Authenticatable
 
     public function role(): BelongsTo
     {
-        return $this->belongsTo(Role::class, 'role_id');
+        return $this->belongsTo(
+            Role::class,
+            'role_id'
+        );
     }
 
     public function carts(): HasMany
     {
-        return $this->hasMany(Cart::class, 'user_id');
+        return $this->hasMany(
+            Cart::class,
+            'user_id'
+        );
     }
 
     public function orders(): HasMany
     {
-        return $this->hasMany(Order::class, 'user_id');
+        return $this->hasMany(
+            Order::class,
+            'user_id'
+        );
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(
+            Payment::class,
+            'user_id'
+        );
     }
 
     public function notifications(): HasMany
     {
-        return $this->hasMany(Notification::class, 'user_id');
+        return $this->hasMany(
+            Notification::class,
+            'user_id'
+        );
     }
 }

@@ -1,176 +1,626 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources\Api\V1\Operator;
 
+use App\Enums\OrderStatusName;
+use App\Services\Order\OrderStatusTransitionService;
 use App\Services\Order\WhatsAppDeliveryDispatchLinkService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class OperatorOrderDetailResource extends JsonResource
+/**
+ * @mixin \App\Models\Order
+ */
+final class OperatorOrderDetailResource extends JsonResource
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
-        $o = $this->resource;
+        $order = $this->resource;
+
+        $statusName = trim(
+            (string) (
+                $order->orderStatus?->status_name
+                ?? ''
+            ),
+        );
+
+        $deliveryType = trim(
+            (string) (
+                $order->deliveryType?->delivery_type_name
+                ?? ''
+            ),
+        );
+
+        $currentStatus = OrderStatusName::tryFrom(
+            $statusName,
+        );
+
+        $allowedTransitions = $currentStatus === null
+            ? []
+            : app(
+                OrderStatusTransitionService::class,
+            )->allowedTransitionValues(
+                currentStatus: $currentStatus,
+                deliveryType: $deliveryType,
+            );
 
         return [
-            'id' => (int)$o->id,
-            'order_number' => (string)($o->order_number ?? ''),
-            'ordered_at' => optional($o->ordered_at)->toIso8601String(),
-            'total' => (float)($o->total ?? 0),
+            'id' => (int) $order->id,
 
-            'status' => (string)($o->orderStatus?->status_name ?? ''),
-            'delivery_type' => (string)($o->deliveryType?->delivery_type_name ?? ''),
-            'payment_method' => (string)($o->paymentMethod?->name ?? ''),
+            'order_number' => (string) (
+                $order->order_number
+                ?? ''
+            ),
+
+            'ordered_at' => $order->ordered_at
+                ?->toIso8601String(),
+
+            'total' => (float) (
+                $order->total
+                ?? 0
+            ),
+
+            'status' => $statusName,
+
+            'allowed_transitions' =>
+                $allowedTransitions,
+
+            'delivery_type' =>
+                $deliveryType,
+
+            'payment_method' => (string) (
+                $order->paymentMethod?->name
+                ?? ''
+            ),
 
             'customer' => [
-                'id' => (int)($o->user?->id ?? 0),
-                'name' => trim(($o->user?->first_name ?? '') . ' ' . ($o->user?->last_name ?? '')),
-                'phone' => (string)($o->user?->phone ?? ''),
-                'email' => (string)($o->user?->email ?? ''),
+                'id' => (int) (
+                    $order->user?->id
+                    ?? 0
+                ),
+
+                'name' => trim(
+                    (string) (
+                        $order->user?->first_name
+                        ?? ''
+                    )
+                    .' '.
+                    (string) (
+                        $order->user?->last_name
+                        ?? ''
+                    ),
+                ),
+
+                'phone' => (string) (
+                    $order->user?->phone
+                    ?? ''
+                ),
+
+                'email' => (string) (
+                    $order->user?->email
+                    ?? ''
+                ),
             ],
 
             'delivery' => [
-                'address' => (string)($o->address ?? ''),
-                'lat' => $o->delivery_lat !== null ? (float)$o->delivery_lat : null,
-                'lng' => $o->delivery_lng !== null ? (float)$o->delivery_lng : null,
-                'maps_url' => (string)($o->delivery_maps_url ?? ''),
-                'reference' => (string)($o->delivery_reference ?? ''),
+                'address' => (string) (
+                    $order->address
+                    ?? ''
+                ),
+
+                'lat' => $order->delivery_lat !== null
+                    ? (float) $order->delivery_lat
+                    : null,
+
+                'lng' => $order->delivery_lng !== null
+                    ? (float) $order->delivery_lng
+                    : null,
+
+                'maps_url' => (string) (
+                    $order->delivery_maps_url
+                    ?? ''
+                ),
+
+                'reference' => (string) (
+                    $order->delivery_reference
+                    ?? ''
+                ),
             ],
 
-            'delivery_whatsapp_url' => ($o->deliveryType?->delivery_type_name === 'delivery')
-                ? app(WhatsAppDeliveryDispatchLinkService::class)->build($o)
-                : null,
+            'delivery_whatsapp_url' =>
+                $deliveryType ===
+                    OrderStatusTransitionService::DELIVERY_TYPE_DELIVERY
+                    ? app(
+                        WhatsAppDeliveryDispatchLinkService::class,
+                    )->build($order)
+                    : null,
 
             'kitchen' => [
-                'items' => $this->kitchenItems($o),
+                'items' => $this->kitchenItems(
+                    $order,
+                ),
             ],
 
-            'status_changes' => $o->relationLoaded('statusChanges')
-                ? $o->statusChanges->map(fn($c) => [
-                    'from' => (string)($c->fromStatus?->status_name ?? ''),
-                    'to' => (string)($c->toStatus?->status_name ?? ''),
-                    'changed_at' => optional($c->changed_at)->toIso8601String(),
-                    'note' => (string)($c->note ?? ''),
-                    'by' => trim(($c->changedBy?->first_name ?? '') . ' ' . ($c->changedBy?->last_name ?? '')) ?: 'Sistema',
-                ])->values()->all()
-                : [],
+            'status_changes' =>
+                $this->statusChanges(
+                    $order,
+                ),
         ];
     }
 
-    private function kitchenItems($o): array
-    {
-        if (!$o->relationLoaded('orderItems')) return [];
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function kitchenItems(
+        mixed $order,
+    ): array {
+        if (
+            !$order->relationLoaded(
+                'orderItems',
+            )
+        ) {
+            return [];
+        }
 
-        return $o->orderItems->map(function ($it) {
+        return $order
+            ->orderItems
+            ->map(
+                function (
+                    mixed $item,
+                ): array {
+                    $base = [
+                        'id' =>
+                            (int) $item->id,
 
-            $base = [
-                'id' => (int)$it->id,
-                'quantity' => (int)($it->quantity ?? 1),
-                'size_name' => (string)($it->size_name ?? ''),
-                'category_name' => (string)($it->category_name ?? ''),
-                'type' => 'pizza',
-                'personalizations' => $this->personalizations($it),
-            ];
+                        'quantity' =>
+                            (int) (
+                                $item->quantity
+                                ?? 1
+                            ),
 
-            if (!empty($it->promotion_id)) {
-                $pizzas = $it->relationLoaded('orderPromotionItems')
-                    ? $it->orderPromotionItems->map(function ($pi) {
-                        $pizza = $pi->pizza;
+                        'size_name' =>
+                            (string) (
+                                $item->size_name
+                                ?? ''
+                            ),
 
+                        'category_name' =>
+                            (string) (
+                                $item->category_name
+                                ?? ''
+                            ),
+
+                        'type' =>
+                            'pizza',
+
+                        'personalizations' =>
+                            $this->personalizations(
+                                $item,
+                            ),
+                    ];
+
+                    if (
+                        !empty(
+                            $item->promotion_id
+                        )
+                    ) {
+                        return $this
+                            ->promotionItem(
+                                item: $item,
+                                base: $base,
+                            );
+                    }
+
+                    if (
+                        (bool) $item
+                            ->is_half_and_half
+                    ) {
+                        return $this
+                            ->halfAndHalfItem(
+                                item: $item,
+                                base: $base,
+                            );
+                    }
+
+                    return $this->pizzaItem(
+                        item: $item,
+                        base: $base,
+                    );
+                },
+            )
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param array<string, mixed> $base
+     *
+     * @return array<string, mixed>
+     */
+    private function promotionItem(
+        mixed $item,
+        array $base,
+    ): array {
+        $pizzas = $item->relationLoaded(
+            'orderPromotionItems',
+        )
+            ? $item
+                ->orderPromotionItems
+                ->map(
+                    function (
+                        mixed $promotionItem,
+                    ): array {
                         return [
-                            'pizza_id' => (int)($pi->pizza_id ?? 0),
-                            'pizza_name' => (string)($pi->pizza_name ?? ''),
-                            'ingredients' => $this->extractPizzaIngredients($pizza),
+                            'pizza_id' => (int) (
+                                $promotionItem
+                                    ->pizza_id
+                                ?? 0
+                            ),
+
+                            'pizza_name' => (string) (
+                                $promotionItem
+                                    ->pizza_name
+                                ?? ''
+                            ),
+
+                            'ingredients' =>
+                                $this
+                                    ->extractPizzaIngredients(
+                                        $promotionItem
+                                            ->pizza,
+                                    ),
                         ];
-                    })->values()->all()
-                    : [];
+                    },
+                )
+                ->values()
+                ->all()
+            : [];
 
-                return array_merge($base, [
-                    'type' => 'promotion',
-                    'promotion' => [
-                        'id' => (int)$it->promotion_id,
-                        'name' => (string)($it->promotion_name ?? ''),
-                        'pizzas' => $pizzas,
-                    ],
-                ]);
-            }
+        return array_merge(
+            $base,
+            [
+                'type' => 'promotion',
 
-            if ((bool)$it->is_half_and_half) {
-                $a = $it->pizza;
-                $b = $it->pizzaSecond;
+                'promotion' => [
+                    'id' => (int) (
+                        $item->promotion_id
+                        ?? 0
+                    ),
 
-                return array_merge($base, [
-                    'type' => 'half_and_half',
-                    'half' => [
-                        'A' => [
-                            'pizza_id' => (int)($it->pizza_id ?? 0),
-                            'pizza_name' => (string)($it->pizza_name ?? ''),
-                            'ingredients' => $this->extractPizzaIngredients($a),
-                        ],
-                        'B' => [
-                            'pizza_id' => (int)($it->pizza_id_second ?? 0),
-                            'pizza_name' => (string)($it->pizza_name_second ?? ''),
-                            'ingredients' => $this->extractPizzaIngredients($b),
-                        ],
-                    ],
-                ]);
-            }
+                    'name' => (string) (
+                        $item->promotion_name
+                        ?? ''
+                    ),
 
-            $pizza = $it->pizza;
-
-            return array_merge($base, [
-                'type' => 'pizza',
-                'pizza' => [
-                    'pizza_id' => (int)($it->pizza_id ?? 0),
-                    'pizza_name' => (string)($it->pizza_name ?? ''),
-                    'ingredients' => $this->extractPizzaIngredients($pizza),
+                    'pizzas' => $pizzas,
                 ],
-            ]);
-        })->values()->all();
+            ],
+        );
     }
 
-    private function extractPizzaIngredients($pizza): array
-    {
-        if (!$pizza) return [];
+    /**
+     * @param array<string, mixed> $base
+     *
+     * @return array<string, mixed>
+     */
+    private function halfAndHalfItem(
+        mixed $item,
+        array $base,
+    ): array {
+        return array_merge(
+            $base,
+            [
+                'type' =>
+                    'half_and_half',
 
-        if ($pizza->relationLoaded('ingredients') && $pizza->ingredients?->isNotEmpty()) {
-            return $pizza->ingredients
-                ->map(fn($ing) => trim((string)($ing->ingredient_name ?? '')))
-                ->filter()
-                ->values()
-                ->all();
-        }
+                'half' => [
+                    'A' => [
+                        'pizza_id' =>
+                            (int) (
+                                $item->pizza_id
+                                ?? 0
+                            ),
 
-        if ($pizza->relationLoaded('pizzaIngredients') && $pizza->pizzaIngredients?->isNotEmpty()) {
-            return $pizza->pizzaIngredients
-                ->map(fn($pi) => trim((string)($pi->ingredient?->ingredient_name ?? '')))
-                ->filter()
-                ->values()
-                ->all();
-        }
+                        'pizza_name' =>
+                            (string) (
+                                $item->pizza_name
+                                ?? ''
+                            ),
 
-        $desc = trim((string)($pizza->description ?? ''));
-        if ($desc !== '') {
-            return collect(explode(',', $desc))
-                ->map(fn($s) => trim($s))
-                ->filter()
-                ->values()
-                ->all();
-        }
+                        'ingredients' =>
+                            $this
+                                ->extractPizzaIngredients(
+                                    $item->pizza,
+                                ),
+                    ],
 
-        return [];
+                    'B' => [
+                        'pizza_id' =>
+                            (int) (
+                                $item
+                                    ->pizza_id_second
+                                ?? 0
+                            ),
+
+                        'pizza_name' =>
+                            (string) (
+                                $item
+                                    ->pizza_name_second
+                                ?? ''
+                            ),
+
+                        'ingredients' =>
+                            $this
+                                ->extractPizzaIngredients(
+                                    $item
+                                        ->pizzaSecond,
+                                ),
+                    ],
+                ],
+            ],
+        );
     }
 
-    private function personalizations($it): array
-    {
-        if (!$it->relationLoaded('orderItemPersonalizations')) return [];
+    /**
+     * @param array<string, mixed> $base
+     *
+     * @return array<string, mixed>
+     */
+    private function pizzaItem(
+        mixed $item,
+        array $base,
+    ): array {
+        return array_merge(
+            $base,
+            [
+                'type' => 'pizza',
 
-        return $it->orderItemPersonalizations->map(fn($p) => [
-            'ingredient_id' => (int)($p->ingredient_id ?? 0),
-            'ingredient_name' => (string)($p->ingredient_name ?? ''),
-            'action' => (string)($p->personalizationAction?->action_name ?? ''),
-            'applies_to' => (string)($p->applies_to ?? 'ALL'),
-            'extra_price' => (float)($p->extra_price ?? 0),
-        ])->values()->all();
+                'pizza' => [
+                    'pizza_id' => (int) (
+                        $item->pizza_id
+                        ?? 0
+                    ),
+
+                    'pizza_name' => (string) (
+                        $item->pizza_name
+                        ?? ''
+                    ),
+
+                    'ingredients' =>
+                        $this
+                            ->extractPizzaIngredients(
+                                $item->pizza,
+                            ),
+                ],
+            ],
+        );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function extractPizzaIngredients(
+        mixed $pizza,
+    ): array {
+        if ($pizza === null) {
+            return [];
+        }
+
+        if (
+            $pizza->relationLoaded(
+                'ingredients',
+            )
+            && $pizza->ingredients
+                ?->isNotEmpty()
+        ) {
+            return $pizza
+                ->ingredients
+                ->map(
+                    static fn (
+                        mixed $ingredient,
+                    ): string => trim(
+                        (string) (
+                            $ingredient
+                                ->ingredient_name
+                            ?? ''
+                        ),
+                    ),
+                )
+                ->filter()
+                ->values()
+                ->all();
+        }
+
+        if (
+            $pizza->relationLoaded(
+                'pizzaIngredients',
+            )
+            && $pizza->pizzaIngredients
+                ?->isNotEmpty()
+        ) {
+            return $pizza
+                ->pizzaIngredients
+                ->map(
+                    static fn (
+                        mixed $pizzaIngredient,
+                    ): string => trim(
+                        (string) (
+                            $pizzaIngredient
+                                ->ingredient
+                                ?->ingredient_name
+                            ?? ''
+                        ),
+                    ),
+                )
+                ->filter()
+                ->values()
+                ->all();
+        }
+
+        $description = trim(
+            (string) (
+                $pizza->description
+                ?? ''
+            ),
+        );
+
+        if ($description === '') {
+            return [];
+        }
+
+        return collect(
+            explode(
+                ',',
+                $description,
+            ),
+        )
+            ->map(
+                static fn (
+                    string $ingredient,
+                ): string => trim(
+                    $ingredient,
+                ),
+            )
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function personalizations(
+        mixed $item,
+    ): array {
+        if (
+            !$item->relationLoaded(
+                'orderItemPersonalizations',
+            )
+        ) {
+            return [];
+        }
+
+        return $item
+            ->orderItemPersonalizations
+            ->map(
+                static function (
+                    mixed $personalization,
+                ): array {
+                    return [
+                        'ingredient_id' =>
+                            (int) (
+                                $personalization
+                                    ->ingredient_id
+                                ?? 0
+                            ),
+
+                        'ingredient_name' =>
+                            (string) (
+                                $personalization
+                                    ->ingredient_name
+                                ?? ''
+                            ),
+
+                        'action' =>
+                            (string) (
+                                $personalization
+                                    ->personalizationAction
+                                    ?->action_name
+                                ?? ''
+                            ),
+
+                        'applies_to' =>
+                            (string) (
+                                $personalization
+                                    ->applies_to
+                                ?? 'ALL'
+                            ),
+
+                        'extra_price' =>
+                            (float) (
+                                $personalization
+                                    ->extra_price
+                                ?? 0
+                            ),
+                    ];
+                },
+            )
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function statusChanges(
+        mixed $order,
+    ): array {
+        if (
+            !$order->relationLoaded(
+                'statusChanges',
+            )
+        ) {
+            return [];
+        }
+
+        return $order
+            ->statusChanges
+            ->map(
+                static function (
+                    mixed $change,
+                ): array {
+                    $changedBy = trim(
+                        (string) (
+                            $change
+                                ->changedBy
+                                ?->first_name
+                            ?? ''
+                        )
+                        .' '.
+                        (string) (
+                            $change
+                                ->changedBy
+                                ?->last_name
+                            ?? ''
+                        ),
+                    );
+
+                    return [
+                        'from' => (string) (
+                            $change
+                                ->fromStatus
+                                ?->status_name
+                            ?? ''
+                        ),
+
+                        'to' => (string) (
+                            $change
+                                ->toStatus
+                                ?->status_name
+                            ?? ''
+                        ),
+
+                        'changed_at' =>
+                            $change->changed_at
+                                ?->toIso8601String(),
+
+                        'note' => (string) (
+                            $change->note
+                            ?? ''
+                        ),
+
+                        'by' => $changedBy !== ''
+                            ? $changedBy
+                            : 'Sistema',
+                    ];
+                },
+            )
+            ->values()
+            ->all();
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 
 namespace App\Models;
 
@@ -7,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\OrderStatusChange;
 
 class Order extends Model
 {
@@ -47,31 +47,57 @@ class Order extends Model
 
     public function deliveryType(): BelongsTo
     {
-        return $this->belongsTo(DeliveryType::class, 'delivery_type_id');
+        return $this->belongsTo(
+            DeliveryType::class,
+            'delivery_type_id'
+        );
     }
 
     public function paymentMethod(): BelongsTo
     {
-        return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
+        return $this->belongsTo(
+            PaymentMethod::class,
+            'payment_method_id'
+        );
     }
 
     public function orderStatus(): BelongsTo
     {
-        return $this->belongsTo(OrderStatus::class, 'order_status_id');
+        return $this->belongsTo(
+            OrderStatus::class,
+            'order_status_id'
+        );
     }
 
     public function orderItems(): HasMany
     {
-        return $this->hasMany(OrderItem::class, 'order_id');
+        return $this->hasMany(
+            OrderItem::class,
+            'order_id'
+        );
     }
 
     public function notifications(): HasMany
     {
-        return $this->hasMany(Notification::class, 'order_id');
+        return $this->hasMany(
+            Notification::class,
+            'order_id'
+        );
     }
 
     public function statusChanges(): HasMany
     {
-    return $this->hasMany(OrderStatusChange::class)->orderBy('changed_at');
+        return $this->hasMany(
+            OrderStatusChange::class,
+            'order_id'
+        )->orderBy('changed_at');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(
+            Payment::class,
+            'order_id'
+        );
     }
 }
