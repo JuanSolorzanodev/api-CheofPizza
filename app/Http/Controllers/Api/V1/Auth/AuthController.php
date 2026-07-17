@@ -1,106 +1,224 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Requests\Api\V1\Auth\FirebaseGoogleLoginRequest;
+use App\Http\Resources\Api\V1\AuthUserResource;
 use App\Http\Resources\Api\V1\CartResource;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\Cart\CartService;
+use App\Support\ApiResponse;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Kreait\Firebase\Exception\Auth\FailedToVerifyToken;
 use Throwable;
 
-class AuthController
+final class AuthController
 {
-    public function loginWithGoogle(FirebaseGoogleLoginRequest $request, CartService $cartService)
-    {
+    public function loginWithGoogle(
+        FirebaseGoogleLoginRequest $request,
+        CartService $cartService,
+    ): JsonResponse {
         try {
-            $firebaseAuth = app('firebase.auth');
+            $verifiedToken = app('firebase.auth')->verifyIdToken(
+                $request->string('id_token')->toString()
+            );
 
-            $verified = $firebaseAuth->verifyIdToken($request->string('id_token')->toString());
-            $claims = $verified->claims();
+            $claims = $verifiedToken->claims();
 
-            $email = (string) ($claims->get('email') ?? '');
-            $name  = (string) ($claims->get('name') ?? '');
+            $email = Str::lower(
+                trim((string) ($claims->get('email') ?? ''))
+            );
 
-            if ($email === '') {
-                return response()->json(['message' => 'Token válido pero sin email.'], 422);
+            $firebaseUid = trim(
+                (string) ($claims->get('sub') ?? '')
+            );
+
+            $displayName = trim(
+                (string) ($claims->get('name') ?? '')
+            );
+
+            if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return ApiResponse::error(
+                    message: 'La cuenta de Google no proporcionó un correo válido.',
+                    status: 422,
+                    code: 'GOOGLE_EMAIL_REQUIRED',
+                );
             }
 
-            [$firstName, $lastName] = $this->splitName($name);
-
-            // 1) Buscar usuario existente
-            $user = User::where('email', $email)->first();
-
-            // 2) Si NO existe, obligar phone para completar registro (como ya lo haces)
-            if (!$user && !$request->filled('phone')) {
-                return response()->json([
-                    'message' => 'Se requiere phone para completar el registro.',
-                    'code' => 'PHONE_REQUIRED'
-                ], 422);
+            if ($firebaseUid === '') {
+                return ApiResponse::error(
+                    message: 'No fue posible identificar la cuenta de Google.',
+                    status: 422,
+                    code: 'GOOGLE_UID_REQUIRED',
+                );
             }
 
-            // 3) Rol customer debe existir por seeder (no lo crees en runtime)
-            $customerRoleId = Role::where('role_name', 'customer')->value('id');
-            if (!$customerRoleId) {
-                return response()->json([
-                    'message' => 'Configuración inválida: el rol "customer" no existe. Ejecuta RoleSeeder.',
-                    'code' => 'ROLE_NOT_CONFIGURED'
-                ], 500);
+            [$firstName, $lastName] = $this->splitName($displayName);
+
+            $customerRoleId = Role::query()
+                ->where('role_name', 'customer')
+                ->value('id');
+
+            if ($customerRoleId === null) {
+                Log::critical(
+                    'No existe el rol customer requerido para autenticación.'
+                );
+
+                return ApiResponse::error(
+                    message: 'La autenticación no está configurada correctamente.',
+                    status: 500,
+                    code: 'AUTH_ROLE_NOT_CONFIGURED',
+                );
             }
 
-            // 4) Crear o actualizar SIN pisar role_id / phone / password
-            if ($user) {
-                // Actualiza solo datos no críticos (y sin borrar datos existentes)
-                $user->update([
-                    'first_name' => $firstName !== '' ? $firstName : $user->first_name,
-                    'last_name'  => $lastName !== '' ? $lastName : $user->last_name,
-                    // NO tocar: role_id, phone, password
-                ]);
-            } else {
-                $user = User::create([
-                    'email'      => $email,
-                    'role_id'    => $customerRoleId,
-                    'first_name' => $firstName !== '' ? $firstName : 'Cliente',
-                    'last_name'  => $lastName !== '' ? $lastName : 'Google',
-                    'phone'      => $request->input('phone'),
-                    // solo en create
-                    'password'   => Str::random(40),
-                ]);
-            }
-
-            // 5) Token
-            $token = $user->createToken('google')->plainTextToken;
-
-            // 6) Sesión del carrito (header o body)
             $sessionId = $request->header('X-Cart-Session')
                 ?? $request->input('cart_session_id');
 
-            // 7) Claim/merge carrito
-            $cart = $cartService->getOrCreateActiveCart($user->id, $sessionId);
+            $result = DB::transaction(
+                function () use (
+                    $email,
+                    $firstName,
+                    $lastName,
+                    $customerRoleId,
+                    $request,
+                    $cartService,
+                    $sessionId,
+                ): array {
+                    $user = User::query()
+                        ->where('email', $email)
+                        ->lockForUpdate()
+                        ->first();
 
-            return response()->json([
-                'token' => $token,
-                'user'  => $user,
-                'cart'  => new CartResource($cart),
-            ])->header('X-Cart-Session', $cart->session_id);
+                    if ($user === null && !$request->filled('phone')) {
+                        return [
+                            'error' => ApiResponse::error(
+                                message: 'Ingresa tu número de teléfono para completar el registro.',
+                                status: 422,
+                                code: 'PHONE_REQUIRED',
+                                errors: [
+                                    'phone' => [
+                                        'El número de teléfono es obligatorio para clientes nuevos.',
+                                    ],
+                                ],
+                            ),
+                        ];
+                    }
 
-        } catch (Throwable $e) {
-            return response()->json([
-                'message' => 'Token inválido o no verificable.',
-            ], 401);
+                    if ($user === null) {
+                        $user = User::query()->create([
+                            'email' => $email,
+                            'role_id' => (int) $customerRoleId,
+                            'first_name' => $firstName !== ''
+                                ? $firstName
+                                : 'Cliente',
+                            'last_name' => $lastName !== ''
+                                ? $lastName
+                                : 'Google',
+                            'phone' => $request->string('phone')->toString(),
+                            'password' => Str::random(64),
+                        ]);
+                    } else {
+                        $updates = [];
+
+                        if ($firstName !== '') {
+                            $updates['first_name'] = $firstName;
+                        }
+
+                        if ($lastName !== '') {
+                            $updates['last_name'] = $lastName;
+                        }
+
+                        if ($updates !== []) {
+                            $user->fill($updates)->save();
+                        }
+                    }
+
+                    /*
+                     * Permitimos varias sesiones/dispositivos. Más adelante
+                     * podremos añadir administración y expiración de sesiones.
+                     */
+                    $plainTextToken = $user
+                        ->createToken('google-web')
+                        ->plainTextToken;
+
+                    $cart = $cartService->getOrCreateActiveCart(
+                        userId: (int) $user->id,
+                        sessionId: is_string($sessionId)
+                            ? $sessionId
+                            : null,
+                    );
+
+                    $user->load('role');
+
+                    return [
+                        'user' => $user,
+                        'token' => $plainTextToken,
+                        'cart' => $cart,
+                    ];
+                },
+                attempts: 3,
+            );
+
+            if (isset($result['error'])) {
+                return $result['error'];
+            }
+
+            return ApiResponse::success(
+                data: [
+                    'token' => $result['token'],
+                    'user' => new AuthUserResource($result['user']),
+                    'cart' => new CartResource($result['cart']),
+                ],
+                message: 'Sesión iniciada correctamente.',
+            )->header(
+                'X-Cart-Session',
+                (string) $result['cart']->session_id,
+            );
+        } catch (FailedToVerifyToken $exception) {
+            Log::notice('Token de Firebase rechazado.', [
+                'exception' => $exception::class,
+            ]);
+
+            return ApiResponse::error(
+                message: 'La sesión de Google no es válida o ha expirado.',
+                status: 401,
+                code: 'INVALID_FIREBASE_TOKEN',
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return ApiResponse::error(
+                message: 'No fue posible iniciar sesión en este momento.',
+                status: 500,
+                code: 'AUTHENTICATION_FAILED',
+            );
         }
     }
 
+    /**
+     * @return array{0: string, 1: string}
+     */
     private function splitName(string $fullName): array
     {
         $fullName = trim($fullName);
-        if ($fullName === '') return ['', ''];
+
+        if ($fullName === '') {
+            return ['', ''];
+        }
 
         $parts = preg_split('/\s+/', $fullName) ?: [];
-        $first = $parts[0] ?? '';
-        $last  = count($parts) > 1 ? implode(' ', array_slice($parts, 1)) : '';
 
-        return [$first, $last];
+        $firstName = trim((string) ($parts[0] ?? ''));
+        $lastName = count($parts) > 1
+            ? trim(implode(' ', array_slice($parts, 1)))
+            : '';
+
+        return [$firstName, $lastName];
     }
 }

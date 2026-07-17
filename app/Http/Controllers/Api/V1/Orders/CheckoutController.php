@@ -1,18 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1\Orders;
 
-use Illuminate\Http\JsonResponse;
-
 use App\Http\Requests\Api\V1\Orders\CheckoutRequest;
-use App\Http\Resources\Api\V1\OrderResource;
 use App\Http\Resources\Api\V1\BankAccountPublicResource;
-
+use App\Http\Resources\Api\V1\OrderResource;
 use App\Services\Cart\CartService;
 use App\Services\Order\CheckoutService;
 use App\Services\Payments\TransferAccountService;
+use Illuminate\Http\JsonResponse;
 
-class CheckoutController
+final class CheckoutController
 {
     public function __construct(
         private readonly CartService $cartService,
@@ -21,33 +21,63 @@ class CheckoutController
     ) {}
 
     /**
-     * PUBLIC: Configuración de checkout (por ahora solo transferencia).
+     * Devuelve la configuración pública requerida por el checkout.
+     *
      * GET /api/v1/public/checkout/config
      */
     public function config(): JsonResponse
     {
-        $account = $this->transferAccountService->getActivePrimary();
+        $transferAccount = $this->transferAccountService->getActivePrimary();
+
+        $paypalClientId = (string) config('paypal.client_id', '');
 
         return response()->json([
             'data' => [
-                'transfer' => $account ? new BankAccountPublicResource($account) : null,
+                'transfer' => $transferAccount !== null
+                    ? new BankAccountPublicResource($transferAccount)
+                    : null,
+
+                'paypal' => [
+                    'enabled' => $paypalClientId !== '',
+                    'client_id' => $paypalClientId,
+                    'currency' => (string) config(
+                        'paypal.currency',
+                        'USD'
+                    ),
+                    'locale' => (string) config(
+                        'paypal.locale',
+                        'es-EC'
+                    ),
+                ],
             ],
         ]);
     }
 
     /**
-     * AUTH: Confirmar checkout y crear orden.
+     * Crea un pedido mediante efectivo o transferencia.
+     *
+     * Los pagos con tarjeta se procesan mediante el flujo de PayPal.
+     *
      * POST /api/v1/checkout
      */
-    public function checkout(CheckoutRequest $request)
-    {
+    public function checkout(
+        CheckoutRequest $request
+    ): OrderResource {
         $sessionId = $request->header('X-Cart-Session');
-        $userId = $request->user()->id;
 
-        // Esto también hace merge del carrito invitado si existe con esa sesión.
-        $cart = $this->cartService->getOrCreateActiveCart($userId, $sessionId);
+        $userId = (int) $request
+            ->user()
+            ->getAuthIdentifier();
 
-        $order = $this->checkoutService->checkout($cart, $request->validated());
+        $cart = $this->cartService->getOrCreateActiveCart(
+            userId: $userId,
+            sessionId: $sessionId,
+        );
+
+        $order = $this->checkoutService->checkout(
+            cart: $cart,
+            payload: $request->validated(),
+        );
 
         return new OrderResource($order);
     }

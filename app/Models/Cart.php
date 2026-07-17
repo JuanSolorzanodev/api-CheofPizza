@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 
 namespace App\Models;
 
@@ -27,16 +28,33 @@ class Cart extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(
+            User::class,
+            'user_id'
+        );
     }
 
     public function cartStatus(): BelongsTo
     {
-        return $this->belongsTo(CartStatus::class, 'cart_status_id');
+        return $this->belongsTo(
+            CartStatus::class,
+            'cart_status_id'
+        );
     }
 
     public function cartItems(): HasMany
     {
-        return $this->hasMany(CartItem::class, 'cart_id');
+        return $this->hasMany(
+            CartItem::class,
+            'cart_id'
+        );
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(
+            Payment::class,
+            'cart_id'
+        );
     }
 }

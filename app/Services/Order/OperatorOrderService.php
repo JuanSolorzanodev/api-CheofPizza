@@ -1,7 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Order;
 
+use App\Enums\OrderStatusName;
+use App\Events\Customer\OrderUpdated as CustomerOrderUpdated;
+use App\Events\Operator\OrderStatusChanged;
 use App\Models\Order;
 use App\Models\OrderStatus;
 use App\Models\OrderStatusChange;
@@ -9,28 +14,31 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use App\Events\Operator\OrderStatusChanged;
-use App\Events\Customer\OrderUpdated as CustomerOrderUpdated;
 
-class OperatorOrderService
+final class OperatorOrderService
 {
-    private const FINAL_STATUSES = ['delivered', 'cancelled'];
+    public function __construct(
+        private readonly OrderStatusTransitionService $transitionService,
+    ) {
+    }
 
-    private const TRANSITIONS = [
-        'pending'    => ['confirmed', 'cancelled'],
-        'confirmed'  => ['preparing', 'cancelled'],
-        'preparing'  => ['ready', 'cancelled'],
-        'ready'      => ['on_the_way', 'delivered', 'cancelled'], // delivered solo si pickup
-        'on_the_way' => ['delivered', 'cancelled'],
-        'delivered'  => [],
-        'cancelled'  => [],
-    ];
+    /**
+     * @param array<string, mixed> $filters
+     *
+     * @return LengthAwarePaginator<int, Order>
+     */
+    public function paginate(
+        array $filters,
+    ): LengthAwarePaginator {
+        $perPage = max(
+            1,
+            min(
+                100,
+                (int) ($filters['per_page'] ?? 15),
+            ),
+        );
 
-    public function paginate(array $filters): LengthAwarePaginator
-    {
-        $perPage = (int)($filters['per_page'] ?? 15);
-
-        $q = Order::query()
+        $query = Order::query()
             ->with([
                 'user',
                 'deliveryType',
@@ -39,33 +47,28 @@ class OperatorOrderService
             ])
             ->latest('ordered_at');
 
-        $this->applyFilters($q, $filters);
+        $this->applyFilters(
+            query: $query,
+            filters: $filters,
+        );
 
-        return $q->paginate($perPage);
+        return $query->paginate($perPage);
     }
 
-    /**
-     * Detalle operativo (1 query principal + eager loads) sin N+1
-     */
-    public function findOrFail(int $orderId): Order
-    {
+    public function findOrFail(
+        int $orderId,
+    ): Order {
         return Order::query()
             ->with([
-                // -------------------------
-                // Cabecera
-                // -------------------------
                 'orderStatus:id,status_name',
                 'deliveryType:id,delivery_type_name',
                 'paymentMethod:id,name',
                 'user:id,first_name,last_name,email,phone',
 
-                // -------------------------
-                // Items + relaciones necesarias para cocina
-                // -------------------------
-                'orderItems' => function ($q) {
-                    // Importante: NO hacer select agresivo que rompa FKs.
-                    // Cargamos todo lo necesario para resource sin inventar columnas.
-                    $q->select([
+                'orderItems' => static function (
+                    $query,
+                ): void {
+                    $query->select([
                         'id',
                         'order_id',
                         'promotion_id',
@@ -85,32 +88,28 @@ class OperatorOrderService
                     ]);
                 },
 
-                // Pizza normal (preferida: belongsToMany ingredients)
                 'orderItems.pizza:id,pizza_name,description',
                 'orderItems.pizza.ingredients:id,ingredient_name',
 
-                // Fallback (si en algún lado estás usando pizzaIngredients)
                 'orderItems.pizza.pizzaIngredients:id,pizza_id,ingredient_id',
                 'orderItems.pizza.pizzaIngredients.ingredient:id,ingredient_name',
 
-                // Mitad y mitad
                 'orderItems.pizzaSecond:id,pizza_name,description',
                 'orderItems.pizzaSecond.ingredients:id,ingredient_name',
+
                 'orderItems.pizzaSecond.pizzaIngredients:id,pizza_id,ingredient_id',
                 'orderItems.pizzaSecond.pizzaIngredients.ingredient:id,ingredient_name',
 
-                // Promo
                 'orderItems.orderPromotionItems:id,order_item_id,pizza_id,pizza_name',
                 'orderItems.orderPromotionItems.pizza:id,pizza_name,description',
                 'orderItems.orderPromotionItems.pizza.ingredients:id,ingredient_name',
+
                 'orderItems.orderPromotionItems.pizza.pizzaIngredients:id,pizza_id,ingredient_id',
                 'orderItems.orderPromotionItems.pizza.pizzaIngredients.ingredient:id,ingredient_name',
 
-                // Personalizaciones (tu resource las usa)
                 'orderItems.orderItemPersonalizations:id,order_item_id,ingredient_id,ingredient_name,personalization_action_id,applies_to,modification_type,extra_price',
                 'orderItems.orderItemPersonalizations.personalizationAction:id,action_name',
 
-                // Historial de estados
                 'statusChanges.fromStatus:id,status_name',
                 'statusChanges.toStatus:id,status_name',
                 'statusChanges.changedBy:id,first_name,last_name,email',
@@ -120,146 +119,254 @@ class OperatorOrderService
 
     public function changeStatus(
         int $orderId,
-        string $toStatusName,
+        OrderStatusName $destinationStatus,
         ?string $note,
-        int $changedByUserId
+        int $changedByUserId,
     ): Order {
-        return DB::transaction(function () use ($orderId, $toStatusName, $note, $changedByUserId) {
+        /**
+         * @var array{
+         *     order: Order,
+         *     from_status: OrderStatusName,
+         *     to_status: OrderStatusName
+         * } $result
+         */
+        $result = DB::transaction(
+            function () use (
+                $orderId,
+                $destinationStatus,
+                $note,
+                $changedByUserId,
+            ): array {
+                /** @var Order $order */
+                $order = Order::query()
+                    ->with([
+                        'deliveryType:id,delivery_type_name',
+                        'orderStatus:id,status_name',
+                    ])
+                    ->lockForUpdate()
+                    ->findOrFail($orderId);
 
-            /** @var Order $order */
-            $order = Order::query()
-                ->with(['deliveryType', 'orderStatus'])
-                ->lockForUpdate()
-                ->findOrFail($orderId);
+                $currentStatusName = trim(
+                    (string) $order->orderStatus?->status_name,
+                );
 
-            $fromName = (string)($order->orderStatus?->status_name ?? '');
+                $currentStatus = OrderStatusName::tryFrom(
+                    $currentStatusName,
+                );
 
-            if ($fromName === '') {
-                throw ValidationException::withMessages([
-                    'status' => ['La orden no tiene estado actual válido.'],
+                if ($currentStatus === null) {
+                    throw ValidationException::withMessages([
+                        'to_status' => [
+                            'La orden no tiene un estado actual válido.',
+                        ],
+                    ]);
+                }
+
+                $deliveryType = trim(
+                    (string) $order
+                        ->deliveryType
+                        ?->delivery_type_name,
+                );
+
+                $this->transitionService->assertCanTransition(
+                    currentStatus: $currentStatus,
+                    destinationStatus: $destinationStatus,
+                    deliveryType: $deliveryType,
+                );
+
+                $destinationStatusModel = OrderStatus::query()
+                    ->where(
+                        'status_name',
+                        $destinationStatus->value,
+                    )
+                    ->first();
+
+                if ($destinationStatusModel === null) {
+                    throw ValidationException::withMessages([
+                        'to_status' => [
+                            sprintf(
+                                'El estado %s no existe en order_statuses. Ejecuta el seeder de comercio.',
+                                $destinationStatus->value,
+                            ),
+                        ],
+                    ]);
+                }
+
+                $fromStatusId = (int) $order->order_status_id;
+                $toStatusId = (int) $destinationStatusModel->id;
+
+                $order->forceFill([
+                    'order_status_id' => $toStatusId,
+                ])->save();
+
+                OrderStatusChange::query()->create([
+                    'order_id' => (int) $order->id,
+                    'from_order_status_id' => $fromStatusId,
+                    'to_order_status_id' => $toStatusId,
+                    'changed_by_user_id' => $changedByUserId,
+                    'changed_at' => now(),
+                    'note' => $note,
                 ]);
-            }
 
-            if ($fromName === $toStatusName) {
-                throw ValidationException::withMessages([
-                    'to_status' => ['La orden ya se encuentra en ese estado.'],
-                ]);
-            }
+                return [
+                    'order' => $order,
+                    'from_status' => $currentStatus,
+                    'to_status' => $destinationStatus,
+                ];
+            },
+            attempts: 3,
+        );
 
-            if (in_array($fromName, self::FINAL_STATUSES, true)) {
-                throw ValidationException::withMessages([
-                    'to_status' => ["No puedes cambiar una orden en estado final ({$fromName})."],
-                ]);
-            }
+        /*
+         * La transacción ya confirmó el cambio.
+         * Los eventos además implementan ShouldDispatchAfterCommit.
+         */
+        $freshOrder = $this->findOrFail(
+            (int) $result['order']->id,
+        );
 
-            $allowed = self::TRANSITIONS[$fromName] ?? [];
-            if (!in_array($toStatusName, $allowed, true)) {
-                throw ValidationException::withMessages([
-                    'to_status' => ["Transición no permitida: {$fromName} → {$toStatusName}."],
-                ]);
-            }
+        event(new OrderStatusChanged(
+            order: $freshOrder,
+            fromStatus: $result['from_status']->value,
+            toStatus: $result['to_status']->value,
+        ));
 
-            // Regla: delivered directo desde ready SOLO si pickup
-            $deliveryType = (string)($order->deliveryType?->delivery_type_name ?? '');
-            if ($fromName === 'ready' && $toStatusName === 'delivered' && $deliveryType === 'delivery') {
-                throw ValidationException::withMessages([
-                    'to_status' => ['Para delivery debes pasar por on_the_way antes de delivered.'],
-                ]);
-            }
+        event(new CustomerOrderUpdated(
+            order: $freshOrder,
+            action: 'status_changed',
+        ));
 
-            $toStatus = OrderStatus::query()->firstWhere('status_name', $toStatusName);
-            if (!$toStatus) {
-                throw ValidationException::withMessages([
-                    'to_status' => ['El estado destino no existe en order_statuses. Ejecuta CommerceSeeder.'],
-                ]);
-            }
-
-            $fromStatusId = (int)$order->order_status_id;
-            $toStatusId   = (int)$toStatus->id;
-
-            $order->forceFill([
-                'order_status_id' => $toStatusId,
-            ])->save();
-
-            OrderStatusChange::query()->create([
-                'order_id' => (int)$order->id,
-                'from_order_status_id' => $fromStatusId,
-                'to_order_status_id' => $toStatusId,
-                'changed_by_user_id' => $changedByUserId,
-                'changed_at' => now(),
-                'note' => $note,
-            ]);
-
-            $freshOrder = $this->findOrFail((int) $order->id);
-
-            event(new OrderStatusChanged(
-                $freshOrder,
-                $fromName,
-                $toStatusName
-            ));
-
-            event(new CustomerOrderUpdated($freshOrder, 'status_changed'));
-
-            return $freshOrder;
-        });
+        return $freshOrder;
     }
 
+    /**
+     * @return array<string, int>
+     */
     public function queueCounts(): array
     {
         $rows = OrderStatus::query()
-            ->select(['id', 'status_name'])
-            ->withCount(['orders as orders_count'])
+            ->select([
+                'id',
+                'status_name',
+            ])
+            ->withCount([
+                'orders as orders_count',
+            ])
             ->orderBy('id')
             ->get();
 
         $counts = [];
-        foreach ($rows as $r) {
-            $counts[$r->status_name] = (int)$r->orders_count;
+
+        foreach ($rows as $row) {
+            $counts[(string) $row->status_name] =
+                (int) $row->orders_count;
         }
 
         return $counts;
     }
 
+    /**
+     * @return list<string>
+     */
     public function allStatuses(): array
     {
-        return OrderStatus::query()
-            ->orderBy('id')
-            ->pluck('status_name')
-            ->values()
-            ->all();
+        return OrderStatusName::values();
     }
 
-    private function applyFilters(Builder $q, array $filters): void
-    {
-        if (!empty($filters['q'])) {
-            $term = trim((string)$filters['q']);
-            $q->where(function (Builder $w) use ($term) {
-                $w->where('order_number', 'like', "%{$term}%")
-                    ->orWhere('address', 'like', "%{$term}%");
-            });
+    /**
+     * @param Builder<Order> $query
+     * @param array<string, mixed> $filters
+     */
+    private function applyFilters(
+        Builder $query,
+        array $filters,
+    ): void {
+        $term = trim(
+            (string) ($filters['q'] ?? ''),
+        );
+
+        if ($term !== '') {
+            $query->where(
+                static function (
+                    Builder $nestedQuery,
+                ) use ($term): void {
+                    $nestedQuery
+                        ->where(
+                            'order_number',
+                            'like',
+                            "%{$term}%",
+                        )
+                        ->orWhere(
+                            'address',
+                            'like',
+                            "%{$term}%",
+                        );
+                },
+            );
         }
 
-        if (!empty($filters['status'])) {
-            $status = (string)$filters['status'];
-            $q->whereHas('orderStatus', fn (Builder $s) => $s->where('status_name', $status));
+        $status = trim(
+            (string) ($filters['status'] ?? ''),
+        );
+
+        if ($status !== '') {
+            $query->whereHas(
+                'orderStatus',
+                static fn (
+                    Builder $statusQuery,
+                ): Builder => $statusQuery->where(
+                    'status_name',
+                    $status,
+                ),
+            );
         }
 
-        if (!empty($filters['delivery_type'])) {
-            $deliveryType = (string)$filters['delivery_type'];
-            $q->whereHas('deliveryType', fn (Builder $d) => $d->where('delivery_type_name', $deliveryType));
+        $deliveryType = trim(
+            (string) ($filters['delivery_type'] ?? ''),
+        );
+
+        if ($deliveryType !== '') {
+            $query->whereHas(
+                'deliveryType',
+                static fn (
+                    Builder $deliveryQuery,
+                ): Builder => $deliveryQuery->where(
+                    'delivery_type_name',
+                    $deliveryType,
+                ),
+            );
         }
 
-        if (!empty($filters['payment_method'])) {
-            $pm = (string)$filters['payment_method'];
-            $q->whereHas('paymentMethod', fn (Builder $p) => $p->where('name', $pm));
+        $paymentMethod = trim(
+            (string) ($filters['payment_method'] ?? ''),
+        );
+
+        if ($paymentMethod !== '') {
+            $query->whereHas(
+                'paymentMethod',
+                static fn (
+                    Builder $paymentQuery,
+                ): Builder => $paymentQuery->where(
+                    'name',
+                    $paymentMethod,
+                ),
+            );
         }
 
         if (!empty($filters['date_from'])) {
-            $q->whereDate('ordered_at', '>=', $filters['date_from']);
+            $query->whereDate(
+                'ordered_at',
+                '>=',
+                $filters['date_from'],
+            );
         }
 
         if (!empty($filters['date_to'])) {
-            $q->whereDate('ordered_at', '<=', $filters['date_to']);
+            $query->whereDate(
+                'ordered_at',
+                '<=',
+                $filters['date_to'],
+            );
         }
     }
 }
