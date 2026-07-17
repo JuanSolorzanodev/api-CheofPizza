@@ -20,9 +20,11 @@ final class PayPalClient
 
     public function baseUrl(): string
     {
-        $mode = (string) config(
-            'paypal.mode',
-            'sandbox'
+        $mode = trim(
+            (string) config(
+                'paypal.mode',
+                'sandbox'
+            )
         );
 
         $baseUrl = config(
@@ -30,11 +32,11 @@ final class PayPalClient
         );
 
         if (
-            ! is_string($baseUrl)
-            || $baseUrl === ''
+            !is_string($baseUrl)
+            || trim($baseUrl) === ''
         ) {
             throw new RuntimeException(
-                "La URL de PayPal no está configurada para [{$mode}]."
+                "La URL de PayPal no está configurada para el modo [{$mode}]."
             );
         }
 
@@ -42,9 +44,11 @@ final class PayPalClient
     }
 
     /**
+     * Solicita un access token OAuth a PayPal.
+     *
      * @return array<string, mixed>
      *
-     * @throws ConnectionException
+     * @throws PayPalApiException
      */
     public function getAccessTokenResponse(): array
     {
@@ -63,7 +67,7 @@ final class PayPalClient
                 )
                 ->post(
                     $this->baseUrl()
-                        .'/v1/oauth2/token',
+                        . '/v1/oauth2/token',
                     [
                         'grant_type' =>
                             'client_credentials',
@@ -79,17 +83,24 @@ final class PayPalClient
 
         if ($response->failed()) {
             throw $this->createApiException(
-                $response,
-                'PayPal rechazó la autenticación OAuth.'
+                response: $response,
+                fallbackMessage:
+                    'PayPal rechazó la autenticación OAuth.',
             );
         }
 
-        /** @var array<string, mixed> $payload */
         $payload = $response->json();
 
-        return $payload;
+        return is_array($payload)
+            ? $payload
+            : [];
     }
 
+    /**
+     * Obtiene el access token desde caché o solicita uno nuevo.
+     *
+     * @throws PayPalApiException
+     */
     public function accessToken(): string
     {
         $cachedToken = Cache::get(
@@ -98,7 +109,7 @@ final class PayPalClient
 
         if (
             is_string($cachedToken)
-            && $cachedToken !== ''
+            && trim($cachedToken) !== ''
         ) {
             return $cachedToken;
         }
@@ -112,8 +123,8 @@ final class PayPalClient
             $payload['expires_in'] ?? null;
 
         if (
-            ! is_string($accessToken)
-            || $accessToken === ''
+            !is_string($accessToken)
+            || trim($accessToken) === ''
         ) {
             throw new PayPalApiException(
                 'PayPal no devolvió un access token válido.'
@@ -121,7 +132,10 @@ final class PayPalClient
         }
 
         $ttl = is_numeric($expiresIn)
-            ? max(((int) $expiresIn) - 60, 60)
+            ? max(
+                ((int) $expiresIn) - 60,
+                60
+            )
             : 300;
 
         Cache::put(
@@ -134,9 +148,13 @@ final class PayPalClient
     }
 
     /**
+     * Ejecuta una petición POST con payload JSON.
+     *
      * @param array<string, mixed> $payload
      *
      * @return array<string, mixed>
+     *
+     * @throws PayPalApiException
      */
     public function post(
         string $uri,
@@ -149,6 +167,7 @@ final class PayPalClient
                 ->withHeaders([
                     'PayPal-Request-Id' =>
                         $requestId,
+
                     'Prefer' =>
                         'return=representation',
                 ])
@@ -164,33 +183,69 @@ final class PayPalClient
             );
         }
 
-        if ($response->failed()) {
-            /*
-             * El token pudo expirar o ser invalidado.
-             * Se limpia para que una llamada posterior
-             * solicite uno nuevo.
-             */
-            if ($response->status() === 401) {
-                $this->forgetAccessToken();
-            }
-
-            throw $this->createApiException(
-                $response,
-                'PayPal rechazó la operación.'
-            );
-        }
-
-        /** @var array<string, mixed> $data */
-        $data = $response->json();
-
-        return $data;
+        return $this->resolveResponse(
+            response: $response,
+            fallbackMessage:
+                'PayPal rechazó la operación.',
+        );
     }
 
     /**
+     * Ejecuta un POST que requiere exactamente un objeto JSON vacío.
+     *
+     * PayPal espera `{}` en determinados endpoints, como la captura
+     * de una orden. Un array PHP vacío podría serializarse como `[]`.
+     *
      * @return array<string, mixed>
+     *
+     * @throws PayPalApiException
      */
-    public function get(string $uri): array
-    {
+    public function postEmptyObject(
+        string $uri,
+        string $requestId,
+    ): array {
+        try {
+            $response = $this
+                ->authenticatedRequest()
+                ->withHeaders([
+                    'PayPal-Request-Id' =>
+                        $requestId,
+
+                    'Prefer' =>
+                        'return=representation',
+                ])
+                ->withBody(
+                    '{}',
+                    'application/json'
+                )
+                ->post(
+                    $this->url($uri)
+                );
+        } catch (ConnectionException $exception) {
+            throw new PayPalApiException(
+                message:
+                    'No fue posible conectar con PayPal.',
+                previous: $exception,
+            );
+        }
+
+        return $this->resolveResponse(
+            response: $response,
+            fallbackMessage:
+                'PayPal rechazó la operación.',
+        );
+    }
+
+    /**
+     * Ejecuta una petición GET autenticada.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws PayPalApiException
+     */
+    public function get(
+        string $uri
+    ): array {
         try {
             $response = $this
                 ->authenticatedRequest()
@@ -205,23 +260,137 @@ final class PayPalClient
             );
         }
 
-        if ($response->failed()) {
-            if ($response->status() === 401) {
-                $this->forgetAccessToken();
-            }
+        return $this->resolveResponse(
+            response: $response,
+            fallbackMessage:
+                'No fue posible consultar PayPal.',
+        );
+    }
 
-            throw $this->createApiException(
-                $response,
-                'No fue posible consultar PayPal.'
+    /**
+     * Verifica la firma de un webhook usando PayPal.
+     *
+     * No debemos confiar en el contenido del webhook antes de que
+     * PayPal confirme que su firma es válida.
+     *
+     * @param array{
+     *     auth_algo: ?string,
+     *     cert_url: ?string,
+     *     transmission_id: ?string,
+     *     transmission_sig: ?string,
+     *     transmission_time: ?string
+     * } $headers
+     *
+     * @param array<string, mixed> $webhookEvent
+     *
+     * @throws PayPalApiException
+     * @throws RuntimeException
+     */
+    public function verifyWebhookSignature(
+        array $headers,
+        array $webhookEvent,
+    ): bool {
+        $webhookId = trim(
+            (string) config(
+                'paypal.webhook_id',
+                ''
+            )
+        );
+
+        if ($webhookId === '') {
+            throw new RuntimeException(
+                'PAYPAL_WEBHOOK_ID no está configurado.'
             );
         }
 
-        /** @var array<string, mixed> $data */
-        $data = $response->json();
+        $authAlgo = $this->requiredHeader(
+            headers: $headers,
+            key: 'auth_algo',
+        );
 
-        return $data;
+        $certUrl = $this->requiredHeader(
+            headers: $headers,
+            key: 'cert_url',
+        );
+
+        $transmissionId = $this->requiredHeader(
+            headers: $headers,
+            key: 'transmission_id',
+        );
+
+        $transmissionSignature =
+            $this->requiredHeader(
+                headers: $headers,
+                key: 'transmission_sig',
+            );
+
+        $transmissionTime =
+            $this->requiredHeader(
+                headers: $headers,
+                key: 'transmission_time',
+            );
+
+        $payload = [
+            'auth_algo' =>
+                $authAlgo,
+
+            'cert_url' =>
+                $certUrl,
+
+            'transmission_id' =>
+                $transmissionId,
+
+            'transmission_sig' =>
+                $transmissionSignature,
+
+            'transmission_time' =>
+                $transmissionTime,
+
+            'webhook_id' =>
+                $webhookId,
+
+            'webhook_event' =>
+                $webhookEvent,
+        ];
+
+        try {
+            $response = $this
+                ->authenticatedRequest()
+                ->post(
+                    $this->url(
+                        '/v1/notifications/verify-webhook-signature'
+                    ),
+                    $payload,
+                );
+        } catch (ConnectionException $exception) {
+            throw new PayPalApiException(
+                message:
+                    'No fue posible verificar el webhook con PayPal.',
+                previous: $exception,
+            );
+        }
+
+        $data = $this->resolveResponse(
+            response: $response,
+            fallbackMessage:
+                'PayPal rechazó la verificación del webhook.',
+        );
+
+        $verificationStatus = strtoupper(
+            trim(
+                (string) (
+                    $data['verification_status']
+                    ?? ''
+                )
+            )
+        );
+
+        return $verificationStatus === 'SUCCESS';
     }
 
+    /**
+     * Crea una petición autenticada estándar.
+     */
     public function authenticatedRequest(): PendingRequest
     {
         return Http::acceptJson()
@@ -244,11 +413,40 @@ final class PayPalClient
         );
     }
 
-    private function url(string $uri): string
-    {
+    private function url(
+        string $uri
+    ): string {
         return $this->baseUrl()
-            .'/'
-            .ltrim($uri, '/');
+            . '/'
+            . ltrim($uri, '/');
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws PayPalApiException
+     */
+    private function resolveResponse(
+        Response $response,
+        string $fallbackMessage,
+    ): array {
+        if ($response->failed()) {
+            if ($response->status() === 401) {
+                $this->forgetAccessToken();
+            }
+
+            throw $this->createApiException(
+                response: $response,
+                fallbackMessage:
+                    $fallbackMessage,
+            );
+        }
+
+        $data = $response->json();
+
+        return is_array($data)
+            ? $data
+            : [];
     }
 
     private function clientId(): string
@@ -258,15 +456,15 @@ final class PayPalClient
         );
 
         if (
-            ! is_string($clientId)
-            || $clientId === ''
+            !is_string($clientId)
+            || trim($clientId) === ''
         ) {
             throw new RuntimeException(
                 'PAYPAL_CLIENT_ID no está configurado.'
             );
         }
 
-        return $clientId;
+        return trim($clientId);
     }
 
     private function clientSecret(): string
@@ -276,15 +474,15 @@ final class PayPalClient
         );
 
         if (
-            ! is_string($clientSecret)
-            || $clientSecret === ''
+            !is_string($clientSecret)
+            || trim($clientSecret) === ''
         ) {
             throw new RuntimeException(
                 'PAYPAL_CLIENT_SECRET no está configurado.'
             );
         }
 
-        return $clientSecret;
+        return trim($clientSecret);
     }
 
     private function timeout(): int
@@ -309,13 +507,37 @@ final class PayPalClient
         );
     }
 
+    /**
+     * @param array<string, mixed> $headers
+     */
+    private function requiredHeader(
+        array $headers,
+        string $key,
+    ): string {
+        $value = $headers[$key] ?? null;
+
+        if (
+            !is_string($value)
+            || trim($value) === ''
+        ) {
+            throw new RuntimeException(
+                "Falta el encabezado requerido del webhook: {$key}."
+            );
+        }
+
+        return trim($value);
+    }
+
     private function createApiException(
         Response $response,
         string $fallbackMessage,
     ): PayPalApiException {
         try {
-            /** @var array<string, mixed> $payload */
-            $payload = $response->json();
+            $decoded = $response->json();
+
+            $payload = is_array($decoded)
+                ? $decoded
+                : [];
         } catch (Throwable) {
             $payload = [];
         }
@@ -325,88 +547,56 @@ final class PayPalClient
         );
 
         if (
-            ! is_string($debugId)
-            || $debugId === ''
+            !is_string($debugId)
+            || trim($debugId) === ''
         ) {
-            $debugId = isset($payload['debug_id'])
-                && is_string($payload['debug_id'])
-                    ? $payload['debug_id']
-                    : null;
+            $debugId = isset(
+                $payload['debug_id']
+            ) && is_string(
+                $payload['debug_id']
+            )
+                ? $payload['debug_id']
+                : null;
         }
 
-        $name = isset($payload['name'])
-            && is_string($payload['name'])
-                ? $payload['name']
-                : null;
+        $name = isset(
+            $payload['name']
+        ) && is_string(
+            $payload['name']
+        )
+            ? $payload['name']
+            : null;
 
-        $message = isset($payload['message'])
-            && is_string($payload['message'])
-                ? $payload['message']
-                : $fallbackMessage;
+        $message = isset(
+            $payload['message']
+        ) && is_string(
+            $payload['message']
+        )
+            ? $payload['message']
+            : $fallbackMessage;
 
-        $details = isset($payload['details'])
-            && is_array($payload['details'])
-                ? $payload['details']
-                : null;
+        $details = isset(
+            $payload['details']
+        ) && is_array(
+            $payload['details']
+        )
+            ? $payload['details']
+            : null;
 
         return new PayPalApiException(
             message: $message,
-            statusCode: $response->status(),
-            debugId: $debugId,
-            paypalErrorName: $name,
-            details: $details,
+
+            statusCode:
+                $response->status(),
+
+            debugId:
+                $debugId,
+
+            paypalErrorName:
+                $name,
+
+            details:
+                $details,
         );
     }
-
-    /**
- * Ejecuta un POST que requiere un objeto JSON vacío.
- *
- * PayPal espera {} en determinados endpoints, como la captura
- * de una orden. Un array PHP vacío se serializaría como [],
- * lo cual no cumple el esquema esperado.
- *
- * @return array<string, mixed>
- */
-public function postEmptyObject(
-    string $uri,
-    string $requestId,
-): array {
-    try {
-        $response = $this
-            ->authenticatedRequest()
-            ->withHeaders([
-                'PayPal-Request-Id' => $requestId,
-                'Prefer' => 'return=representation',
-            ])
-            ->withBody(
-                '{}',
-                'application/json'
-            )
-            ->post(
-                $this->url($uri)
-            );
-    } catch (ConnectionException $exception) {
-        throw new PayPalApiException(
-            message: 'No fue posible conectar con PayPal.',
-            previous: $exception,
-        );
-    }
-
-    if ($response->failed()) {
-        if ($response->status() === 401) {
-            $this->forgetAccessToken();
-        }
-
-        throw $this->createApiException(
-            response: $response,
-            fallbackMessage:
-                'PayPal rechazó la operación.',
-        );
-    }
-
-    /** @var array<string, mixed> $data */
-    $data = $response->json();
-
-    return $data;
-}
 }

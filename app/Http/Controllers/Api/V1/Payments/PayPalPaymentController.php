@@ -8,6 +8,8 @@ use App\Exceptions\Payments\PayPalApiException;
 use App\Http\Requests\Api\V1\Payments\CreatePayPalOrderRequest;
 use App\Http\Resources\Api\V1\OrderResource;
 use App\Http\Resources\Api\V1\Payments\PayPalOrderResource;
+use App\Http\Resources\Api\V1\Payments\PayPalPaymentStatusResource;
+use App\Models\Payment;
 use App\Services\Cart\CartService;
 use App\Services\Payments\PayPal\PayPalCaptureService;
 use App\Services\Payments\PayPal\PayPalOrderService;
@@ -24,8 +26,7 @@ final class PayPalPaymentController
         private readonly CartService $cartService,
         private readonly PayPalOrderService $payPalOrderService,
         private readonly PayPalCaptureService $payPalCaptureService,
-    ) {
-    }
+    ) {}
 
     /**
      * Crea la orden PayPal utilizando el total calculado por Laravel.
@@ -97,6 +98,38 @@ final class PayPalPaymentController
                 ],
             ], 502);
         }
+    }
+
+    /**
+     * Consulta el estado actual de un pago PayPal perteneciente
+     * al usuario autenticado.
+     */
+    public function show(
+        Request $request,
+        string $paymentUuid,
+    ): PayPalPaymentStatusResource {
+        $payment = Payment::query()
+            ->where(
+                'uuid',
+                $paymentUuid
+            )
+            ->where(
+                'user_id',
+                (int) $request->user()->id
+            )
+            ->with([
+                'order.orderStatus',
+            ])
+            ->firstOrFail();
+
+        return (
+            new PayPalPaymentStatusResource(
+                $payment
+            )
+        )->additional([
+            'message' =>
+                'Estado del pago PayPal consultado correctamente.',
+        ]);
     }
 
     /**
