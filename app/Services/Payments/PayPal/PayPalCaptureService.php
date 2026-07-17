@@ -15,6 +15,7 @@ use App\Services\Payments\CartFingerprintService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Exceptions\Payments\PayPalPaymentActionRequiredException;
 use Throwable;
 
 final class PayPalCaptureService
@@ -120,32 +121,56 @@ final class PayPalCaptureService
                     requestId: 'capture-' . $payment->uuid,
                 );
         } catch (PayPalApiException $exception) {
-            if (
-                $this->hasPayPalIssue(
-                    exception: $exception,
-                    issue: 'INSTRUMENT_DECLINED',
-                )
-            ) {
-                Log::notice(
-                    'PayPal funding source declined.',
-                    [
-                        'payment_id' =>
-                        $payment->id,
+           if (
+    $this->hasPayPalIssue(
+        exception: $exception,
+        issue: 'INSTRUMENT_DECLINED',
+    )
+) {
+    Log::notice(
+        'PayPal funding source declined.',
+        [
+            'payment_id' =>
+                $payment->id,
 
-                        'payment_uuid' =>
-                        $payment->uuid,
+            'payment_uuid' =>
+                $payment->uuid,
 
-                        'paypal_debug_id' =>
-                        $exception->debugId,
-                    ]
-                );
+            'paypal_order_id' =>
+                $payment->provider_order_id,
 
-                throw ValidationException::withMessages([
-                    'payment' => [
-                        'PayPal rechazó la fuente de pago. Selecciona otra tarjeta o método e inténtalo nuevamente.',
-                    ],
-                ]);
-            }
+            'paypal_debug_id' =>
+                $exception->debugId,
+        ],
+    );
+
+    /*
+     * INSTRUMENT_DECLINED es recuperable.
+     *
+     * No se marca el pago como fallido porque PayPal permite
+     * volver al flujo y elegir otra fuente de fondos mediante
+     * actions.restart() en el SDK JavaScript.
+     */
+    throw new PayPalPaymentActionRequiredException(
+        message:
+            'PayPal rechazó la tarjeta o fuente de pago. Selecciona otro método e inténtalo nuevamente.',
+
+        action:
+            'RESTART_PAYMENT_SELECTION',
+
+        paypalCode:
+            'INSTRUMENT_DECLINED',
+
+        reference:
+            $exception->debugId,
+
+        recoverable:
+            true,
+
+        previous:
+            $exception,
+    );
+}
 
             /*
              * Una caída de red o un 5xx puede ocurrir después de que

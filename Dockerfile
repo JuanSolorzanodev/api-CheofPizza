@@ -2,6 +2,10 @@ FROM php:8.3-cli-bookworm
 
 ARG DEBIAN_FRONTEND=noninteractive
 
+ENV APP_ENV=production \
+    COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_NO_INTERACTION=1
+
 WORKDIR /var/www/html
 
 RUN apt-get update \
@@ -43,7 +47,8 @@ COPY . .
 
 RUN composer dump-autoload \
         --no-dev \
-        --optimize \
+        --classmap-authoritative \
+        --no-interaction \
     && php artisan package:discover --ansi \
     && mkdir -p \
         storage/framework/cache/data \
