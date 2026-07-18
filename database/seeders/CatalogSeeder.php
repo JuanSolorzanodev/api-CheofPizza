@@ -8,7 +8,6 @@ use App\Models\CategorySizePrice;
 use App\Models\Ingredient;
 use App\Models\IngredientSizePrice;
 use App\Models\IngredientType;
-use App\Models\PersonalizationAction;
 use App\Models\Pizza;
 use App\Models\PizzaIngredient;
 use App\Models\Size;
@@ -161,21 +160,6 @@ class CatalogSeeder extends Seeder
             }
         }
 
-        /**
-         * 7) Acciones de personalización
-         */
-        $actions = [
-            ['action_name' => 'Agregar', 'description' => 'Añadir ingrediente'],
-            ['action_name' => 'Quitar', 'description' => 'Eliminar ingrediente'],
-            ['action_name' => 'Extra', 'description' => 'Porción extra del ingrediente'],
-        ];
-
-        foreach ($actions as $a) {
-            PersonalizationAction::updateOrCreate(
-                ['action_name' => $a['action_name']],
-                ['description' => $a['description']]
-            );
-        }
 
         /**
          * 8) Pizzas + ingredientes (según menús)
