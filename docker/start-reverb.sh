@@ -1,28 +1,12 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
 set -eu
 
 echo "Starting CheofPizza Reverb server..."
-
-if [ -z "${APP_KEY:-}" ]; then
-    echo "ERROR: APP_KEY is not configured."
-    exit 1
-fi
-
-mkdir -p \
-    storage/framework/cache/data \
-    storage/framework/sessions \
-    storage/framework/views \
-    storage/logs \
-    bootstrap/cache
-
-php artisan config:clear
-php artisan event:clear || true
-
-php artisan config:cache
-php artisan event:cache || true
+echo "Host: ${REVERB_SERVER_HOST:-0.0.0.0}"
+echo "Port: ${REVERB_SERVER_PORT:-8080}"
 
 exec php artisan reverb:start \
-    --host=0.0.0.0 \
-    --port="${PORT:-8080}" \
+    --host="${REVERB_SERVER_HOST:-0.0.0.0}" \
+    --port="${REVERB_SERVER_PORT:-8080}" \
     --no-interaction
