@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Admin\MachineLearningController;
 use App\Http\Controllers\Api\V1\Auth\AuthenticatedUserController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
@@ -15,7 +16,6 @@ use App\Http\Controllers\Api\V1\Public\CartController;
 use App\Http\Controllers\Api\V1\Public\CatalogController;
 use App\Http\Controllers\Api\V1\Public\GeoController;
 use App\Http\Controllers\Api\V1\Public\PromotionController;
-use App\Http\Controllers\Api\V1\Admin\MachineLearningController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -28,22 +28,26 @@ Route::prefix('v1')->group(function (): void {
     Route::prefix('auth')->group(function (): void {
         Route::post(
             'firebase/google',
-            [AuthController::class, 'loginWithGoogle'],
+            [
+                AuthController::class,
+                'loginWithGoogle',
+            ],
         )
             ->middleware('throttle:auth')
             ->name('api.v1.auth.firebase.google');
 
-        Route::middleware('auth:sanctum')->group(function (): void {
-            Route::get(
-                'me',
-                AuthenticatedUserController::class,
-            )->name('api.v1.auth.me');
+        Route::middleware('auth:sanctum')
+            ->group(function (): void {
+                Route::get(
+                    'me',
+                    AuthenticatedUserController::class,
+                )->name('api.v1.auth.me');
 
-            Route::post(
-                'logout',
-                LogoutController::class,
-            )->name('api.v1.auth.logout');
-        });
+                Route::post(
+                    'logout',
+                    LogoutController::class,
+                )->name('api.v1.auth.logout');
+            });
     });
 
     /*
@@ -51,8 +55,8 @@ Route::prefix('v1')->group(function (): void {
     | Webhook público de PayPal
     |--------------------------------------------------------------------------
     |
-    | PayPal llama directamente a este endpoint. No utiliza Sanctum.
-    | Su autenticidad debe validarse mediante la firma enviada por PayPal.
+    | PayPal llama directamente a este endpoint.
+    | No utiliza Sanctum.
     |
     */
 
@@ -74,32 +78,50 @@ Route::prefix('v1')->group(function (): void {
         ->group(function (): void {
             Route::get(
                 'categories',
-                [CatalogController::class, 'categories'],
+                [
+                    CatalogController::class,
+                    'categories',
+                ],
             );
 
             Route::get(
                 'ingredients',
-                [CatalogController::class, 'ingredients'],
+                [
+                    CatalogController::class,
+                    'ingredients',
+                ],
             );
 
             Route::get(
                 'pizzas',
-                [CatalogController::class, 'pizzas'],
+                [
+                    CatalogController::class,
+                    'pizzas',
+                ],
             );
 
             Route::get(
                 'pizzas/sencillas',
-                [CatalogController::class, 'pizzasSencillas'],
+                [
+                    CatalogController::class,
+                    'pizzasSencillas',
+                ],
             );
 
             Route::get(
                 'pizzas/especiales',
-                [CatalogController::class, 'pizzasEspeciales'],
+                [
+                    CatalogController::class,
+                    'pizzasEspeciales',
+                ],
             );
 
             Route::get(
                 'pizzas/{name}/search',
-                [CatalogController::class, 'searchPizzasByName'],
+                [
+                    CatalogController::class,
+                    'searchPizzasByName',
+                ],
             );
         });
 
@@ -114,7 +136,10 @@ Route::prefix('v1')->group(function (): void {
         ->group(function (): void {
             Route::post(
                 'quote',
-                [BuilderController::class, 'quote'],
+                [
+                    BuilderController::class,
+                    'quote',
+                ],
             );
         });
 
@@ -129,12 +154,18 @@ Route::prefix('v1')->group(function (): void {
         ->group(function (): void {
             Route::get(
                 '',
-                [PromotionController::class, 'index'],
+                [
+                    PromotionController::class,
+                    'index',
+                ],
             );
 
             Route::get(
                 '{slug}',
-                [PromotionController::class, 'show'],
+                [
+                    PromotionController::class,
+                    'show',
+                ],
             );
         });
 
@@ -152,32 +183,50 @@ Route::prefix('v1')->group(function (): void {
         ->group(function (): void {
             Route::get(
                 '',
-                [CartController::class, 'show'],
+                [
+                    CartController::class,
+                    'show',
+                ],
             );
 
             Route::post(
                 'items/pizza',
-                [CartController::class, 'addPizza'],
+                [
+                    CartController::class,
+                    'addPizza',
+                ],
             );
 
             Route::post(
                 'items/promotion',
-                [CartController::class, 'addPromotion'],
+                [
+                    CartController::class,
+                    'addPromotion',
+                ],
             );
 
             Route::put(
                 'items/{itemId}',
-                [CartController::class, 'updateQuantity'],
+                [
+                    CartController::class,
+                    'updateQuantity',
+                ],
             )->whereNumber('itemId');
 
             Route::delete(
                 'items/{itemId}',
-                [CartController::class, 'remove'],
+                [
+                    CartController::class,
+                    'remove',
+                ],
             )->whereNumber('itemId');
 
             Route::delete(
                 '',
-                [CartController::class, 'clear'],
+                [
+                    CartController::class,
+                    'clear',
+                ],
             );
         });
 
@@ -192,7 +241,10 @@ Route::prefix('v1')->group(function (): void {
         ->group(function (): void {
             Route::get(
                 'config',
-                [CheckoutController::class, 'config'],
+                [
+                    CheckoutController::class,
+                    'config',
+                ],
             );
         });
 
@@ -207,7 +259,10 @@ Route::prefix('v1')->group(function (): void {
         ->group(function (): void {
             Route::get(
                 'reverse',
-                [GeoController::class, 'reverse'],
+                [
+                    GeoController::class,
+                    'reverse',
+                ],
             );
         });
 
@@ -223,7 +278,10 @@ Route::prefix('v1')->group(function (): void {
     ])->group(function (): void {
         Route::post(
             'checkout',
-            [CheckoutController::class, 'checkout'],
+            [
+                CheckoutController::class,
+                'checkout',
+            ],
         )
             ->middleware('throttle:checkout')
             ->name('api.v1.checkout.store');
@@ -233,32 +291,53 @@ Route::prefix('v1')->group(function (): void {
             ->group(function (): void {
                 Route::post(
                     'orders',
-                    [PayPalPaymentController::class, 'store'],
-                )->name('api.v1.payments.paypal.orders.store');
+                    [
+                        PayPalPaymentController::class,
+                        'store',
+                    ],
+                )->name(
+                    'api.v1.payments.paypal.orders.store'
+                );
 
                 Route::get(
                     'orders/{paymentUuid}',
-                    [PayPalPaymentController::class, 'show'],
+                    [
+                        PayPalPaymentController::class,
+                        'show',
+                    ],
                 )
                     ->whereUuid('paymentUuid')
-                    ->name('api.v1.payments.paypal.orders.show');
+                    ->name(
+                        'api.v1.payments.paypal.orders.show'
+                    );
 
                 Route::post(
                     'orders/{paymentUuid}/capture',
-                    [PayPalPaymentController::class, 'capture'],
+                    [
+                        PayPalPaymentController::class,
+                        'capture',
+                    ],
                 )
                     ->whereUuid('paymentUuid')
-                    ->name('api.v1.payments.paypal.orders.capture');
+                    ->name(
+                        'api.v1.payments.paypal.orders.capture'
+                    );
             });
 
         Route::get(
             'my/orders',
-            [MyOrdersController::class, 'index'],
+            [
+                MyOrdersController::class,
+                'index',
+            ],
         );
 
         Route::get(
             'my/orders/{orderId}',
-            [MyOrdersController::class, 'show'],
+            [
+                MyOrdersController::class,
+                'show',
+            ],
         )->whereNumber('orderId');
     });
 
@@ -276,36 +355,54 @@ Route::prefix('v1')->group(function (): void {
         ->group(function (): void {
             Route::get(
                 'orders',
-                [OperatorOrdersController::class, 'index'],
+                [
+                    OperatorOrdersController::class,
+                    'index',
+                ],
             );
 
             Route::get(
                 'orders/queue',
-                [OperatorOrdersController::class, 'queue'],
+                [
+                    OperatorOrdersController::class,
+                    'queue',
+                ],
             );
 
             Route::get(
                 'orders/statuses',
-                [OperatorOrdersController::class, 'statuses'],
+                [
+                    OperatorOrdersController::class,
+                    'statuses',
+                ],
             );
 
             Route::get(
                 'orders/{orderId}',
-                [OperatorOrdersController::class, 'show'],
+                [
+                    OperatorOrdersController::class,
+                    'show',
+                ],
             )->whereNumber('orderId');
 
             Route::patch(
                 'orders/{orderId}/status',
-                [OperatorOrdersController::class, 'updateStatus'],
+                [
+                    OperatorOrdersController::class,
+                    'updateStatus',
+                ],
             )
                 ->whereNumber('orderId')
-                ->middleware('throttle:operator-actions');
+                ->middleware(
+                    'throttle:operator-actions'
+                );
         });
+
     /*
-|--------------------------------------------------------------------------
-| Panel administrativo
-|--------------------------------------------------------------------------
-*/
+    |--------------------------------------------------------------------------
+    | Panel administrativo
+    |--------------------------------------------------------------------------
+    */
 
     Route::middleware([
         'auth:sanctum',
@@ -314,41 +411,106 @@ Route::prefix('v1')->group(function (): void {
         ->prefix('admin')
         ->name('api.v1.admin.')
         ->group(function (): void {
+            /*
+            |--------------------------------------------------------------------------
+            | Machine Learning
+            |--------------------------------------------------------------------------
+            */
+
             Route::prefix('machine-learning')
                 ->name('machine-learning.')
                 ->group(function (): void {
+                    /*
+                     * Devuelve el último pronóstico activo
+                     * guardado en Laravel.
+                     */
                     Route::get(
                         'latest',
                         [
                             MachineLearningController::class,
                             'latest',
-                        ]
+                        ],
                     )->name('latest');
 
+                    /*
+                     * Devuelve el historial paginado
+                     * de ejecuciones predictivas.
+                     */
                     Route::get(
                         'history',
                         [
                             MachineLearningController::class,
                             'history',
-                        ]
+                        ],
                     )->name('history');
 
+                    /*
+                     * Devuelve una ejecución específica.
+                     */
                     Route::get(
                         'runs/{uuid}',
                         [
                             MachineLearningController::class,
                             'show',
-                        ]
+                        ],
                     )
                         ->whereUuid('uuid')
                         ->name('runs.show');
 
+                    /*
+                     * Consulta directamente la información
+                     * del modelo remoto desplegado en FastAPI.
+                     */
+                    Route::get(
+                        'service/model',
+                        [
+                            MachineLearningController::class,
+                            'serviceModel',
+                        ],
+                    )->name('service.model');
+
+                    /*
+                     * Genera una previsualización remota,
+                     * pero no guarda datos en Laravel.
+                     */
+                    Route::post(
+                        'preview',
+                        [
+                            MachineLearningController::class,
+                            'preview',
+                        ],
+                    )
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('preview');
+
+                    /*
+                     * Genera un pronóstico mediante FastAPI
+                     * y lo guarda en las tablas predictivas.
+                     */
+                    Route::post(
+                        'generate',
+                        [
+                            MachineLearningController::class,
+                            'generate',
+                        ],
+                    )
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('generate');
+
+                    /*
+                     * Importa manualmente un pronóstico JSON
+                     * generado fuera del sistema.
+                     */
                     Route::post(
                         'import',
                         [
                             MachineLearningController::class,
                             'import',
-                        ]
+                        ],
                     )
                         ->middleware(
                             'throttle:operator-actions'

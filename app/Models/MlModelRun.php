@@ -17,6 +17,7 @@ final class MlModelRun extends Model
     public const STATUS_FAILED = 'failed';
 
     public const SOURCE_GOOGLE_COLAB = 'google_colab';
+    public const SOURCE_ML_SERVICE = 'ml_service';
 
     public const TARGET_TOTAL_UNITS = 'total_units';
 

@@ -35,4 +35,35 @@ return [
         ],
     ],
 
+        /*
+    |--------------------------------------------------------------------------
+    | CheofPizza Machine Learning Service
+    |--------------------------------------------------------------------------
+    |
+    | Microservicio privado encargado de cargar el modelo predictivo
+    | y generar pronósticos de demanda. Laravel es el único consumidor
+    | autorizado; Angular nunca debe llamar directamente a este servicio.
+    |
+    */
+
+    'machine_learning' => [
+        'base_url' => env(
+            'ML_SERVICE_URL',
+            'http://127.0.0.1:8001'
+        ),
+
+        'api_key' => env(
+            'ML_SERVICE_API_KEY'
+        ),
+
+        'timeout' => (int) env(
+            'ML_SERVICE_TIMEOUT',
+            20
+        ),
+
+        'connect_timeout' => (int) env(
+            'ML_SERVICE_CONNECT_TIMEOUT',
+            5
+        ),
+    ],
 ];
