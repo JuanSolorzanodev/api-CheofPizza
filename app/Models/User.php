@@ -72,4 +72,11 @@ class User extends Authenticatable
             'user_id'
         );
     }
+    public function mlModelRuns(): HasMany
+    {
+        return $this->hasMany(
+            MlModelRun::class,
+            'created_by'
+        );
+    }
 }

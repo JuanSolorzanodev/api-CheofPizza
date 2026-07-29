@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\Public\CartController;
 use App\Http\Controllers\Api\V1\Public\CatalogController;
 use App\Http\Controllers\Api\V1\Public\GeoController;
 use App\Http\Controllers\Api\V1\Public\PromotionController;
+use App\Http\Controllers\Api\V1\Admin\MachineLearningController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -299,5 +300,60 @@ Route::prefix('v1')->group(function (): void {
             )
                 ->whereNumber('orderId')
                 ->middleware('throttle:operator-actions');
+        });
+    /*
+|--------------------------------------------------------------------------
+| Panel administrativo
+|--------------------------------------------------------------------------
+*/
+
+    Route::middleware([
+        'auth:sanctum',
+        'role:admin',
+    ])
+        ->prefix('admin')
+        ->name('api.v1.admin.')
+        ->group(function (): void {
+            Route::prefix('machine-learning')
+                ->name('machine-learning.')
+                ->group(function (): void {
+                    Route::get(
+                        'latest',
+                        [
+                            MachineLearningController::class,
+                            'latest',
+                        ]
+                    )->name('latest');
+
+                    Route::get(
+                        'history',
+                        [
+                            MachineLearningController::class,
+                            'history',
+                        ]
+                    )->name('history');
+
+                    Route::get(
+                        'runs/{uuid}',
+                        [
+                            MachineLearningController::class,
+                            'show',
+                        ]
+                    )
+                        ->whereUuid('uuid')
+                        ->name('runs.show');
+
+                    Route::post(
+                        'import',
+                        [
+                            MachineLearningController::class,
+                            'import',
+                        ]
+                    )
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('import');
+                });
         });
 });
