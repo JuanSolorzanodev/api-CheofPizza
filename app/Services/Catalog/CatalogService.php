@@ -1,32 +1,40 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Catalog;
 
 use App\Models\Category;
 use App\Models\Ingredient;
 use App\Models\Pizza;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
-class CatalogService
+final class CatalogService
 {
     /**
-     * Endpoint #1 (support): categorías con precios por tamaño (category_size_prices)
+     * Devuelve categorías mostrando únicamente
+     * tamaños con precios comerciales válidos.
      */
     public function categories(): Collection
     {
         return Category::query()
             ->orderBy('category_name')
             ->with([
-                'categorySizePrices' => function ($q) {
-                    $q->orderBy('size_id')
-                      ->with('size');
-                },
+                'categorySizePrices' =>
+                    static function ($query): void {
+                        $query
+                            ->where('price', '>', 0)
+                            ->orderBy('size_id')
+                            ->with('size');
+                    },
             ])
             ->get();
     }
 
     /**
-     * Endpoint #2 (support): ingredientes con tipo + precios extra por tamaño
+     * Devuelve ingredientes y únicamente sus
+     * tarifas extra mayores que cero.
      */
     public function ingredients(): Collection
     {
@@ -34,86 +42,141 @@ class CatalogService
             ->orderBy('ingredient_name')
             ->with([
                 'ingredientType:id,type_name',
-                'sizes' => function ($q) {
-                    $q->select('sizes.id', 'size_name', 'portion')
-                      ->orderBy('portion');
-                },
+
+                'sizes' =>
+                    static function ($query): void {
+                        $query
+                            ->select(
+                                'sizes.id',
+                                'size_name',
+                                'portion'
+                            )
+                            ->wherePivot(
+                                'extra_price',
+                                '>',
+                                0
+                            )
+                            ->orderBy('portion');
+                    },
             ])
             ->get();
     }
 
-    /**
-     * Endpoint #3 (principal): pizzas con TODO (categoría + tamaños/precios + ingredientes)
-     */
-    public function pizzas(?int $categoryId = null, ?string $search = null): Collection
-    {
-        return Pizza::query()
-            ->where('is_visible', true)
-            ->when($categoryId, fn ($q) => $q->where('category_id', $categoryId))
-            ->when($search, fn ($q) => $q->where('pizza_name', 'like', '%' . $search . '%'))
-            ->orderBy('pizza_name')
-            ->with([
-                // ✅ Para tamaños + precios por categoría
-                'category' => function ($q) {
-                    $q->with([
-                        'categorySizePrices' => function ($q2) {
-                            $q2->orderBy('size_id')->with('size');
-                        },
-                    ]);
-                },
+    public function pizzas(
+        ?int $categoryId = null,
+        ?string $search = null,
+    ): Collection {
+        return $this->basePizzaQuery()
+            ->when(
+                $categoryId !== null,
 
-                // ✅ Para ingredientes + tipos (evita N+1)
-                'ingredients' => function ($q) {
-                    $q->with('ingredientType:id,type_name');
-                },
-            ])
+                static fn (Builder $query) =>
+                    $query->where(
+                        'category_id',
+                        $categoryId
+                    ),
+            )
+            ->when(
+                filled($search),
+
+                static fn (Builder $query) =>
+                    $query->where(
+                        'pizza_name',
+                        'like',
+                        '%'.trim((string) $search).'%'
+                    ),
+            )
             ->get();
-    }
-
-
-
-    private function basePizzaQuery()
-    {
-        return Pizza::query()
-            ->where('is_visible', true)
-            ->with([
-                'category' => function ($q) {
-                    $q->with([
-                        'categorySizePrices' => function ($q2) {
-                            $q2->orderBy('size_id')
-                               ->with('size');
-                        },
-                    ]);
-                },
-                'ingredients' => function ($q) {
-                    $q->with('ingredientType:id,type_name');
-                },
-            ])
-            ->orderBy('pizza_name');
     }
 
     public function allPizzas(): Collection
     {
-        return $this->basePizzaQuery()->get();
-    }
-
-    public function pizzasByCategoryName(string $categoryName): Collection
-    {
-        return $this->basePizzaQuery()
-            ->whereHas('category', function ($q) use ($categoryName) {
-                $q->where('category_name', $categoryName);
-            })
+        return $this
+            ->basePizzaQuery()
             ->get();
     }
 
-
-    public function searchPizzasByName(string $name): Collection
-    {
-        $name = trim($name);
-
+    public function pizzasByCategoryName(
+        string $categoryName,
+    ): Collection {
         return $this->basePizzaQuery()
-            ->where('pizza_name', 'like', '%' . $name . '%')
+            ->whereHas(
+                'category',
+
+                static fn (Builder $query) =>
+                    $query->where(
+                        'category_name',
+                        $categoryName
+                    ),
+            )
             ->get();
     }
 
+    public function searchPizzasByName(
+        string $name,
+    ): Collection {
+        return $this->basePizzaQuery()
+            ->where(
+                'pizza_name',
+                'like',
+                '%'.trim($name).'%'
+            )
+            ->get();
+    }
+
+    /**
+     * Consulta base del catálogo.
+     *
+     * Una pizza se publica solamente cuando:
+     * - está visible;
+     * - tiene categoría;
+     * - la categoría posee al menos un tamaño con precio > 0.
+     */
+    private function basePizzaQuery(): Builder
+    {
+        return Pizza::query()
+            ->where('is_visible', true)
+            ->whereHas(
+                'category.categorySizePrices',
+
+                static fn (Builder $query) =>
+                    $query->where(
+                        'price',
+                        '>',
+                        0
+                    ),
+            )
+            ->with([
+                'category' =>
+                    static function ($query): void {
+                        $query->with([
+                            'categorySizePrices' =>
+                                static function (
+                                    $priceQuery
+                                ): void {
+                                    $priceQuery
+                                        ->where(
+                                            'price',
+                                            '>',
+                                            0
+                                        )
+                                        ->orderBy(
+                                            'size_id'
+                                        )
+                                        ->with(
+                                            'size'
+                                        );
+                                },
+                        ]);
+                    },
+
+                'ingredients' =>
+                    static function ($query): void {
+                        $query->with(
+                            'ingredientType:id,type_name'
+                        );
+                    },
+            ])
+            ->orderBy('pizza_name');
+    }
 }
