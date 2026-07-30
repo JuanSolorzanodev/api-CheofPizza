@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V1\Public\BuilderController;
 use App\Http\Controllers\Api\V1\Public\CartController;
 use App\Http\Controllers\Api\V1\Public\CatalogController;
 use App\Http\Controllers\Api\V1\Public\GeoController;
+use App\Http\Controllers\Api\V1\Admin\PromotionController as AdminPromotionController;
 use App\Http\Controllers\Api\V1\Public\PromotionController;
 use Illuminate\Support\Facades\Route;
 
@@ -786,7 +787,7 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )->name('ingredient-prices.index');
 
-                    Route::put(
+                                       Route::put(
                         'ingredients/{ingredient}/prices',
                         [
                             AdminIngredientPriceController::class,
@@ -799,6 +800,81 @@ Route::prefix('v1')->group(function (): void {
                         )
                         ->name('ingredient-prices.update');
                 });
+
+            /*
+            |--------------------------------------------------------------------------
+            | Promociones administrativas
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                'promotions',
+                [
+                    AdminPromotionController::class,
+                    'index',
+                ],
+            )->name('promotions.index');
+
+            Route::post(
+                'promotions',
+                [
+                    AdminPromotionController::class,
+                    'store',
+                ],
+            )
+                ->middleware(
+                    'throttle:operator-actions'
+                )
+                ->name('promotions.store');
+
+            Route::get(
+                'promotions/{promotion}',
+                [
+                    AdminPromotionController::class,
+                    'show',
+                ],
+            )
+                ->whereNumber('promotion')
+                ->name('promotions.show');
+
+            Route::put(
+                'promotions/{promotion}',
+                [
+                    AdminPromotionController::class,
+                    'update',
+                ],
+            )
+                ->whereNumber('promotion')
+                ->middleware(
+                    'throttle:operator-actions'
+                )
+                ->name('promotions.update');
+
+            Route::patch(
+                'promotions/{promotion}/visibility',
+                [
+                    AdminPromotionController::class,
+                    'updateVisibility',
+                ],
+            )
+                ->whereNumber('promotion')
+                ->middleware(
+                    'throttle:operator-actions'
+                )
+                ->name('promotions.visibility');
+
+            Route::delete(
+                'promotions/{promotion}',
+                [
+                    AdminPromotionController::class,
+                    'destroy',
+                ],
+            )
+                ->whereNumber('promotion')
+                ->middleware(
+                    'throttle:operator-actions'
+                )
+                ->name('promotions.destroy');
 
             /*
             |--------------------------------------------------------------------------

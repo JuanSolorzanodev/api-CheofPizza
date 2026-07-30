@@ -76,36 +76,36 @@ class CartService
         return $this->loadCart($cart);
     }
 
-   /**
- * Agrega una pizza validada y cotizada por el backend.
- *
- * El frontend nunca decide el precio.
- *
- * @param array<string, mixed> $payload
- *
- * @throws ValidationException
- */
-public function addPizza(
-    Cart $cart,
-    array $payload,
-): Cart {
-    return $cart
-        ->getConnection()
-        ->transaction(
-            function () use (
-                $cart,
-                $payload
-            ): Cart {
-                $cart = $this->loadCart(
-                    $cart
-                );
-
-                $payload =
-                    $this->normalizePizzaPayload(
-                        $payload
+    /**
+     * Agrega una pizza validada y cotizada por el backend.
+     *
+     * El frontend nunca decide el precio.
+     *
+     * @param array<string, mixed> $payload
+     *
+     * @throws ValidationException
+     */
+    public function addPizza(
+        Cart $cart,
+        array $payload,
+    ): Cart {
+        return $cart
+            ->getConnection()
+            ->transaction(
+                function () use (
+                    $cart,
+                    $payload
+                ): Cart {
+                    $cart = $this->loadCart(
+                        $cart
                     );
 
-                /*
+                    $payload =
+                        $this->normalizePizzaPayload(
+                            $payload
+                        );
+
+                    /*
                  * BuilderQuoteService valida:
                  * - pizza;
                  * - tamaño;
@@ -116,116 +116,250 @@ public function addPizza(
                  * - extras;
                  * - precios de extras.
                  */
-                $quote =
-                    $this->quoteService->quote(
-                        $payload
+                    $quote =
+                        $this->quoteService->quote(
+                            $payload
+                        );
+
+                    $quantity = (int) (
+                        $payload['quantity'] ?? 1
                     );
 
-                $quantity = (int) (
-                    $payload['quantity'] ?? 1
-                );
+                    $sizeId = (int) (
+                        $payload['size_id'] ?? 0
+                    );
 
-                $sizeId = (int) (
-                    $payload['size_id'] ?? 0
-                );
+                    $isHalfAndHalf = (bool) (
+                        $payload['is_half_and_half']
+                        ?? false
+                    );
 
-                $isHalfAndHalf = (bool) (
-                    $payload['is_half_and_half']
-                    ?? false
-                );
+                    $pizzaAId = (int) (
+                        $payload['pizza_id'] ?? 0
+                    );
 
-                $pizzaAId = (int) (
-                    $payload['pizza_id'] ?? 0
-                );
+                    $pizzaBId = $isHalfAndHalf
+                        ? (int) (
+                            $payload['second_pizza_id']
+                            ?? 0
+                        )
+                        : null;
 
-                $pizzaBId = $isHalfAndHalf
-                    ? (int) (
-                        $payload['second_pizza_id']
-                        ?? 0
-                    )
-                    : null;
+                    $unitPrice = round(
+                        (float) (
+                            $quote['unit_price']
+                            ?? 0
+                        ),
+                        2
+                    );
 
-                $unitPrice = round(
-                    (float) (
-                        $quote['unit_price']
-                        ?? 0
-                    ),
-                    2
-                );
+                    $subTotal = round(
+                        $unitPrice * $quantity,
+                        2
+                    );
 
-                $subTotal = round(
-                    $unitPrice * $quantity,
-                    2
-                );
-
-                /*
+                    /*
                  * Defensa final antes de persistir.
                  *
                  * Aunque una validación anterior fuese
                  * modificada accidentalmente, nunca se
                  * guarda un ítem con precio cero o negativo.
                  */
-                if (
-                    $unitPrice <= 0 ||
-                    $subTotal <= 0
-                ) {
-                    throw ValidationException::withMessages([
-                        'size_id' =>
-                            'La pizza seleccionada no tiene un precio válido y no puede agregarse al carrito.',
-                    ]);
-                }
-
-                $customizations =
-                    $this->normalizeCustomizations(
-                        $payload['customizations']
-                        ?? []
-                    );
-
-                $existing =
-                    $this->findEquivalentPizzaItemInLoadedCart(
-                        cart: $cart,
-                        pizzaAId: $pizzaAId,
-                        pizzaBId: $pizzaBId,
-                        isHalf: $isHalfAndHalf,
-                        sizeId: $sizeId,
-                        customizations:
-                            $customizations,
-                    );
-
-                if ($existing !== null) {
-                    $newQuantity =
-                        (int) $existing->quantity
-                        + $quantity;
-
-                    if ($newQuantity > 10) {
-                        throw ValidationException::withMessages([
-                            'quantity' =>
-                                'La cantidad total para esta configuración no puede superar 10 pizzas.',
-                        ]);
-                    }
-
-                    $existing->quantity =
-                        $newQuantity;
-
-                    $existing->unit_price =
-                        $unitPrice;
-
-                    $existing->subtotal = round(
-                        $newQuantity * $unitPrice,
-                        2
-                    );
-
                     if (
-                        (float) $existing->subtotal
-                        <= 0
+                        $unitPrice <= 0 ||
+                        $subTotal <= 0
                     ) {
                         throw ValidationException::withMessages([
                             'size_id' =>
-                                'No fue posible calcular un subtotal válido para la pizza.',
+                            'La pizza seleccionada no tiene un precio válido y no puede agregarse al carrito.',
                         ]);
                     }
 
-                    $existing->save();
+                    $customizations =
+                        $this->normalizeCustomizations(
+                            $payload['customizations']
+                                ?? []
+                        );
+
+                    $existing =
+                        $this->findEquivalentPizzaItemInLoadedCart(
+                            cart: $cart,
+                            pizzaAId: $pizzaAId,
+                            pizzaBId: $pizzaBId,
+                            isHalf: $isHalfAndHalf,
+                            sizeId: $sizeId,
+                            customizations: $customizations,
+                        );
+
+                    if ($existing !== null) {
+                        $newQuantity =
+                            (int) $existing->quantity
+                            + $quantity;
+
+                        if ($newQuantity > 10) {
+                            throw ValidationException::withMessages([
+                                'quantity' =>
+                                'La cantidad total para esta configuración no puede superar 10 pizzas.',
+                            ]);
+                        }
+
+                        $existing->quantity =
+                            $newQuantity;
+
+                        $existing->unit_price =
+                            $unitPrice;
+
+                        $existing->subtotal = round(
+                            $newQuantity * $unitPrice,
+                            2
+                        );
+
+                        if (
+                            (float) $existing->subtotal
+                            <= 0
+                        ) {
+                            throw ValidationException::withMessages([
+                                'size_id' =>
+                                'No fue posible calcular un subtotal válido para la pizza.',
+                            ]);
+                        }
+
+                        $existing->save();
+
+                        $this->recalculateCartTotal(
+                            $cart
+                        );
+
+                        return $this->loadCart(
+                            $cart
+                        );
+                    }
+
+                    /** @var CartItem $item */
+                    $item = $cart
+                        ->cartItems()
+                        ->create([
+                            'item_type' => 'pizza',
+
+                            'is_half_and_half' =>
+                            $isHalfAndHalf,
+
+                            'pizza_id' =>
+                            $pizzaAId,
+
+                            'pizza_id_second' =>
+                            $pizzaBId,
+
+                            'promotion_id' =>
+                            null,
+
+                            'size_id' =>
+                            $sizeId,
+
+                            'quantity' =>
+                            $quantity,
+
+                            'unit_price' =>
+                            $unitPrice,
+
+                            'subtotal' =>
+                            $subTotal,
+                        ]);
+
+                    $breakdown = collect(
+                        $quote['customizations_breakdown'] ?? []
+                    )->keyBy(
+                        static fn(
+                            array $row
+                        ): string =>
+                        strtolower(
+                            (string) (
+                                $row['action']
+                                ?? 'extra'
+                            )
+                        )
+                            . '|'
+                            . (int) (
+                                $row['ingredient_id']
+                                ?? 0
+                            )
+                            . '|'
+                            . (string) (
+                                $row['applies_to']
+                                ?? 'ALL'
+                            )
+                    );
+
+                    foreach (
+                        $customizations
+                        as $customization
+                    ) {
+                        $actionName =
+                            $customization['action']
+                            === 'remove'
+                            ? 'Quitar'
+                            : 'Extra';
+
+                        $actionId =
+                            $this->personalizationActionIdOrFail(
+                                $actionName
+                            );
+
+                        $key =
+                            strtolower(
+                                $customization['action']
+                            )
+                            . '|'
+                            . $customization['ingredient_id']
+                            . '|'
+                            . $customization['applies_to'];
+
+                        $line = $breakdown->get(
+                            $key
+                        );
+
+                        $extraPrice = round(
+                            (float) (
+                                $line['line_total']
+                                ?? 0
+                            ),
+                            2
+                        );
+
+                        /*
+                     * Las acciones de tipo extra deben
+                     * conservar un precio positivo.
+                     */
+                        if (
+                            $customization['action']
+                            === 'extra' &&
+                            $extraPrice <= 0
+                        ) {
+                            throw ValidationException::withMessages([
+                                'customizations' =>
+                                'Uno de los ingredientes extra no tiene un precio válido.',
+                            ]);
+                        }
+
+                        $item
+                            ->cartItemPersonalizations()
+                            ->create([
+                                'ingredient_id' =>
+                                $customization['ingredient_id'],
+
+                                'personalization_action_id' =>
+                                $actionId,
+
+                                'applies_to' =>
+                                $customization['applies_to'],
+
+                                'extra_price' =>
+                                $extraPrice,
+
+                                'cart_promotion_item_id' =>
+                                null,
+                            ]);
+                    }
 
                     $this->recalculateCartTotal(
                         $cart
@@ -235,279 +369,398 @@ public function addPizza(
                         $cart
                     );
                 }
+            );
+    }
 
-                /** @var CartItem $item */
-                $item = $cart
-                    ->cartItems()
-                    ->create([
-                        'item_type' => 'pizza',
-
-                        'is_half_and_half' =>
-                            $isHalfAndHalf,
-
-                        'pizza_id' =>
-                            $pizzaAId,
-
-                        'pizza_id_second' =>
-                            $pizzaBId,
-
-                        'promotion_id' =>
-                            null,
-
-                        'size_id' =>
-                            $sizeId,
-
-                        'quantity' =>
-                            $quantity,
-
-                        'unit_price' =>
-                            $unitPrice,
-
-                        'subtotal' =>
-                            $subTotal,
-                    ]);
-
-                $breakdown = collect(
-                    $quote[
-                        'customizations_breakdown'
-                    ] ?? []
-                )->keyBy(
-                    static fn (
-                        array $row
-                    ): string =>
-                        strtolower(
-                            (string) (
-                                $row['action']
-                                ?? 'extra'
-                            )
-                        )
-                        .'|'
-                        .(int) (
-                            $row['ingredient_id']
-                            ?? 0
-                        )
-                        .'|'
-                        .(string) (
-                            $row['applies_to']
-                            ?? 'ALL'
-                        )
-                );
-
-                foreach (
-                    $customizations
-                    as $customization
-                ) {
-                    $actionName =
-                        $customization['action']
-                        === 'remove'
-                            ? 'Quitar'
-                            : 'Extra';
-
-                    $actionId =
-                        $this->personalizationActionIdOrFail(
-                            $actionName
+    public function addPromotion(
+        Cart $cart,
+        array $payload
+    ): Cart {
+        return $cart
+            ->getConnection()
+            ->transaction(
+                function () use (
+                    $cart,
+                    $payload
+                ): Cart {
+                    $cart =
+                        $this->loadCart(
+                            $cart
                         );
 
-                    $key =
-                        strtolower(
-                            $customization['action']
-                        )
-                        .'|'
-                        .$customization[
-                            'ingredient_id'
-                        ]
-                        .'|'
-                        .$customization[
-                            'applies_to'
-                        ];
+                    $promotion =
+                        $this->promotionService
+                        ->findActiveByIdOrFail(
+                            (int) $payload['promotion_id']
+                        );
 
-                    $line = $breakdown->get(
-                        $key
-                    );
+                    $selectedItemsPayload =
+                        $payload['selected_items'] ?? [];
 
-                    $extraPrice = round(
-                        (float) (
-                            $line['line_total']
-                            ?? 0
-                        ),
-                        2
-                    );
-
-                    /*
-                     * Las acciones de tipo extra deben
-                     * conservar un precio positivo.
-                     */
                     if (
-                        $customization['action']
-                            === 'extra' &&
-                        $extraPrice <= 0
+                        $selectedItemsPayload === [] &&
+                        !empty($payload['selected_pizza_ids'])
+                    ) {
+                        $selectedItemsPayload =
+                            collect(
+                                $payload['selected_pizza_ids']
+                            )
+                            ->map(
+                                static fn(
+                                    mixed $pizzaId
+                                ): array => [
+                                    'pizza_id' =>
+                                    (int) $pizzaId,
+
+                                    'customizations' =>
+                                    [],
+                                ]
+                            )
+                            ->values()
+                            ->all();
+                    }
+
+                    $requestedSizeId =
+                        isset(
+                            $payload['size_id']
+                        )
+                        ? (int) $payload['size_id']
+                        : null;
+
+                    $validatedSelection =
+                        $this->promotionService
+                        ->validateSelectedItemsForPromotion(
+                            promotion: $promotion,
+
+                            selectedItems: $selectedItemsPayload,
+
+                            requestedSizeId: $requestedSizeId
+                        );
+
+                    $quantity =
+                        (int) (
+                            $payload['quantity'] ?? 1
+                        );
+
+                    $sizeId =
+                        (int) $validatedSelection['size_id'];
+
+                    $basePrice =
+                        round(
+                            (float) $validatedSelection['base_price'],
+                            2
+                        );
+
+                    $selectedItems =
+                        collect(
+                            $validatedSelection['selected_items']
+                        )->values();
+
+                    $ingredientIds =
+                        $selectedItems
+                        ->flatMap(
+                            static fn(
+                                array $row
+                            ): Collection =>
+                            collect(
+                                $row['customizations'] ?? []
+                            )->pluck(
+                                'ingredient_id'
+                            )
+                        )
+                        ->filter()
+                        ->map(
+                            static fn(
+                                mixed $id
+                            ): int =>
+                            (int) $id
+                        )
+                        ->unique()
+                        ->values();
+
+                    $ingredients =
+                        Ingredient::query()
+                        ->with([
+                            'sizes' =>
+                            static fn(
+                                $query
+                            ) =>
+                            $query->where(
+                                'sizes.id',
+                                $sizeId
+                            ),
+                        ])
+                        ->whereIn(
+                            'id',
+                            $ingredientIds
+                        )
+                        ->get()
+                        ->keyBy('id');
+
+                    $promotionExtrasTotal =
+                        0.0;
+
+                    foreach (
+                        $selectedItems as $row
+                    ) {
+                        foreach (
+                            (
+                                $row['customizations'] ?? []
+                            ) as $customization
+                        ) {
+                            if (
+                                (
+                                    $customization['action'] ?? null
+                                ) !== 'extra'
+                            ) {
+                                continue;
+                            }
+
+                            $ingredient =
+                                $ingredients->get(
+                                    (int) $customization['ingredient_id']
+                                );
+
+                            $pivot =
+                                $ingredient
+                                ?->sizes
+                                ?->first()
+                                ?->pivot;
+
+                            $promotionExtrasTotal +=
+                                (float) (
+                                    $pivot
+                                    ?->extra_price
+                                    ?? 0
+                                );
+                        }
+                    }
+
+                    $promotionExtrasTotal =
+                        round(
+                            $promotionExtrasTotal,
+                            2
+                        );
+
+                    $unitPrice =
+                        round(
+                            $basePrice +
+                                $promotionExtrasTotal,
+                            2
+                        );
+
+                    $subTotal =
+                        round(
+                            $unitPrice *
+                                $quantity,
+                            2
+                        );
+
+                    if (
+                        $unitPrice <= 0 ||
+                        $subTotal <= 0
                     ) {
                         throw ValidationException::withMessages([
-                            'customizations' =>
-                                'Uno de los ingredientes extra no tiene un precio válido.',
+                            'promotion_id' => [
+                                'La promoción no tiene un precio válido.',
+                            ],
                         ]);
                     }
 
-                    $item
-                        ->cartItemPersonalizations()
+                    $normalizedSelectedItems =
+                        $selectedItems
+                        ->map(
+                            function (
+                                array $row
+                            ): array {
+                                return [
+                                    'pizza_id' =>
+                                    (int) $row['pizza']->id,
+
+                                    'customizations' =>
+                                    $this
+                                        ->normalizeCustomizations(
+                                            $row['customizations'] ?? []
+                                        ),
+                                ];
+                            }
+                        )
+                        ->all();
+
+                    $existing =
+                        $this
+                        ->findEquivalentPromotionItemInLoadedCart(
+                            cart: $cart,
+
+                            promotionId: (int) $promotion->id,
+
+                            sizeId: $sizeId,
+
+                            selectedItems: $normalizedSelectedItems
+                        );
+
+                    if ($existing !== null) {
+                        $newQuantity =
+                            (int) $existing
+                                ->quantity +
+                            $quantity;
+
+                        if ($newQuantity > 10) {
+                            throw ValidationException::withMessages([
+                                'quantity' => [
+                                    'La cantidad total de esta promoción no puede superar 10.',
+                                ],
+                            ]);
+                        }
+
+                        $existing->forceFill([
+                            'quantity' =>
+                            $newQuantity,
+
+                            'unit_price' =>
+                            $unitPrice,
+
+                            'subtotal' =>
+                            round(
+                                $newQuantity *
+                                    $unitPrice,
+                                2
+                            ),
+                        ])->save();
+
+                        $this->recalculateCartTotal(
+                            $cart
+                        );
+
+                        return $this->loadCart(
+                            $cart
+                        );
+                    }
+
+                    /** @var CartItem $item */
+                    $item =
+                        $cart
+                        ->cartItems()
                         ->create([
-                            'ingredient_id' =>
-                                $customization[
-                                    'ingredient_id'
-                                ],
+                            'item_type' =>
+                            'promotion',
 
-                            'personalization_action_id' =>
-                                $actionId,
+                            'is_half_and_half' =>
+                            false,
 
-                            'applies_to' =>
-                                $customization[
-                                    'applies_to'
-                                ],
+                            'pizza_id' =>
+                            null,
 
-                            'extra_price' =>
-                                $extraPrice,
+                            'pizza_id_second' =>
+                            null,
 
-                            'cart_promotion_item_id' =>
-                                null,
+                            'promotion_id' =>
+                            (int) $promotion
+                                ->id,
+
+                            'size_id' =>
+                            $sizeId,
+
+                            'quantity' =>
+                            $quantity,
+
+                            'unit_price' =>
+                            $unitPrice,
+
+                            'subtotal' =>
+                            $subTotal,
                         ]);
-                }
 
-                $this->recalculateCartTotal(
-                    $cart
-                );
+                    foreach (
+                        $selectedItems as $row
+                    ) {
+                        $pizza =
+                            $row['pizza'];
 
-                return $this->loadCart(
-                    $cart
-                );
-            }
-        );
-}
+                        $customizations =
+                            $this
+                            ->normalizeCustomizations(
+                                $row['customizations'] ?? []
+                            );
 
-    public function addPromotion(Cart $cart, array $payload): Cart
-    {
-        return $cart->getConnection()->transaction(function () use ($cart, $payload) {
-            $cart = $this->loadCart($cart);
+                        $promotionItem =
+                            $item
+                            ->cartPromotionItems()
+                            ->create([
+                                'pizza_id' =>
+                                (int) $pizza
+                                    ->id,
+                            ]);
 
-            $promotion = $this->promotionService->findActiveByIdOrFail((int) $payload['promotion_id']);
+                        foreach (
+                            $customizations
+                            as $customization
+                        ) {
+                            $actionName =
+                                $customization['action'] === 'remove'
+                                ? 'Quitar'
+                                : 'Extra';
 
-            $selectedItemsPayload = $payload['selected_items'] ?? [];
-            if (empty($selectedItemsPayload) && !empty($payload['selected_pizza_ids'])) {
-                $selectedItemsPayload = collect($payload['selected_pizza_ids'])
-                    ->map(fn ($pizzaId) => [
-                        'pizza_id' => (int) $pizzaId,
-                        'customizations' => [],
-                    ])
-                    ->values()
-                    ->all();
-            }
+                            $actionId =
+                                $this
+                                ->personalizationActionIdOrFail(
+                                    $actionName
+                                );
 
-            $validatedSelection = $this->promotionService->validateSelectedItemsForPromotion(
-                $promotion,
-                $selectedItemsPayload
-            );
+                            $ingredient =
+                                $ingredients->get(
+                                    (int) $customization['ingredient_id']
+                                );
 
-            $quantity = (int) ($payload['quantity'] ?? 1);
-            $sizeId = (int) $validatedSelection['size_id'];
-            $selectedItems = collect($validatedSelection['selected_items'])->values();
+                            $pivot =
+                                $ingredient
+                                ?->sizes
+                                ?->first()
+                                ?->pivot;
 
-            $ingredientIds = $selectedItems
-                ->flatMap(fn ($row) => collect($row['customizations'] ?? [])->pluck('ingredient_id'))
-                ->filter()
-                ->map(fn ($id) => (int) $id)
-                ->unique()
-                ->values();
+                            $extraPrice =
+                                $customization['action'] === 'extra'
+                                ? (float) (
+                                    $pivot
+                                    ?->extra_price
+                                    ?? 0
+                                )
+                                : 0.0;
 
-            $ingredients = Ingredient::query()
-                ->with(['sizes' => fn ($q) => $q->where('sizes.id', $sizeId)])
-                ->whereIn('id', $ingredientIds)
-                ->get()
-                ->keyBy('id');
+                            $item
+                                ->cartItemPersonalizations()
+                                ->create([
+                                    'cart_promotion_item_id' =>
+                                    (int) $promotionItem
+                                        ->id,
 
-            $promotionExtrasTotal = 0.0;
+                                    'ingredient_id' =>
+                                    (int) $customization['ingredient_id'],
 
-            foreach ($selectedItems as $row) {
-                foreach (($row['customizations'] ?? []) as $customization) {
-                    if (($customization['action'] ?? null) !== 'extra') {
-                        continue;
+                                    'personalization_action_id' =>
+                                    $actionId,
+
+                                    'applies_to' =>
+                                    'ALL',
+
+                                    'extra_price' =>
+                                    round(
+                                        $extraPrice,
+                                        2
+                                    ),
+                                ]);
+                        }
                     }
 
-                    $ingredient = $ingredients->get((int) $customization['ingredient_id']);
-                    $pivot = $ingredient?->sizes?->first()?->pivot;
-                    $promotionExtrasTotal += (float) ($pivot?->extra_price ?? 0);
+                    $this->recalculateCartTotal(
+                        $cart
+                    );
+
+                    return $this->loadCart(
+                        $cart
+                    );
                 }
-            }
-
-            $promotionExtrasTotal = round($promotionExtrasTotal, 2);
-
-            $unitPrice = round((float) $promotion->promotion_price + $promotionExtrasTotal, 2);
-            $subTotal = round($unitPrice * $quantity, 2);
-
-            $existing = $this->findEquivalentPromotionItemInLoadedCart(
-                cart: $cart,
-                promotionId: (int) $promotion->id,
-                sizeId: $sizeId,
-                selectedItems: $selectedItems->map(function ($row) {
-                    return [
-                        'pizza_id' => (int) $row['pizza']->id,
-                        'customizations' => $this->normalizeCustomizations($row['customizations'] ?? []),
-                    ];
-                })->all()
             );
-
-            if ($existing) {
-                $existing->quantity = (int) $existing->quantity + $quantity;
-                $existing->unit_price = $unitPrice;
-                $existing->subtotal = round(((float) $existing->quantity) * $unitPrice, 2);
-                $existing->save();
-
-                $this->recalculateCartTotal($cart);
-                return $this->loadCart($cart);
-            }
-
-            /** @var CartItem $item */
-            $item = $cart->cartItems()->create([
-                'item_type' => 'promotion',
-                'is_half_and_half' => false,
-                'pizza_id' => null,
-                'pizza_id_second' => null,
-                'promotion_id' => (int) $promotion->id,
-                'size_id' => $sizeId,
-                'quantity' => $quantity,
-                'unit_price' => $unitPrice,
-                'subtotal' => $subTotal,
-            ]);
-
-            foreach ($selectedItems as $row) {
-                $pizza = $row['pizza'];
-                $customizations = $this->normalizeCustomizations($row['customizations'] ?? []);
-
-                $promoItem = $item->cartPromotionItems()->create([
-                    'pizza_id' => (int) $pizza->id,
-                ]);
-
-                foreach ($customizations as $customization) {
-                    $actionName = $customization['action'] === 'remove' ? 'Quitar' : 'Extra';
-                    $actionId = $this->personalizationActionIdOrFail($actionName);
-
-                    $ingredient = $ingredients->get((int) $customization['ingredient_id']);
-                    $pivot = $ingredient?->sizes?->first()?->pivot;
-                    $extraPrice = $customization['action'] === 'extra'
-                        ? (float) ($pivot?->extra_price ?? 0)
-                        : 0.0;
-
-                    $item->cartItemPersonalizations()->create([
-                        'cart_promotion_item_id' => $promoItem->id,
-                        'ingredient_id' => (int) $customization['ingredient_id'],
-                        'personalization_action_id' => $actionId,
-                        'applies_to' => 'ALL',
-                        'extra_price' => round($extraPrice, 2),
-                    ]);
-                }
-            }
-
-            $this->recalculateCartTotal($cart);
-            return $this->loadCart($cart);
-        });
     }
 
     public function updateQuantity(Cart $cart, int $cartItemId, int $quantity): Cart
@@ -571,6 +824,7 @@ public function addPizza(
             'cartItems.pizzaSecond.category',
             'cartItems.promotion.promotionDetails.category',
             'cartItems.promotion.promotionDetails.size',
+            'cartItems.promotion.sizePrices.size',
             'cartItems.size',
             'cartItems.cartPromotionItems.pizza.category',
             'cartItems.cartItemPersonalizations.ingredient',
@@ -624,7 +878,7 @@ public function addPizza(
 
         if ((!is_array($customizations) || empty($customizations)) && is_array($payload['extras'] ?? null)) {
             $customizations = collect($payload['extras'])
-                ->map(fn ($extra) => [
+                ->map(fn($extra) => [
                     'action' => 'extra',
                     'ingredient_id' => $extra['ingredient_id'] ?? null,
                     'applies_to' => $extra['applies_to'] ?? 'ALL',
@@ -640,12 +894,12 @@ public function addPizza(
     private function normalizeCustomizations(array $customizations): array
     {
         return collect($customizations)
-            ->map(fn ($c) => [
+            ->map(fn($c) => [
                 'action' => strtolower((string) ($c['action'] ?? 'extra')),
                 'ingredient_id' => (int) ($c['ingredient_id'] ?? 0),
                 'applies_to' => (string) ($c['applies_to'] ?? 'ALL'),
             ])
-            ->filter(fn ($c) => in_array($c['action'], ['extra', 'remove'], true) && $c['ingredient_id'] > 0)
+            ->filter(fn($c) => in_array($c['action'], ['extra', 'remove'], true) && $c['ingredient_id'] > 0)
             ->sortBy([['action', 'asc'], ['ingredient_id', 'asc'], ['applies_to', 'asc']])
             ->values()
             ->all();
@@ -658,7 +912,7 @@ public function addPizza(
         array $selectedItems
     ): ?CartItem {
         $wanted = collect($selectedItems)
-            ->map(fn ($row) => [
+            ->map(fn($row) => [
                 'pizza_id' => (int) $row['pizza_id'],
                 'customizations' => $this->normalizeCustomizations($row['customizations'] ?? []),
             ])
@@ -677,7 +931,7 @@ public function addPizza(
                 ->map(function ($promoItem) use ($item) {
                     $customizations = $item->cartItemPersonalizations
                         ->where('cart_promotion_item_id', $promoItem->id)
-                        ->map(fn ($p) => [
+                        ->map(fn($p) => [
                             'action' => strtolower((string) $p->personalizationAction?->action_name) === 'quitar' ? 'remove' : 'extra',
                             'ingredient_id' => (int) $p->ingredient_id,
                             'applies_to' => 'ALL',
@@ -724,13 +978,13 @@ public function addPizza(
         if ($isHalf) {
             $candidates = $candidates->where('pizza_id_second', $pizzaBId)->values();
         } else {
-            $candidates = $candidates->filter(fn (CartItem $i) => $i->pizza_id_second === null)->values();
+            $candidates = $candidates->filter(fn(CartItem $i) => $i->pizza_id_second === null)->values();
         }
 
         foreach ($candidates as $item) {
             $have = $item->cartItemPersonalizations
                 ->whereNull('cart_promotion_item_id')
-                ->map(fn ($p) => [
+                ->map(fn($p) => [
                     'action' => strtolower((string) $p->personalizationAction?->action_name) === 'quitar' ? 'remove' : 'extra',
                     'ingredient_id' => (int) $p->ingredient_id,
                     'applies_to' => (string) $p->applies_to,
@@ -758,7 +1012,7 @@ public function addPizza(
                     ->map(function ($promoItem) use ($guestItem) {
                         $customizations = $guestItem->cartItemPersonalizations
                             ->where('cart_promotion_item_id', $promoItem->id)
-                            ->map(fn ($p) => [
+                            ->map(fn($p) => [
                                 'action' => strtolower((string) $p->personalizationAction?->action_name) === 'quitar' ? 'remove' : 'extra',
                                 'ingredient_id' => (int) $p->ingredient_id,
                                 'applies_to' => 'ALL',
@@ -798,7 +1052,7 @@ public function addPizza(
 
             $customizations = $guestItem->cartItemPersonalizations
                 ->whereNull('cart_promotion_item_id')
-                ->map(fn ($p) => [
+                ->map(fn($p) => [
                     'action' => strtolower((string) $p->personalizationAction?->action_name) === 'quitar' ? 'remove' : 'extra',
                     'ingredient_id' => (int) $p->ingredient_id,
                     'applies_to' => (string) $p->applies_to,
