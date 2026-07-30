@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Admin\Catalog\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Api\V1\Admin\Catalog\CategoryPriceController as AdminCategoryPriceController;
+use App\Http\Controllers\Api\V1\Admin\Catalog\SizeController as AdminSizeController;
 use App\Http\Controllers\Api\V1\Admin\MachineLearningController;
 use App\Http\Controllers\Api\V1\Auth\AuthenticatedUserController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
@@ -411,6 +414,166 @@ Route::prefix('v1')->group(function (): void {
         ->prefix('admin')
         ->name('api.v1.admin.')
         ->group(function (): void {
+            /*
+            |--------------------------------------------------------------------------
+            | Catálogo administrativo
+            |--------------------------------------------------------------------------
+            */
+
+            Route::prefix('catalog')
+                ->name('catalog.')
+                ->group(function (): void {
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Categorías
+                    |--------------------------------------------------------------------------
+                    */
+
+                    Route::get(
+                        'categories',
+                        [
+                            AdminCategoryController::class,
+                            'index',
+                        ],
+                    )->name('categories.index');
+
+                    Route::post(
+                        'categories',
+                        [
+                            AdminCategoryController::class,
+                            'store',
+                        ],
+                    )
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('categories.store');
+
+                    Route::get(
+                        'categories/{category}',
+                        [
+                            AdminCategoryController::class,
+                            'show',
+                        ],
+                    )
+                        ->whereNumber('category')
+                        ->name('categories.show');
+
+                    Route::put(
+                        'categories/{category}',
+                        [
+                            AdminCategoryController::class,
+                            'update',
+                        ],
+                    )
+                        ->whereNumber('category')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('categories.update');
+
+                    Route::delete(
+                        'categories/{category}',
+                        [
+                            AdminCategoryController::class,
+                            'destroy',
+                        ],
+                    )
+                        ->whereNumber('category')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('categories.destroy');
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Tamaños
+                    |--------------------------------------------------------------------------
+                    */
+
+                    Route::get(
+                        'sizes',
+                        [
+                            AdminSizeController::class,
+                            'index',
+                        ],
+                    )->name('sizes.index');
+
+                    Route::post(
+                        'sizes',
+                        [
+                            AdminSizeController::class,
+                            'store',
+                        ],
+                    )
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('sizes.store');
+
+                    Route::get(
+                        'sizes/{size}',
+                        [
+                            AdminSizeController::class,
+                            'show',
+                        ],
+                    )
+                        ->whereNumber('size')
+                        ->name('sizes.show');
+
+                    Route::put(
+                        'sizes/{size}',
+                        [
+                            AdminSizeController::class,
+                            'update',
+                        ],
+                    )
+                        ->whereNumber('size')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('sizes.update');
+
+                    Route::delete(
+                        'sizes/{size}',
+                        [
+                            AdminSizeController::class,
+                            'destroy',
+                        ],
+                    )
+                        ->whereNumber('size')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('sizes.destroy');
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Precios por categoría y tamaño
+                    |--------------------------------------------------------------------------
+                    */
+
+                    Route::get(
+                        'prices',
+                        [
+                            AdminCategoryPriceController::class,
+                            'index',
+                        ],
+                    )->name('prices.index');
+
+                    Route::put(
+                        'prices',
+                        [
+                            AdminCategoryPriceController::class,
+                            'update',
+                        ],
+                    )
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('prices.update');
+                });
+
             /*
             |--------------------------------------------------------------------------
             | Machine Learning
