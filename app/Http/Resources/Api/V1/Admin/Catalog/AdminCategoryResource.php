@@ -9,30 +9,28 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 final class AdminCategoryResource extends JsonResource
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [
             'id' => (int) $this->id,
 
-            'name' =>
-                (string) $this->category_name,
+            'name' => (string) $this->category_name,
 
-            'description' =>
-                $this->description,
+            'description' => $this->description,
 
-            'pizzas_count' =>
-                (int) (
-                    $this->pizzas_count ?? 0
-                ),
+            'pizzas_count' => (int) (
+                $this->pizzas_count ?? 0
+            ),
 
-            'prices_count' =>
-                (int) (
-                    $this->category_size_prices_count
-                    ?? 0
-                ),
+            'prices_count' => (int) (
+                $this->category_size_prices_count ?? 0
+            ),
 
             'size_prices' =>
-                AdminCategoryResource ::collection(
+                AdminCategoryPriceResource::collection(
                     $this->whenLoaded(
                         'categorySizePrices'
                     )
