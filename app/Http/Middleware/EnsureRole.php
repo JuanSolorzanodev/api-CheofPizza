@@ -1,24 +1,88 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
-class EnsureRole
+final class EnsureRole
 {
-    public function handle(Request $request, Closure $next, string $roles)
-    {
+    /**
+     * Restringe una ruta a uno o varios roles.
+     *
+     * Ejemplos:
+     *
+     * role:admin
+     * role:operator,admin
+     * role:customer,operator,admin
+     *
+     * @param string ...$roles Roles enviados por Laravel
+     */
+    public function handle(
+        Request $request,
+        Closure $next,
+        string ...$roles,
+    ): Response {
         $user = $request->user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+
+        if ($user === null) {
+            return new JsonResponse([
+                'success' => false,
+                'message' =>
+                    'Debes iniciar sesión para acceder a este recurso.',
+                'code' => 'UNAUTHENTICATED',
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
-        $allowed = array_map('trim', explode(',', $roles));
-        $roleName = $user->role?->role_name;
+        /*
+         * Normalizamos los parámetros por seguridad.
+         *
+         * Laravel normalmente entrega:
+         * ['operator', 'admin']
+         *
+         * También soportamos accidentalmente:
+         * ['operator,admin']
+         */
+        $allowedRoles = collect($roles)
+            ->flatMap(
+                static fn (string $role): array =>
+                    explode(',', $role),
+            )
+            ->map(
+                static fn (string $role): string =>
+                    strtolower(trim($role)),
+            )
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
 
-        if (!$roleName || !in_array($roleName, $allowed, true)) {
-            return response()->json(['message' => 'Forbidden'], 403);
+        $userRole = strtolower(
+            trim(
+                (string) (
+                    $user->role?->role_name ?? ''
+                ),
+            ),
+        );
+
+        if (
+            $userRole === '' ||
+            ! in_array(
+                $userRole,
+                $allowedRoles,
+                true,
+            )
+        ) {
+            return new JsonResponse([
+                'success' => false,
+                'message' =>
+                    'No tienes permisos para acceder a este recurso.',
+                'code' => 'FORBIDDEN',
+            ], Response::HTTP_FORBIDDEN);
         }
 
         return $next($request);
