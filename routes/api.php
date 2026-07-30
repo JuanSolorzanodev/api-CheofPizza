@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Admin\Catalog\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\Catalog\CategoryPriceController as AdminCategoryPriceController;
+use App\Http\Controllers\Api\V1\Admin\Catalog\PizzaController as AdminPizzaController;
 use App\Http\Controllers\Api\V1\Admin\Catalog\SizeController as AdminSizeController;
 use App\Http\Controllers\Api\V1\Admin\MachineLearningController;
 use App\Http\Controllers\Api\V1\Auth\AuthenticatedUserController;
@@ -57,10 +58,6 @@ Route::prefix('v1')->group(function (): void {
     |--------------------------------------------------------------------------
     | Webhook público de PayPal
     |--------------------------------------------------------------------------
-    |
-    | PayPal llama directamente a este endpoint.
-    | No utiliza Sanctum.
-    |
     */
 
     Route::post(
@@ -572,6 +569,81 @@ Route::prefix('v1')->group(function (): void {
                             'throttle:operator-actions'
                         )
                         ->name('prices.update');
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Pizzas
+                    |--------------------------------------------------------------------------
+                    */
+
+                    Route::get(
+                        'pizzas',
+                        [
+                            AdminPizzaController::class,
+                            'index',
+                        ],
+                    )->name('pizzas.index');
+
+                    Route::post(
+                        'pizzas',
+                        [
+                            AdminPizzaController::class,
+                            'store',
+                        ],
+                    )
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('pizzas.store');
+
+                    Route::get(
+                        'pizzas/{pizza}',
+                        [
+                            AdminPizzaController::class,
+                            'show',
+                        ],
+                    )
+                        ->whereNumber('pizza')
+                        ->name('pizzas.show');
+
+                    Route::put(
+                        'pizzas/{pizza}',
+                        [
+                            AdminPizzaController::class,
+                            'update',
+                        ],
+                    )
+                        ->whereNumber('pizza')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('pizzas.update');
+
+                    Route::patch(
+                        'pizzas/{pizza}/visibility',
+                        [
+                            AdminPizzaController::class,
+                            'updateVisibility',
+                        ],
+                    )
+                        ->whereNumber('pizza')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('pizzas.visibility');
+
+                    Route::delete(
+                        'pizzas/{pizza}',
+                        [
+                            AdminPizzaController::class,
+                            'destroy',
+                        ],
+                    )
+                        ->whereNumber('pizza')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('pizzas.destroy');
                 });
 
             /*
@@ -583,10 +655,6 @@ Route::prefix('v1')->group(function (): void {
             Route::prefix('machine-learning')
                 ->name('machine-learning.')
                 ->group(function (): void {
-                    /*
-                     * Devuelve el último pronóstico activo
-                     * guardado en Laravel.
-                     */
                     Route::get(
                         'latest',
                         [
@@ -595,10 +663,6 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )->name('latest');
 
-                    /*
-                     * Devuelve el historial paginado
-                     * de ejecuciones predictivas.
-                     */
                     Route::get(
                         'history',
                         [
@@ -607,9 +671,6 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )->name('history');
 
-                    /*
-                     * Devuelve una ejecución específica.
-                     */
                     Route::get(
                         'runs/{uuid}',
                         [
@@ -620,10 +681,6 @@ Route::prefix('v1')->group(function (): void {
                         ->whereUuid('uuid')
                         ->name('runs.show');
 
-                    /*
-                     * Consulta directamente la información
-                     * del modelo remoto desplegado en FastAPI.
-                     */
                     Route::get(
                         'service/model',
                         [
@@ -632,10 +689,6 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )->name('service.model');
 
-                    /*
-                     * Genera una previsualización remota,
-                     * pero no guarda datos en Laravel.
-                     */
                     Route::post(
                         'preview',
                         [
@@ -648,10 +701,6 @@ Route::prefix('v1')->group(function (): void {
                         )
                         ->name('preview');
 
-                    /*
-                     * Genera un pronóstico mediante FastAPI
-                     * y lo guarda en las tablas predictivas.
-                     */
                     Route::post(
                         'generate',
                         [
@@ -664,10 +713,6 @@ Route::prefix('v1')->group(function (): void {
                         )
                         ->name('generate');
 
-                    /*
-                     * Importa manualmente un pronóstico JSON
-                     * generado fuera del sistema.
-                     */
                     Route::post(
                         'import',
                         [
