@@ -14,108 +14,125 @@ final class AdminPizzaResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $cartItemsPrimary = (int) (
+            $this->cart_items_count ?? 0
+        );
+
+        $cartItemsSecondary = (int) (
+            $this->cart_items_second_count ?? 0
+        );
+
+        $orderItemsPrimary = (int) (
+            $this->order_items_count ?? 0
+        );
+
+        $orderItemsSecondary = (int) (
+            $this->order_items_second_count ?? 0
+        );
+
+        $cartPromotions = (int) (
+            $this->cart_promotion_items_count ?? 0
+        );
+
+        $orderPromotions = (int) (
+            $this->order_promotion_items_count ?? 0
+        );
+
+        $salesHistory = (int) (
+            $this->pizza_sales_histories_count ?? 0
+        );
+
         return [
             'id' => (int) $this->id,
 
-            'category_id' =>
-                (int) $this->category_id,
+            'category_id' => (int) $this->category_id,
 
-            'name' =>
-                (string) $this->pizza_name,
+            'name' => (string) $this->pizza_name,
 
-            'description' =>
-                $this->description,
+            'description' => $this->description,
 
-            'image_url' =>
-                $this->image_url,
+            'image_url' => $this->image_url,
 
-            'is_visible' =>
-                (bool) $this->is_visible,
+            'is_visible' => (bool) $this->is_visible,
 
-            'category' =>
-                $this->whenLoaded(
-                    'category',
-                    fn (): array => [
-                        'id' =>
-                            (int) $this->category->id,
+            'category' => $this->whenLoaded(
+                'category',
+                fn (): array => [
+                    'id' => (int) $this->category->id,
+                    'name' => (string) $this
+                        ->category
+                        ->category_name,
+                ],
+            ),
 
-                        'name' =>
-                            (string) $this
-                                ->category
-                                ->category_name,
-                    ],
-                ),
+            'ingredients' => $this->whenLoaded(
+                'ingredients',
+                fn (): array => $this->ingredients
+                    ->map(
+                        static fn ($ingredient): array => [
+                            'id' => (int) $ingredient->id,
 
-            'ingredients' =>
-                $this->whenLoaded(
-                    'ingredients',
-                    fn () => $this->ingredients
-                        ->map(
-                            static fn ($ingredient): array => [
-                                'id' =>
-                                    (int) $ingredient->id,
+                            'name' => (string) $ingredient
+                                ->ingredient_name,
 
-                                'name' =>
-                                    (string) $ingredient
-                                        ->ingredient_name,
-
-                                'type' =>
-                                    $ingredient
+                            'type' => $ingredient
+                                ->ingredientType
+                                ? [
+                                    'id' => (int) $ingredient
                                         ->ingredientType
-                                        ? [
-                                            'id' =>
-                                                (int) $ingredient
-                                                    ->ingredientType
-                                                    ->id,
+                                        ->id,
 
-                                            'name' =>
-                                                (string) $ingredient
-                                                    ->ingredientType
-                                                    ->type_name,
-                                        ]
-                                        : null,
-                            ],
-                        )
-                        ->values()
-                        ->all(),
-                ),
+                                    'name' => (string) $ingredient
+                                        ->ingredientType
+                                        ->type_name,
+                                ]
+                                : null,
+                        ],
+                    )
+                    ->values()
+                    ->all(),
+            ),
 
-            'ingredients_count' =>
-                (int) (
-                    $this->ingredients_count ?? 0
-                ),
+            'ingredients_count' => (int) (
+                $this->ingredients_count ?? 0
+            ),
 
             'usage' => [
-                'cart_items' =>
-                    (int) (
-                        $this->cart_items_count ?? 0
-                    ),
+                'cart_items' => $cartItemsPrimary,
 
-                'cart_promotions' =>
-                    (int) (
-                        $this->cart_promotion_items_count ?? 0
-                    ),
+                'cart_items_second' => $cartItemsSecondary,
 
-                'order_items' =>
-                    (int) (
-                        $this->order_items_count ?? 0
-                    ),
+                'cart_items_total' =>
+                    $cartItemsPrimary +
+                    $cartItemsSecondary,
 
-                'order_promotions' =>
-                    (int) (
-                        $this->order_promotion_items_count ?? 0
-                    ),
+                'cart_promotions' => $cartPromotions,
 
-                'sales_history' =>
-                    (int) (
-                        $this->pizza_sales_histories_count ?? 0
-                    ),
+                'order_items' => $orderItemsPrimary,
+
+                'order_items_second' => $orderItemsSecondary,
+
+                'order_items_total' =>
+                    $orderItemsPrimary +
+                    $orderItemsSecondary,
+
+                'order_promotions' => $orderPromotions,
+
+                'sales_history' => $salesHistory,
+
+                'total' =>
+                    $cartItemsPrimary +
+                    $cartItemsSecondary +
+                    $cartPromotions +
+                    $orderItemsPrimary +
+                    $orderItemsSecondary +
+                    $orderPromotions +
+                    $salesHistory,
             ],
 
-            'can_delete' =>
-                (bool) (
-                    $this->can_delete ?? false
-                ),
+            'can_delete' => (bool) (
+                $this->can_delete ?? false
+            ),
 
             'created_at' =>
                 $this->created_at?->toISOString(),

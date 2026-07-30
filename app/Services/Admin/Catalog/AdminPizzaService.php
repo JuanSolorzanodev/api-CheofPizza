@@ -20,30 +20,20 @@ final class AdminPizzaService
             ->with([
                 'category:id,category_name',
 
-                'ingredients' =>
-                    static function ($query): void {
-                        $query
-                            ->select(
-                                'ingredients.id',
-                                'ingredient_type_id',
-                                'ingredient_name'
-                            )
-                            ->with(
-                                'ingredientType:id,type_name'
-                            )
-                            ->orderBy(
-                                'ingredient_name'
-                            );
-                    },
+                'ingredients' => static function ($query): void {
+                    $query
+                        ->select(
+                            'ingredients.id',
+                            'ingredient_type_id',
+                            'ingredient_name'
+                        )
+                        ->with(
+                            'ingredientType:id,type_name'
+                        )
+                        ->orderBy('ingredient_name');
+                },
             ])
-            ->withCount([
-                'ingredients',
-                'cartItems',
-                'cartPromotionItems',
-                'orderItems',
-                'orderPromotionItems',
-                'pizzaSalesHistories',
-            ])
+            ->withCount('ingredients')
             ->orderBy('pizza_name')
             ->get()
             ->each(
@@ -57,31 +47,21 @@ final class AdminPizzaService
         $pizza->load([
             'category:id,category_name',
 
-            'ingredients' =>
-                static function ($query): void {
-                    $query
-                        ->select(
-                            'ingredients.id',
-                            'ingredient_type_id',
-                            'ingredient_name'
-                        )
-                        ->with(
-                            'ingredientType:id,type_name'
-                        )
-                        ->orderBy(
-                            'ingredient_name'
-                        );
-                },
+            'ingredients' => static function ($query): void {
+                $query
+                    ->select(
+                        'ingredients.id',
+                        'ingredient_type_id',
+                        'ingredient_name'
+                    )
+                    ->with(
+                        'ingredientType:id,type_name'
+                    )
+                    ->orderBy('ingredient_name');
+            },
         ]);
 
-        $pizza->loadCount([
-            'ingredients',
-            'cartItems',
-            'cartPromotionItems',
-            'orderItems',
-            'orderPromotionItems',
-            'pizzaSalesHistories',
-        ]);
+        $pizza->loadCount('ingredients');
 
         return $this->appendUsageState($pizza);
     }
@@ -118,7 +98,7 @@ final class AdminPizzaService
 
                 $pizza->ingredients()->sync(
                     $this->ingredientIds(
-                        $data['ingredient_ids']
+                        $data['ingredient_ids'] ?? []
                     )
                 );
 
@@ -164,7 +144,7 @@ final class AdminPizzaService
 
                 $pizza->ingredients()->sync(
                     $this->ingredientIds(
-                        $data['ingredient_ids']
+                        $data['ingredient_ids'] ?? []
                     )
                 );
 
@@ -263,9 +243,7 @@ final class AdminPizzaService
                     ->count(),
 
             'cart_promotions' =>
-                DB::table(
-                    'cart_promotion_items'
-                )
+                DB::table('cart_promotion_items')
                     ->where(
                         'pizza_id',
                         $pizzaId
@@ -289,9 +267,7 @@ final class AdminPizzaService
                     ->count(),
 
             'order_promotions' =>
-                DB::table(
-                    'order_promotion_items'
-                )
+                DB::table('order_promotion_items')
                     ->where(
                         'pizza_id',
                         $pizzaId
@@ -299,9 +275,7 @@ final class AdminPizzaService
                     ->count(),
 
             'sales_history' =>
-                DB::table(
-                    'pizza_sales_history'
-                )
+                DB::table('pizza_sales_history')
                     ->where(
                         'pizza_id',
                         $pizzaId
@@ -317,19 +291,14 @@ final class AdminPizzaService
             (int) $pizza->id
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Contadores principales
-        |--------------------------------------------------------------------------
-        |
-        | Se asignan explícitamente para que el Resource siempre tenga valores
-        | coherentes, tanto en listados como después de crear o actualizar.
-        |
-        */
-
         $pizza->setAttribute(
             'cart_items_count',
             $usage['cart_items']
+        );
+
+        $pizza->setAttribute(
+            'cart_items_second_count',
+            $usage['cart_items_second']
         );
 
         $pizza->setAttribute(
@@ -343,6 +312,11 @@ final class AdminPizzaService
         );
 
         $pizza->setAttribute(
+            'order_items_second_count',
+            $usage['order_items_second']
+        );
+
+        $pizza->setAttribute(
             'order_promotion_items_count',
             $usage['order_promotions']
         );
@@ -352,27 +326,10 @@ final class AdminPizzaService
             $usage['sales_history']
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Contadores de segunda mitad
-        |--------------------------------------------------------------------------
-        */
-
         $pizza->setAttribute(
-            'cart_items_second_count',
-            $usage['cart_items_second']
+            'usage_total',
+            array_sum($usage)
         );
-
-        $pizza->setAttribute(
-            'order_items_second_count',
-            $usage['order_items_second']
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Permiso de eliminación
-        |--------------------------------------------------------------------------
-        */
 
         $pizza->setAttribute(
             'can_delete',
@@ -383,8 +340,6 @@ final class AdminPizzaService
     }
 
     /**
-     * @param mixed $value
-     *
      * @return array<int, int>
      */
     private function ingredientIds(
