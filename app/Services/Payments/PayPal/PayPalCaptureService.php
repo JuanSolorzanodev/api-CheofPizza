@@ -10,6 +10,7 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\Order\CheckoutPricingService;
 use App\Services\Order\CheckoutService;
 use App\Services\Payments\CartFingerprintService;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,7 @@ final class PayPalCaptureService
         private readonly PayPalClient $payPalClient,
         private readonly CartFingerprintService $cartFingerprintService,
         private readonly CheckoutService $checkoutService,
+        private readonly CheckoutPricingService $pricingService,
     ) {}
 
     /**
@@ -67,6 +69,11 @@ final class PayPalCaptureService
             cart: $cart,
         );
 
+        $pricingSnapshot = $this->resolvePricingSnapshot(
+            payment: $payment,
+            cart: $cart,
+        );
+
         /*
          * Verificamos la orden remota antes de capturar.
          * Angular no es fuente de verdad.
@@ -90,6 +97,7 @@ final class PayPalCaptureService
                 user: $user,
                 payment: $payment,
                 paypalOrder: $paypalOrder,
+                pricingSnapshot: $pricingSnapshot,
             );
         }
 
@@ -195,6 +203,7 @@ final class PayPalCaptureService
             user: $user,
             payment: $payment,
             captureResponse: $captureResponse,
+            pricingSnapshot: $pricingSnapshot,
         );
     }
 
@@ -310,6 +319,61 @@ final class PayPalCaptureService
         }
     }
 
+
+    /**
+     * Recupera el desglose congelado al crear la orden PayPal.
+     * Para pagos antiguos sin snapshot, recalcula con la configuración
+     * actual y exige que el total siga coincidiendo antes de capturar.
+     *
+     * @return array{
+     *     subtotal: string,
+     *     delivery_fee: string,
+     *     total: string
+     * }
+     */
+    private function resolvePricingSnapshot(
+        Payment $payment,
+        Cart $cart,
+    ): array {
+        $checkoutContext = is_array(
+            $payment->checkout_context,
+        )
+            ? $payment->checkout_context
+            : [];
+
+        $snapshot = $checkoutContext['_pricing'] ?? null;
+
+        if (! is_array($snapshot)) {
+            $snapshot = $this->pricingService->calculate(
+                cart: $cart,
+                deliveryType: (string) (
+                    $checkoutContext['delivery_type']
+                    ?? 'pickup'
+                ),
+                paymentMethod: 'card',
+            );
+        }
+
+        $total = $snapshot['total'] ?? null;
+
+        if (
+            $this->moneyToCents($total)
+            !== $this->moneyToCents($payment->amount)
+        ) {
+            throw ValidationException::withMessages([
+                'payment' => [
+                    'La configuración del pedido cambió y el total ya no coincide con la orden PayPal. Debes crear una nueva operación de pago.',
+                ],
+            ]);
+        }
+
+        return [
+            'subtotal' => (string) ($snapshot['subtotal'] ?? ''),
+            'delivery_fee' => (string) ($snapshot['delivery_fee'] ?? ''),
+            'total' => (string) $total,
+        ];
+    }
+
     /**
      * @param array<string, mixed> $paypalOrder
      */
@@ -411,6 +475,7 @@ final class PayPalCaptureService
         User $user,
         Payment $payment,
         array $captureResponse,
+        array $pricingSnapshot,
     ): Order {
         $orderStatus = $this->requiredString(
             $captureResponse['status'] ?? null,
@@ -466,6 +531,7 @@ final class PayPalCaptureService
                 $capture,
                 $captureId,
                 $captureStatus,
+                $pricingSnapshot,
             ): Order {
                 $lockedPayment = Payment::query()
                     ->whereKey($payment->id)
@@ -525,6 +591,7 @@ final class PayPalCaptureService
                         cart: $lockedCart,
                         payload: $checkoutContext,
                         paymentMethodCode: 'card',
+                        pricingSnapshot: $pricingSnapshot,
                     );
 
                 $lockedPayment->forceFill([
@@ -613,11 +680,13 @@ final class PayPalCaptureService
         User $user,
         Payment $payment,
         array $paypalOrder,
+        array $pricingSnapshot,
     ): Order {
         return $this->finalizeCapture(
             user: $user,
             payment: $payment,
             captureResponse: $paypalOrder,
+            pricingSnapshot: $pricingSnapshot,
         );
     }
 
@@ -652,10 +721,20 @@ final class PayPalCaptureService
                 ]
             );
 
+            $cart = $this->loadCart(
+                payment: $payment,
+            );
+
+            $pricingSnapshot = $this->resolvePricingSnapshot(
+                payment: $payment,
+                cart: $cart,
+            );
+
             return $this->reconcileCompletedOrder(
                 user: $user,
                 payment: $payment,
                 paypalOrder: $paypalOrder,
+                pricingSnapshot: $pricingSnapshot,
             );
         } catch (Throwable $reconciliationException) {
             Log::critical(

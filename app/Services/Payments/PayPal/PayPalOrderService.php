@@ -10,6 +10,7 @@ use App\Exceptions\Payments\PayPalApiException;
 use App\Models\Cart;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\Order\CheckoutPricingService;
 use App\Services\Payments\CartFingerprintService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +24,7 @@ final class PayPalOrderService
     public function __construct(
         private readonly PayPalClient $payPalClient,
         private readonly CartFingerprintService $cartFingerprintService,
+        private readonly CheckoutPricingService $pricingService,
     ) {
     }
 
@@ -57,7 +59,18 @@ final class PayPalOrderService
             );
         }
 
-        $amount = $this->calculateCartTotal($cart);
+        $pricing = $this->pricingService->calculate(
+            cart: $cart,
+            deliveryType: (string) (
+                $checkoutContext['delivery_type']
+                ?? 'pickup'
+            ),
+            paymentMethod: 'card',
+        );
+
+        $amount = $pricing['total'];
+
+        $checkoutContext['_pricing'] = $pricing;
 
         $cartFingerprint = $this->cartFingerprintService
             ->generate($cart);
@@ -188,57 +201,6 @@ final class PayPalOrderService
         }
 
         return $cart;
-    }
-
-    /**
-     * Recalcula el total usando los datos del servidor.
-     *
-     * @throws ValidationException
-     */
-    private function calculateCartTotal(Cart $cart): string
-    {
-        $totalInCents = $cart->cartItems->sum(
-            static fn ($item): int => self::moneyToCents(
-                $item->subtotal
-            )
-        );
-
-        if ($totalInCents <= 0) {
-            throw ValidationException::withMessages([
-                'cart' => [
-                    'El total del carrito debe ser mayor que cero.',
-                ],
-            ]);
-        }
-
-        $storedTotalInCents = self::moneyToCents(
-            $cart->total
-        );
-
-        if ($storedTotalInCents !== $totalInCents) {
-            Log::warning(
-                'Cart total mismatch before PayPal order creation.',
-                [
-                    'cart_id' => $cart->id,
-                    'stored_total' => self::centsToMoney(
-                        $storedTotalInCents
-                    ),
-                    'calculated_total' => self::centsToMoney(
-                        $totalInCents
-                    ),
-                ]
-            );
-
-            $cart->forceFill([
-                'total' => self::centsToMoney(
-                    $totalInCents
-                ),
-            ])->save();
-        }
-
-        return self::centsToMoney(
-            $totalInCents
-        );
     }
 
     /**

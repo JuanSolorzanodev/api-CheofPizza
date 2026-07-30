@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Order extends Model
+final class Order extends Model
 {
     use HasFactory;
 
@@ -17,7 +17,11 @@ class Order extends Model
         'order_number',
         'user_id',
         'ordered_at',
+
+        'subtotal',
+        'delivery_fee',
         'total',
+
         'delivery_type_id',
         'address',
         'delivery_lat',
@@ -25,6 +29,7 @@ class Order extends Model
         'delivery_maps_url',
         'delivery_place_id',
         'delivery_reference',
+
         'payment_method_id',
         'order_status_id',
     ];
@@ -32,24 +37,32 @@ class Order extends Model
     protected $casts = [
         'user_id' => 'integer',
         'ordered_at' => 'datetime',
+
+        'subtotal' => 'decimal:2',
+        'delivery_fee' => 'decimal:2',
         'total' => 'decimal:2',
+
         'delivery_type_id' => 'integer',
         'delivery_lat' => 'decimal:7',
         'delivery_lng' => 'decimal:7',
+
         'payment_method_id' => 'integer',
         'order_status_id' => 'integer',
     ];
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(
+            User::class,
+            'user_id',
+        );
     }
 
     public function deliveryType(): BelongsTo
     {
         return $this->belongsTo(
             DeliveryType::class,
-            'delivery_type_id'
+            'delivery_type_id',
         );
     }
 
@@ -57,7 +70,7 @@ class Order extends Model
     {
         return $this->belongsTo(
             PaymentMethod::class,
-            'payment_method_id'
+            'payment_method_id',
         );
     }
 
@@ -65,7 +78,7 @@ class Order extends Model
     {
         return $this->belongsTo(
             OrderStatus::class,
-            'order_status_id'
+            'order_status_id',
         );
     }
 
@@ -73,7 +86,7 @@ class Order extends Model
     {
         return $this->hasMany(
             OrderItem::class,
-            'order_id'
+            'order_id',
         );
     }
 
@@ -81,23 +94,25 @@ class Order extends Model
     {
         return $this->hasMany(
             Notification::class,
-            'order_id'
+            'order_id',
         );
     }
 
     public function statusChanges(): HasMany
     {
-        return $this->hasMany(
-            OrderStatusChange::class,
-            'order_id'
-        )->orderBy('changed_at');
+        return $this
+            ->hasMany(
+                OrderStatusChange::class,
+                'order_id',
+            )
+            ->orderBy('changed_at');
     }
 
     public function payments(): HasMany
     {
         return $this->hasMany(
             Payment::class,
-            'order_id'
+            'order_id',
         );
     }
 }

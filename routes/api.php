@@ -24,7 +24,9 @@ use App\Http\Controllers\Api\V1\Public\CatalogController;
 use App\Http\Controllers\Api\V1\Public\GeoController;
 use App\Http\Controllers\Api\V1\Admin\PromotionController as AdminPromotionController;
 use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Public\PromotionController;
+use App\Http\Controllers\Api\V1\Public\SettingController as PublicSettingController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -49,16 +51,16 @@ Route::prefix('v1')->group(function (): void {
             'auth:sanctum',
             'active.user',
         ])->group(function (): void {
-                Route::get(
-                    'me',
-                    AuthenticatedUserController::class,
-                )->name('api.v1.auth.me');
+            Route::get(
+                'me',
+                AuthenticatedUserController::class,
+            )->name('api.v1.auth.me');
 
-                Route::post(
-                    'logout',
-                    LogoutController::class,
-                )->name('api.v1.auth.logout');
-            });
+            Route::post(
+                'logout',
+                LogoutController::class,
+            )->name('api.v1.auth.logout');
+        });
     });
 
     /*
@@ -175,6 +177,22 @@ Route::prefix('v1')->group(function (): void {
                 ],
             );
         });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Configuración pública del negocio
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        'public/settings',
+        [
+            PublicSettingController::class,
+            'show',
+        ],
+    )
+        ->middleware('throttle:public-api')
+        ->name('api.v1.public.settings.show');
 
     /*
     |--------------------------------------------------------------------------
@@ -421,6 +439,32 @@ Route::prefix('v1')->group(function (): void {
         ->prefix('admin')
         ->name('api.v1.admin.')
         ->group(function (): void {
+            /*
+            |--------------------------------------------------------------------------
+            | Configuración administrativa
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                'settings',
+                [
+                    AdminSettingController::class,
+                    'show',
+                ],
+            )->name('settings.show');
+
+            Route::put(
+                'settings',
+                [
+                    AdminSettingController::class,
+                    'update',
+                ],
+            )
+                ->middleware(
+                    'throttle:operator-actions'
+                )
+                ->name('settings.update');
+
             /*
             |--------------------------------------------------------------------------
             | Usuarios administrativos

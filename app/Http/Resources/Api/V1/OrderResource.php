@@ -1,47 +1,107 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Services\Order\WhatsAppReceiptLinkService;
 
-class OrderResource extends JsonResource
+final class OrderResource extends JsonResource
 {
-    public function toArray(Request $request): array
-    {
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(
+        Request $request,
+    ): array {
+        $deliveryType =
+            $this->deliveryType
+                ?->delivery_type_name;
+
+        $hasDeliveryLocation =
+            $deliveryType === 'delivery'
+            && $this->delivery_lat !== null
+            && $this->delivery_lng !== null;
+
         return [
-            'id' => $this->id,
-            'order_number' => $this->order_number,
-            'ordered_at' => optional($this->ordered_at)->toISOString(),
-            'total' => (float) $this->total,
+            'id' =>
+                (int) $this->id,
 
-            'delivery_type' => $this->deliveryType?->delivery_type_name,
-            'address' => $this->address,
+            'order_number' =>
+                (string) $this->order_number,
 
-            'delivery_location' => ($this->deliveryType?->delivery_type_name === 'delivery' && $this->delivery_lat && $this->delivery_lng)
-                ? [
-                    'lat' => (float) $this->delivery_lat,
-                    'lng' => (float) $this->delivery_lng,
-                    'maps_url' => $this->delivery_maps_url,
-                    'place_id' => $this->delivery_place_id,
-                    'reference' => $this->delivery_reference,
-                    'formatted_address' => $this->address,
-                ]
-                : null,
+            'ordered_at' =>
+                $this->ordered_at
+                    ?->toISOString(),
 
-            'payment_method' => $this->paymentMethod?->name,
-            'status' => $this->orderStatus?->status_name,
+            'subtotal' =>
+                (float) $this->subtotal,
 
-            'whatsapp_receipt_url' => ($this->paymentMethod?->name === 'transfer')
-                ? app(\App\Services\Order\WhatsAppReceiptLinkService::class)->build($this->resource)
-                : null,
+            'delivery_fee' =>
+                (float) $this->delivery_fee,
 
-            'items' => OrderItemResource::collection($this->whenLoaded('orderItems')),
-            'status_changes' => OrderStatusChangeResource::collection(
-                $this->whenLoaded('statusChanges')
-            ),
+            'total' =>
+                (float) $this->total,
 
+            'delivery_type' =>
+                $deliveryType,
+
+            'address' =>
+                $this->address,
+
+            'delivery_location' =>
+                $hasDeliveryLocation
+                    ? [
+                        'lat' =>
+                            (float) $this->delivery_lat,
+
+                        'lng' =>
+                            (float) $this->delivery_lng,
+
+                        'maps_url' =>
+                            $this->delivery_maps_url,
+
+                        'place_id' =>
+                            $this->delivery_place_id,
+
+                        'reference' =>
+                            $this->delivery_reference,
+
+                        'formatted_address' =>
+                            $this->address,
+                    ]
+                    : null,
+
+            'payment_method' =>
+                $this->paymentMethod?->name,
+
+            'status' =>
+                $this->orderStatus?->status_name,
+
+            'whatsapp_receipt_url' =>
+                $this->paymentMethod?->name
+                === 'transfer'
+                    ? app(
+                        \App\Services\Order\WhatsAppReceiptLinkService::class,
+                    )->build(
+                        $this->resource,
+                    )
+                    : null,
+
+            'items' =>
+                OrderItemResource::collection(
+                    $this->whenLoaded(
+                        'orderItems',
+                    ),
+                ),
+
+            'status_changes' =>
+                OrderStatusChangeResource::collection(
+                    $this->whenLoaded(
+                        'statusChanges',
+                    ),
+                ),
         ];
     }
 }

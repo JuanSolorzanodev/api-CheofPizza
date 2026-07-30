@@ -16,10 +16,12 @@ use App\Models\PaymentMethod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use RuntimeException;
 
 final class CheckoutService
 {
+    public function __construct(
+        private readonly CheckoutPricingService $pricingService,
+    ) {}
     /**
      * Checkout tradicional para efectivo y transferencia.
      *
@@ -48,7 +50,7 @@ final class CheckoutService
         }
 
         return DB::transaction(
-            fn (): Order => $this->createOrderFromCart(
+            fn(): Order => $this->createOrderFromCart(
                 cart: $cart,
                 payload: $payload,
                 paymentMethodCode: $paymentMethod,
@@ -69,6 +71,7 @@ final class CheckoutService
         Cart $cart,
         array $payload,
         string $paymentMethodCode,
+        ?array $pricingSnapshot = null,
     ): Order {
         $this->loadCart($cart);
         $this->validateCart($cart);
@@ -80,13 +83,19 @@ final class CheckoutService
         $deliveryType = DeliveryType::query()
             ->where(
                 'delivery_type_name',
-                $deliveryTypeCode
+                $deliveryTypeCode,
             )
             ->firstOrFail();
 
         $paymentMethod = PaymentMethod::query()
-            ->where('name', $paymentMethodCode)
-            ->where('active', true)
+            ->where(
+                'name',
+                $paymentMethodCode,
+            )
+            ->where(
+                'active',
+                true,
+            )
             ->first();
 
         if ($paymentMethod === null) {
@@ -98,10 +107,18 @@ final class CheckoutService
         }
 
         $orderStatus = OrderStatus::query()
-            ->where('status_name', 'pending')
+            ->where(
+                'status_name',
+                'pending',
+            )
             ->firstOrFail();
 
-        $orderTotal = $this->calculateTotal($cart);
+        $pricing = $pricingSnapshot
+            ?? $this->pricingService->calculate(
+                cart: $cart,
+                deliveryType: $deliveryTypeCode,
+                paymentMethod: $paymentMethodCode,
+            );
 
         $deliveryData = $this->resolveDeliveryData(
             payload: $payload,
@@ -110,43 +127,49 @@ final class CheckoutService
 
         $order = Order::query()->create([
             'order_number' =>
-                $this->generateOrderNumber(),
+            $this->generateOrderNumber(),
 
             'user_id' =>
-                (int) $cart->user_id,
+            (int) $cart->user_id,
 
             'ordered_at' =>
-                now(),
+            now(),
+
+            'subtotal' =>
+            $pricing['subtotal'],
+
+            'delivery_fee' =>
+            $pricing['delivery_fee'],
 
             'total' =>
-                $orderTotal,
+            $pricing['total'],
 
             'delivery_type_id' =>
-                (int) $deliveryType->id,
+            (int) $deliveryType->id,
 
             'address' =>
-                $deliveryData['address'],
+            $deliveryData['address'],
 
             'delivery_lat' =>
-                $deliveryData['latitude'],
+            $deliveryData['latitude'],
 
             'delivery_lng' =>
-                $deliveryData['longitude'],
+            $deliveryData['longitude'],
 
             'delivery_maps_url' =>
-                $deliveryData['maps_url'],
+            $deliveryData['maps_url'],
 
             'delivery_place_id' =>
-                $deliveryData['place_id'],
+            $deliveryData['place_id'],
 
             'delivery_reference' =>
-                $deliveryData['reference'],
+            $deliveryData['reference'],
 
             'payment_method_id' =>
-                (int) $paymentMethod->id,
+            (int) $paymentMethod->id,
 
             'order_status_id' =>
-                (int) $orderStatus->id,
+            (int) $orderStatus->id,
         ]);
 
         $this->createInitialStatusChange(
@@ -241,28 +264,6 @@ final class CheckoutService
         }
     }
 
-    private function calculateTotal(Cart $cart): string
-    {
-        $totalInCents = $cart->cartItems->sum(
-            static fn ($item): int =>
-                self::moneyToCents(
-                    $item->subtotal
-                )
-        );
-
-        if ($totalInCents <= 0) {
-            throw ValidationException::withMessages([
-                'cart' => [
-                    'El total del carrito debe ser mayor que cero.',
-                ],
-            ]);
-        }
-
-        return self::centsToMoney(
-            $totalInCents
-        );
-    }
-
     /**
      * @param array<string, mixed> $payload
      *
@@ -290,9 +291,7 @@ final class CheckoutService
             ];
         }
 
-        $location = $payload[
-            'delivery_location'
-        ] ?? null;
+        $location = $payload['delivery_location'] ?? null;
 
         if (! is_array($location)) {
             throw ValidationException::withMessages([
@@ -360,23 +359,23 @@ final class CheckoutService
         OrderStatusChange::query()->firstOrCreate(
             [
                 'order_id' =>
-                    (int) $order->id,
+                (int) $order->id,
 
                 'from_order_status_id' =>
-                    null,
+                null,
 
                 'to_order_status_id' =>
-                    (int) $orderStatus->id,
+                (int) $orderStatus->id,
             ],
             [
                 'changed_by_user_id' =>
-                    null,
+                null,
 
                 'changed_at' =>
-                    $order->ordered_at,
+                $order->ordered_at,
 
                 'note' =>
-                    null,
+                null,
             ]
         );
     }
@@ -410,46 +409,46 @@ final class CheckoutService
             ->orderItems()
             ->create([
                 'promotion_id' =>
-                    $cartItem->promotion_id,
+                $cartItem->promotion_id,
 
                 'promotion_name' =>
-                    $cartItem->promotion?->promotion_name,
+                $cartItem->promotion?->promotion_name,
 
                 'pizza_id' =>
-                    null,
+                null,
 
                 'pizza_name' =>
-                    null,
+                null,
 
                 'pizza_id_second' =>
-                    null,
+                null,
 
                 'pizza_name_second' =>
-                    null,
+                null,
 
                 'size_id' =>
-                    $cartItem->size_id,
+                $cartItem->size_id,
 
                 'size_name' =>
-                    $cartItem->size?->size_name,
+                $cartItem->size?->size_name,
 
                 'category_name' =>
-                    null,
+                null,
 
                 'category_name_second' =>
-                    null,
+                null,
 
                 'is_half_and_half' =>
-                    false,
+                false,
 
                 'quantity' =>
-                    (int) $cartItem->quantity,
+                (int) $cartItem->quantity,
 
                 'unit_price' =>
-                    (string) $cartItem->unit_price,
+                (string) $cartItem->unit_price,
 
                 'subtotal' =>
-                    (string) $cartItem->subtotal,
+                (string) $cartItem->subtotal,
             ]);
 
         foreach (
@@ -460,10 +459,10 @@ final class CheckoutService
                 ->orderPromotionItems()
                 ->create([
                     'pizza_id' =>
-                        (int) $promotionPizza->pizza_id,
+                    (int) $promotionPizza->pizza_id,
 
                     'pizza_name' =>
-                        $promotionPizza->pizza?->pizza_name,
+                    $promotionPizza->pizza?->pizza_name,
                 ]);
 
             $personalizations = $cartItem
@@ -481,8 +480,7 @@ final class CheckoutService
                 $this->copyPersonalization(
                     orderItem: $orderItem,
                     personalization: $personalization,
-                    orderPromotionItemId:
-                        (int) $orderPromotionItem->id,
+                    orderPromotionItemId: (int) $orderPromotionItem->id,
                 );
             }
         }
@@ -496,46 +494,46 @@ final class CheckoutService
             ->orderItems()
             ->create([
                 'promotion_id' =>
-                    null,
+                null,
 
                 'promotion_name' =>
-                    null,
+                null,
 
                 'pizza_id' =>
-                    $cartItem->pizza_id,
+                $cartItem->pizza_id,
 
                 'pizza_name' =>
-                    $cartItem->pizza?->pizza_name,
+                $cartItem->pizza?->pizza_name,
 
                 'pizza_id_second' =>
-                    $cartItem->pizza_id_second,
+                $cartItem->pizza_id_second,
 
                 'pizza_name_second' =>
-                    $cartItem->pizzaSecond?->pizza_name,
+                $cartItem->pizzaSecond?->pizza_name,
 
                 'size_id' =>
-                    $cartItem->size_id,
+                $cartItem->size_id,
 
                 'size_name' =>
-                    $cartItem->size?->size_name,
+                $cartItem->size?->size_name,
 
                 'category_name' =>
-                    $cartItem->pizza?->category?->category_name,
+                $cartItem->pizza?->category?->category_name,
 
                 'category_name_second' =>
-                    $cartItem->pizzaSecond?->category?->category_name,
+                $cartItem->pizzaSecond?->category?->category_name,
 
                 'is_half_and_half' =>
-                    (bool) $cartItem->is_half_and_half,
+                (bool) $cartItem->is_half_and_half,
 
                 'quantity' =>
-                    (int) $cartItem->quantity,
+                (int) $cartItem->quantity,
 
                 'unit_price' =>
-                    (string) $cartItem->unit_price,
+                (string) $cartItem->unit_price,
 
                 'subtotal' =>
-                    (string) $cartItem->subtotal,
+                (string) $cartItem->subtotal,
             ]);
 
         $personalizations = $cartItem
@@ -565,29 +563,29 @@ final class CheckoutService
             ->orderItemPersonalizations()
             ->create([
                 'order_promotion_item_id' =>
-                    $orderPromotionItemId,
+                $orderPromotionItemId,
 
                 'ingredient_id' =>
-                    (int) $personalization->ingredient_id,
+                (int) $personalization->ingredient_id,
 
                 'ingredient_name' =>
-                    $personalization
-                        ->ingredient
-                        ?->ingredient_name,
+                $personalization
+                    ->ingredient
+                    ?->ingredient_name,
 
                 'personalization_action_id' =>
-                    (int) $personalization
-                        ->personalization_action_id,
+                (int) $personalization
+                    ->personalization_action_id,
 
                 'applies_to' =>
-                    $personalization->applies_to
+                $personalization->applies_to
                     ?? 'ALL',
 
                 'modification_type' =>
-                    null,
+                null,
 
                 'extra_price' =>
-                    (string) $personalization->extra_price,
+                (string) $personalization->extra_price,
             ]);
     }
 
@@ -600,7 +598,7 @@ final class CheckoutService
 
         $cart->forceFill([
             'cart_status_id' =>
-                (int) $orderedStatus->id,
+            (int) $orderedStatus->id,
         ])->save();
     }
 
@@ -627,9 +625,9 @@ final class CheckoutService
     {
         for ($attempt = 0; $attempt < 5; $attempt++) {
             $number = 'CH-'
-                .now()->format('Ymd-His')
-                .'-'
-                .Str::upper(
+                . now()->format('Ymd-His')
+                . '-'
+                . Str::upper(
                     Str::random(4)
                 );
 
@@ -646,7 +644,7 @@ final class CheckoutService
         }
 
         return 'CH-'
-            .Str::uuid()->toString();
+            . Str::uuid()->toString();
     }
 
     private function buildMapsUrl(
@@ -672,75 +670,5 @@ final class CheckoutService
         return $value !== ''
             ? $value
             : null;
-    }
-
-    private static function moneyToCents(
-        mixed $value
-    ): int {
-        $normalized = str_replace(
-            ',',
-            '.',
-            trim((string) ($value ?? '0'))
-        );
-
-        if (
-            ! preg_match(
-                '/^-?\d+(?:\.\d{1,2})?$/',
-                $normalized
-            )
-        ) {
-            throw new RuntimeException(
-                "Importe monetario inválido: {$normalized}"
-            );
-        }
-
-        $negative = str_starts_with(
-            $normalized,
-            '-'
-        );
-
-        if ($negative) {
-            $normalized = substr(
-                $normalized,
-                1
-            );
-        }
-
-        [$integer, $decimals] = array_pad(
-            explode(
-                '.',
-                $normalized,
-                2
-            ),
-            2,
-            ''
-        );
-
-        $decimals = str_pad(
-            substr($decimals, 0, 2),
-            2,
-            '0'
-        );
-
-        $cents = ((int) $integer * 100)
-            +(int) $decimals;
-
-        return $negative
-            ? -$cents
-            : $cents;
-    }
-
-    private static function centsToMoney(
-        int $cents
-    ): string {
-        $negative = $cents < 0;
-        $absolute = abs($cents);
-
-        return sprintf(
-            '%s%d.%02d',
-            $negative ? '-' : '',
-            intdiv($absolute, 100),
-            $absolute % 100,
-        );
     }
 }
