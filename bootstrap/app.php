@@ -9,6 +9,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
+use App\Http\Middleware\EnsureUserIsActive;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Illuminate\Validation\ValidationException;
 
@@ -51,6 +52,7 @@ return Application::configure(
         $middleware->alias([
             'auth.optional' => OptionalSanctumAuth::class,
             'role' => EnsureRole::class,
+            'active.user' => EnsureUserIsActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

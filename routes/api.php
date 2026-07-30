@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\V1\Public\CartController;
 use App\Http\Controllers\Api\V1\Public\CatalogController;
 use App\Http\Controllers\Api\V1\Public\GeoController;
 use App\Http\Controllers\Api\V1\Admin\PromotionController as AdminPromotionController;
+use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\V1\Public\PromotionController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,8 +45,10 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('throttle:auth')
             ->name('api.v1.auth.firebase.google');
 
-        Route::middleware('auth:sanctum')
-            ->group(function (): void {
+        Route::middleware([
+            'auth:sanctum',
+            'active.user',
+        ])->group(function (): void {
                 Route::get(
                     'me',
                     AuthenticatedUserController::class,
@@ -278,6 +281,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware([
         'auth:sanctum',
+        'active.user',
         'role:customer',
     ])->group(function (): void {
         Route::post(
@@ -353,6 +357,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware([
         'auth:sanctum',
+        'active.user',
         'role:operator,admin',
     ])
         ->prefix('operator')
@@ -410,11 +415,99 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware([
         'auth:sanctum',
+        'active.user',
         'role:admin',
     ])
         ->prefix('admin')
         ->name('api.v1.admin.')
         ->group(function (): void {
+            /*
+            |--------------------------------------------------------------------------
+            | Usuarios administrativos
+            |--------------------------------------------------------------------------
+            */
+
+            Route::prefix('users')
+                ->name('users.')
+                ->group(function (): void {
+                    Route::get(
+                        'roles',
+                        [
+                            AdminUserController::class,
+                            'roles',
+                        ],
+                    )->name('roles');
+
+                    Route::get(
+                        '',
+                        [
+                            AdminUserController::class,
+                            'index',
+                        ],
+                    )->name('index');
+
+                    Route::post(
+                        '',
+                        [
+                            AdminUserController::class,
+                            'store',
+                        ],
+                    )
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('store');
+
+                    Route::get(
+                        '{user}',
+                        [
+                            AdminUserController::class,
+                            'show',
+                        ],
+                    )
+                        ->whereNumber('user')
+                        ->name('show');
+
+                    Route::put(
+                        '{user}',
+                        [
+                            AdminUserController::class,
+                            'update',
+                        ],
+                    )
+                        ->whereNumber('user')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('update');
+
+                    Route::patch(
+                        '{user}/role',
+                        [
+                            AdminUserController::class,
+                            'updateRole',
+                        ],
+                    )
+                        ->whereNumber('user')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('role');
+
+                    Route::patch(
+                        '{user}/status',
+                        [
+                            AdminUserController::class,
+                            'updateStatus',
+                        ],
+                    )
+                        ->whereNumber('user')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('status');
+                });
+
             /*
             |--------------------------------------------------------------------------
             | Catálogo administrativo
@@ -787,7 +880,7 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )->name('ingredient-prices.index');
 
-                                       Route::put(
+                    Route::put(
                         'ingredients/{ingredient}/prices',
                         [
                             AdminIngredientPriceController::class,

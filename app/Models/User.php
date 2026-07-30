@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+final class User extends Authenticatable
 {
     use HasApiTokens;
     use HasFactory;
@@ -22,6 +22,7 @@ class User extends Authenticatable
         'phone',
         'email',
         'password',
+        'is_active',
     ];
 
     protected $hidden = [
@@ -31,13 +32,14 @@ class User extends Authenticatable
     protected $casts = [
         'role_id' => 'integer',
         'password' => 'hashed',
+        'is_active' => 'boolean',
     ];
 
     public function role(): BelongsTo
     {
         return $this->belongsTo(
             Role::class,
-            'role_id'
+            'role_id',
         );
     }
 
@@ -45,7 +47,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(
             Cart::class,
-            'user_id'
+            'user_id',
         );
     }
 
@@ -53,7 +55,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(
             Order::class,
-            'user_id'
+            'user_id',
         );
     }
 
@@ -61,7 +63,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(
             Payment::class,
-            'user_id'
+            'user_id',
         );
     }
 
@@ -69,14 +71,29 @@ class User extends Authenticatable
     {
         return $this->hasMany(
             Notification::class,
-            'user_id'
+            'user_id',
         );
     }
+
     public function mlModelRuns(): HasMany
     {
         return $this->hasMany(
             MlModelRun::class,
-            'created_by'
+            'created_by',
         );
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return trim(
+            "{$this->first_name} {$this->last_name}",
+        );
+    }
+
+    public function isAdmin(): bool
+    {
+        return strtolower(
+            (string) $this->role?->role_name,
+        ) === 'admin';
     }
 }
