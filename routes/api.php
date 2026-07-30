@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Admin\Catalog\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\Catalog\CategoryPriceController as AdminCategoryPriceController;
+use App\Http\Controllers\Api\V1\Admin\Catalog\IngredientController as AdminIngredientController;
+use App\Http\Controllers\Api\V1\Admin\Catalog\IngredientPriceController as AdminIngredientPriceController;
+use App\Http\Controllers\Api\V1\Admin\Catalog\IngredientTypeController as AdminIngredientTypeController;
 use App\Http\Controllers\Api\V1\Admin\Catalog\PizzaController as AdminPizzaController;
 use App\Http\Controllers\Api\V1\Admin\Catalog\SizeController as AdminSizeController;
 use App\Http\Controllers\Api\V1\Admin\MachineLearningController;
@@ -644,6 +647,157 @@ Route::prefix('v1')->group(function (): void {
                             'throttle:operator-actions'
                         )
                         ->name('pizzas.destroy');
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Tipos de ingredientes
+                    |--------------------------------------------------------------------------
+                    */
+
+                    Route::get(
+                        'ingredient-types',
+                        [
+                            AdminIngredientTypeController::class,
+                            'index',
+                        ],
+                    )->name('ingredient-types.index');
+
+                    Route::post(
+                        'ingredient-types',
+                        [
+                            AdminIngredientTypeController::class,
+                            'store',
+                        ],
+                    )
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('ingredient-types.store');
+
+                    Route::get(
+                        'ingredient-types/{ingredientType}',
+                        [
+                            AdminIngredientTypeController::class,
+                            'show',
+                        ],
+                    )
+                        ->whereNumber('ingredientType')
+                        ->name('ingredient-types.show');
+
+                    Route::put(
+                        'ingredient-types/{ingredientType}',
+                        [
+                            AdminIngredientTypeController::class,
+                            'update',
+                        ],
+                    )
+                        ->whereNumber('ingredientType')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('ingredient-types.update');
+
+                    Route::delete(
+                        'ingredient-types/{ingredientType}',
+                        [
+                            AdminIngredientTypeController::class,
+                            'destroy',
+                        ],
+                    )
+                        ->whereNumber('ingredientType')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('ingredient-types.destroy');
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Ingredientes
+                    |--------------------------------------------------------------------------
+                    */
+
+                    Route::get(
+                        'ingredients',
+                        [
+                            AdminIngredientController::class,
+                            'index',
+                        ],
+                    )->name('ingredients.index');
+
+                    Route::post(
+                        'ingredients',
+                        [
+                            AdminIngredientController::class,
+                            'store',
+                        ],
+                    )
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('ingredients.store');
+
+                    Route::get(
+                        'ingredients/{ingredient}',
+                        [
+                            AdminIngredientController::class,
+                            'show',
+                        ],
+                    )
+                        ->whereNumber('ingredient')
+                        ->name('ingredients.show');
+
+                    Route::put(
+                        'ingredients/{ingredient}',
+                        [
+                            AdminIngredientController::class,
+                            'update',
+                        ],
+                    )
+                        ->whereNumber('ingredient')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('ingredients.update');
+
+                    Route::delete(
+                        'ingredients/{ingredient}',
+                        [
+                            AdminIngredientController::class,
+                            'destroy',
+                        ],
+                    )
+                        ->whereNumber('ingredient')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('ingredients.destroy');
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Precios extra por ingrediente y tamaño
+                    |--------------------------------------------------------------------------
+                    */
+
+                    Route::get(
+                        'ingredient-prices',
+                        [
+                            AdminIngredientPriceController::class,
+                            'index',
+                        ],
+                    )->name('ingredient-prices.index');
+
+                    Route::put(
+                        'ingredients/{ingredient}/prices',
+                        [
+                            AdminIngredientPriceController::class,
+                            'update',
+                        ],
+                    )
+                        ->whereNumber('ingredient')
+                        ->middleware(
+                            'throttle:operator-actions'
+                        )
+                        ->name('ingredient-prices.update');
                 });
 
             /*
