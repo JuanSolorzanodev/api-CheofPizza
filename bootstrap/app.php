@@ -10,18 +10,19 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Illuminate\Validation\ValidationException;
 
 return Application::configure(
     basePath: dirname(__DIR__)
 )
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
-        commands: __DIR__.'/../routes/console.php',
+        web: __DIR__ . '/../routes/web.php',
+        api: __DIR__ . '/../routes/api.php',
+        commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
     ->withBroadcasting(
-        __DIR__.'/../routes/channels.php',
+        __DIR__ . '/../routes/channels.php',
         [
             'prefix' => 'api',
             'middleware' => [
@@ -54,39 +55,50 @@ return Application::configure(
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-    static fn (
-        Request $request,
-        \Throwable $exception
-    ): bool => $request->is('api/*')
-        || $request->expectsJson(),
-);
+            static fn(
+                Request $request,
+                \Throwable $exception
+            ): bool =>
+            $request->is('api/*')
+                || $request->expectsJson(),
+        );
 
-$exceptions->render(
-    static function (
-        \Throwable $exception,
-        Request $request
-    ) {
-        if (
-            !$request->is('api/*')
-            && !$request->expectsJson()
-        ) {
-            return null;
-        }
+        $exceptions->render(
+            static function (
+                \Throwable $exception,
+                Request $request
+            ) {
+                if (
+                    ! $request->is('api/*')
+                    && ! $request->expectsJson()
+                ) {
+                    return null;
+                }
 
-        if ($exception instanceof HttpExceptionInterface) {
-            return null;
-        }
+                /*
+             * Laravel debe procesar normalmente:
+             * - errores de validación: 422
+             * - errores HTTP: 401, 403, 404, 409, etc.
+             */
+                if (
+                    $exception instanceof ValidationException
+                    || $exception instanceof HttpExceptionInterface
+                ) {
+                    return null;
+                }
 
-        if (app()->isProduction()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ocurrió un error interno en el servidor.',
-                'code' => 'INTERNAL_SERVER_ERROR',
-            ], 500);
-        }
+                if (app()->isProduction()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' =>
+                        'Ocurrió un error interno en el servidor.',
+                        'code' =>
+                        'INTERNAL_SERVER_ERROR',
+                    ], 500);
+                }
 
-        return null;
-    }
-);
+                return null;
+            }
+        );
     })
     ->create();
