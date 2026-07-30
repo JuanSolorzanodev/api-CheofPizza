@@ -47,16 +47,13 @@ final class AdminPizzaService
             ->orderBy('pizza_name')
             ->get()
             ->each(
-                fn (Pizza $pizza) =>
-                    $this->appendDeleteState(
-                        $pizza
-                    )
+                fn (Pizza $pizza): Pizza =>
+                    $this->appendUsageState($pizza)
             );
     }
 
-    public function pizza(
-        Pizza $pizza
-    ): Pizza {
+    public function pizza(Pizza $pizza): Pizza
+    {
         $pizza->load([
             'category:id,category_name',
 
@@ -86,44 +83,38 @@ final class AdminPizzaService
             'pizzaSalesHistories',
         ]);
 
-        return $this->appendDeleteState(
-            $pizza
-        );
+        return $this->appendUsageState($pizza);
     }
 
     /**
      * @param array<string, mixed> $data
      */
-    public function create(
-        array $data
-    ): Pizza {
+    public function create(array $data): Pizza
+    {
         return DB::transaction(
             function () use ($data): Pizza {
-                $pizza = Pizza::query()
-                    ->create([
-                        'category_id' =>
-                            (int) $data['category_id'],
+                $pizza = Pizza::query()->create([
+                    'category_id' =>
+                        (int) $data['category_id'],
 
-                        'pizza_name' =>
-                            trim(
-                                (string) $data['name']
-                            ),
+                    'pizza_name' =>
+                        trim(
+                            (string) $data['name']
+                        ),
 
-                        'description' =>
-                            $this->nullableText(
-                                $data['description']
-                                ?? null
-                            ),
+                    'description' =>
+                        $this->nullableText(
+                            $data['description'] ?? null
+                        ),
 
-                        'image_url' =>
-                            $this->nullableText(
-                                $data['image_url']
-                                ?? null
-                            ),
+                    'image_url' =>
+                        $this->nullableText(
+                            $data['image_url'] ?? null
+                        ),
 
-                        'is_visible' =>
-                            (bool) $data['is_visible'],
-                    ]);
+                    'is_visible' =>
+                        (bool) $data['is_visible'],
+                ]);
 
                 $pizza->ingredients()->sync(
                     $this->ingredientIds(
@@ -159,14 +150,12 @@ final class AdminPizzaService
 
                     'description' =>
                         $this->nullableText(
-                            $data['description']
-                            ?? null
+                            $data['description'] ?? null
                         ),
 
                     'image_url' =>
                         $this->nullableText(
-                            $data['image_url']
-                            ?? null
+                            $data['image_url'] ?? null
                         ),
 
                     'is_visible' =>
@@ -202,11 +191,10 @@ final class AdminPizzaService
     /**
      * @throws ValidationException
      */
-    public function delete(
-        Pizza $pizza
-    ): void {
+    public function delete(Pizza $pizza): void
+    {
         $usage = $this->usageCounts(
-            $pizza->id
+            (int) $pizza->id
         );
 
         if (
@@ -233,9 +221,7 @@ final class AdminPizzaService
         }
 
         DB::transaction(
-            static function () use (
-                $pizza
-            ): void {
+            static function () use ($pizza): void {
                 $pizza
                     ->ingredients()
                     ->detach();
@@ -246,7 +232,15 @@ final class AdminPizzaService
     }
 
     /**
-     * @return array<string, int>
+     * @return array{
+     *     cart_items: int,
+     *     cart_items_second: int,
+     *     cart_promotions: int,
+     *     order_items: int,
+     *     order_items_second: int,
+     *     order_promotions: int,
+     *     sales_history: int
+     * }
      */
     private function usageCounts(
         int $pizzaId
@@ -316,12 +310,69 @@ final class AdminPizzaService
         ];
     }
 
-    private function appendDeleteState(
+    private function appendUsageState(
         Pizza $pizza
     ): Pizza {
         $usage = $this->usageCounts(
             (int) $pizza->id
         );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Contadores principales
+        |--------------------------------------------------------------------------
+        |
+        | Se asignan explícitamente para que el Resource siempre tenga valores
+        | coherentes, tanto en listados como después de crear o actualizar.
+        |
+        */
+
+        $pizza->setAttribute(
+            'cart_items_count',
+            $usage['cart_items']
+        );
+
+        $pizza->setAttribute(
+            'cart_promotion_items_count',
+            $usage['cart_promotions']
+        );
+
+        $pizza->setAttribute(
+            'order_items_count',
+            $usage['order_items']
+        );
+
+        $pizza->setAttribute(
+            'order_promotion_items_count',
+            $usage['order_promotions']
+        );
+
+        $pizza->setAttribute(
+            'pizza_sales_histories_count',
+            $usage['sales_history']
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Contadores de segunda mitad
+        |--------------------------------------------------------------------------
+        */
+
+        $pizza->setAttribute(
+            'cart_items_second_count',
+            $usage['cart_items_second']
+        );
+
+        $pizza->setAttribute(
+            'order_items_second_count',
+            $usage['order_items_second']
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Permiso de eliminación
+        |--------------------------------------------------------------------------
+        */
 
         $pizza->setAttribute(
             'can_delete',
