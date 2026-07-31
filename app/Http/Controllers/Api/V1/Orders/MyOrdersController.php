@@ -1,71 +1,128 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1\Orders;
+declare(strict_types=1);
 
-use App\Http\Resources\Api\V1\BankAccountPublicResource;
+namespace App\Http\Controllers\Api\V1\Orders;
 use App\Http\Resources\Api\V1\OrderResource;
 use App\Models\Order;
-use App\Services\Payments\TransferAccountService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class MyOrdersController
+final class MyOrdersController
 {
-    public function __construct(
-        private readonly TransferAccountService $transferAccountService,
-    ) {}
-
     /**
-     * GET /api/v1/my/orders
-     * Lista paginada de órdenes del usuario autenticado (ORM: relación user->orders)
+     * Lista paginada de pedidos del cliente autenticado.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        $orders = $user->orders()
-            ->with(['deliveryType', 'paymentMethod', 'orderStatus'])
-            ->latest('ordered_at')
-            ->paginate(10);
+        abort_if(
+            $user === null,
+            401,
+            'No autenticado.',
+        );
 
-        return OrderResource::collection($orders);
-    }
+        $perPage = min(
+            max(
+                $request->integer(
+                    'per_page',
+                    10,
+                ),
+                1,
+            ),
+            50,
+        );
 
-    /**
-     * GET /api/v1/my/orders/{orderId}
-     * Detalle de una orden del usuario autenticado (ORM: relación user->orders)
-     */
-    public function show(Request $request, int $orderId)
-    {
-        $user = $request->user();
-
-        /** @var Order $order */
-        $order = $user->orders()
+        $orders = Order::query()
+            ->where(
+                'user_id',
+                (int) $user->id,
+            )
             ->with([
                 'deliveryType',
                 'paymentMethod',
                 'orderStatus',
-                'orderItems.orderItemPersonalizations',
+                'latestPayment',
+            ])
+            ->withCount('orderItems')
+            ->latest('ordered_at')
+            ->latest('id')
+            ->paginate($perPage);
+
+        return response()->json([
+            'data' => OrderResource::collection(
+                $orders->getCollection(),
+            ),
+
+            'meta' => [
+                'current_page' => $orders->currentPage(),
+                'from' => $orders->firstItem(),
+                'last_page' => $orders->lastPage(),
+                'path' => $orders->path(),
+                'per_page' => $orders->perPage(),
+                'to' => $orders->lastItem(),
+                'total' => $orders->total(),
+            ],
+
+            'links' => [
+                'first' => $orders->url(1),
+
+                'last' => $orders->url(
+                    $orders->lastPage(),
+                ),
+
+                'prev' => $orders->previousPageUrl(),
+
+                'next' => $orders->nextPageUrl(),
+            ],
+        ]);
+    }
+
+    /**
+     * Devuelve el detalle de un pedido que pertenece
+     * al cliente autenticado.
+     */
+    public function show(
+        Request $request,
+        int $orderId,
+    ): JsonResponse {
+        $user = $request->user();
+
+        abort_if(
+            $user === null,
+            401,
+            'No autenticado.',
+        );
+
+        $order = Order::query()
+            ->whereKey($orderId)
+            ->where(
+                'user_id',
+                (int) $user->id,
+            )
+            ->with([
+                'user',
+                'deliveryType',
+                'paymentMethod',
+                'orderStatus',
+                'latestPayment',
+
+                'orderItems',
+                'orderItems.orderPromotionItems',
+
+                'orderItems.orderItemPersonalizations.personalizationAction',
+
                 'statusChanges.fromStatus',
                 'statusChanges.toStatus',
+                'statusChanges.changedBy',
             ])
-            ->findOrFail($orderId);
+            ->firstOrFail();
 
-        $data = (new OrderResource($order))->toArray($request);
-
-        // Si es transferencia: devolvemos cuenta activa (para pagar desde el detalle)
-        if (($order->paymentMethod?->name ?? null) === 'transfer') {
-            $account = $this->transferAccountService->getActivePrimary();
-
-            $data['transfer_account'] = $account
-                ? (new BankAccountPublicResource($account))->toArray($request)
-                : null;
-
-            $data['payment_hint'] = 'Realiza la transferencia y envía el comprobante por WhatsApp para validar tu pedido.';
-        } else {
-            $data['transfer_account'] = null;
-            $data['payment_hint'] = null;
-        }
-
-        return response()->json(['data' => $data]);
+        return response()->json([
+            'data' => new OrderResource(
+                $order,
+            ),
+        ]);
     }
 }

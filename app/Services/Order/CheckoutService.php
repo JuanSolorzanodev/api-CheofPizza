@@ -603,7 +603,7 @@ final class CheckoutService
     }
 
     private function loadOrder(
-        int $orderId
+        int $orderId,
     ): Order {
         return Order::query()
             ->with([
@@ -611,9 +611,13 @@ final class CheckoutService
                 'deliveryType',
                 'paymentMethod',
                 'orderStatus',
+                'latestPayment',
+
                 'orderItems',
                 'orderItems.orderPromotionItems',
+
                 'orderItems.orderItemPersonalizations.personalizationAction',
+
                 'statusChanges.fromStatus',
                 'statusChanges.toStatus',
                 'statusChanges.changedBy',
