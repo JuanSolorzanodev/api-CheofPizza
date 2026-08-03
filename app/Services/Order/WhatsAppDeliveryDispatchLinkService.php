@@ -86,13 +86,6 @@ final class WhatsAppDeliveryDispatchLinkService
             ),
         );
 
-        $mapsUrl = trim(
-            (string) (
-                $order->delivery_location
-                ?? ''
-            ),
-        );
-
         $paymentMethod = $this->friendlyPaymentMethod(
             (string) (
                 $order->paymentMethod?->name
@@ -101,6 +94,110 @@ final class WhatsAppDeliveryDispatchLinkService
         );
 
         $summary = $this->buildOrderSummary($order);
+
+        /*
+     * Recupera la ubicación guardada en el pedido.
+     *
+     * delivery_location puede contener directamente una URL,
+     * coordenadas o un JSON, dependiendo de cómo se haya guardado.
+     */
+        $deliveryLocation = $order->delivery_location;
+
+        $mapsUrl = '';
+
+        if (is_string($deliveryLocation)) {
+            $locationValue = trim($deliveryLocation);
+
+            if ($locationValue !== '') {
+                if (
+                    str_starts_with($locationValue, 'http://')
+                    || str_starts_with($locationValue, 'https://')
+                ) {
+                    $mapsUrl = $locationValue;
+                } else {
+                    $decodedLocation = json_decode(
+                        $locationValue,
+                        true,
+                    );
+
+                    if (is_array($decodedLocation)) {
+                        $latitude = $decodedLocation['lat']
+                            ?? $decodedLocation['latitude']
+                            ?? null;
+
+                        $longitude = $decodedLocation['lng']
+                            ?? $decodedLocation['longitude']
+                            ?? null;
+
+                        if (
+                            is_numeric($latitude)
+                            && is_numeric($longitude)
+                        ) {
+                            $mapsUrl = sprintf(
+                                'https://www.google.com/maps/search/?api=1&query=%s,%s',
+                                $latitude,
+                                $longitude,
+                            );
+                        }
+                    } elseif (
+                        preg_match(
+                            '/^-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$/',
+                            $locationValue,
+                        ) === 1
+                    ) {
+                        $mapsUrl =
+                            'https://www.google.com/maps/search/?api=1&query='
+                            . rawurlencode($locationValue);
+                    }
+                }
+            }
+        } elseif (is_array($deliveryLocation)) {
+            $latitude = $deliveryLocation['lat']
+                ?? $deliveryLocation['latitude']
+                ?? null;
+
+            $longitude = $deliveryLocation['lng']
+                ?? $deliveryLocation['longitude']
+                ?? null;
+
+            if (
+                is_numeric($latitude)
+                && is_numeric($longitude)
+            ) {
+                $mapsUrl = sprintf(
+                    'https://www.google.com/maps/search/?api=1&query=%s,%s',
+                    $latitude,
+                    $longitude,
+                );
+            }
+        }
+
+        /*
+     * Respaldo para proyectos que almacenan latitud y longitud
+     * en columnas separadas.
+     */
+        if ($mapsUrl === '') {
+            $latitude = $order->delivery_lat
+                ?? $order->latitude
+                ?? $order->lat
+                ?? null;
+
+            $longitude = $order->delivery_lng
+                ?? $order->longitude
+                ?? $order->lng
+                ?? null;
+
+            if (
+                is_numeric($latitude)
+                && is_numeric($longitude)
+            ) {
+                $mapsUrl = sprintf(
+                    'https://www.google.com/maps/search/?api=1&query=%s,%s',
+                    $latitude,
+                    $longitude,
+                );
+            }
+        }
 
         $lines = [
             "SOLICITUD DE DELIVERY - CHEO' PIZZA",
@@ -117,6 +214,7 @@ final class WhatsAppDeliveryDispatchLinkService
         $lines[] = 'DETALLE DEL PEDIDO';
         $lines[] = $summary;
         $lines[] = '';
+
         $lines[] = 'Total: $'
             . number_format(
                 (float) ($order->total ?? 0),
@@ -145,7 +243,6 @@ final class WhatsAppDeliveryDispatchLinkService
 
         return implode("\n", $lines);
     }
-
     /**
      * Obtiene un nombre legible para el cliente.
      */
