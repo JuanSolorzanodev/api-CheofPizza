@@ -125,4 +125,23 @@ final class Order extends Model
             )
             ->latestOfMany();
     }
+    public function paymentReceipts(): HasMany
+    {
+        return $this->hasMany(
+            PaymentReceipt::class,
+            'order_id',
+        );
+    }
+
+    public function latestPaymentReceipt(): HasOne
+    {
+        return $this
+            ->hasOne(
+                PaymentReceipt::class,
+                'order_id',
+            )
+            ->latestOfMany(
+                'submitted_at',
+            );
+    }
 }

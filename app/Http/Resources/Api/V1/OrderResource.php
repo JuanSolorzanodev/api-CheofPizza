@@ -78,24 +78,34 @@ final class OrderResource extends JsonResource
 
             'customer' => $this->whenLoaded(
                 'user',
-                fn (): ?array => $this->customerData(),
+                fn(): ?array => $this->customerData(),
             ),
 
             'payment' => $this->whenLoaded(
                 'latestPayment',
-                fn (): ?array => $this->paymentData(),
+                fn(): ?array => $this->paymentData(),
             ),
 
             'items' => $this->whenLoaded(
                 'orderItems',
-                fn (): array => $this->itemsData(),
+                fn(): array => $this->itemsData(),
+            ),
+            'payment_receipt' =>
+            $this->whenLoaded(
+                'latestPaymentReceipt',
+                fn(): mixed =>
+                $this->latestPaymentReceipt === null
+                    ? null
+                    : new PaymentReceiptResource(
+                        $this->latestPaymentReceipt,
+                    ),
             ),
 
             'items_count' => $this->resolveItemsCount(),
 
             'status_changes' => $this->whenLoaded(
                 'statusChanges',
-                fn (): array => $this->statusChangesData(),
+                fn(): array => $this->statusChangesData(),
             ),
 
             'whatsapp_receipt_url' => $this->nullableString(
@@ -276,7 +286,7 @@ final class OrderResource extends JsonResource
 
         return $item->orderPromotionItems
             ->map(
-                static fn ($promotionItem): array => [
+                static fn($promotionItem): array => [
                     'id' => (int) $promotionItem->id,
 
                     'pizza_id' => $promotionItem->pizza_id !== null
@@ -305,41 +315,41 @@ final class OrderResource extends JsonResource
                     'id' => (int) $personalization->id,
 
                     'order_promotion_item_id' =>
-                        $personalization->order_promotion_item_id !== null
-                            ? (int) $personalization->order_promotion_item_id
-                            : null,
+                    $personalization->order_promotion_item_id !== null
+                        ? (int) $personalization->order_promotion_item_id
+                        : null,
 
                     'ingredient_id' =>
-                        $personalization->ingredient_id !== null
-                            ? (int) $personalization->ingredient_id
-                            : null,
+                    $personalization->ingredient_id !== null
+                        ? (int) $personalization->ingredient_id
+                        : null,
 
                     'ingredient_name' =>
-                        $personalization->ingredient_name,
+                    $personalization->ingredient_name,
 
                     'action_id' =>
-                        $personalization->personalization_action_id !== null
-                            ? (int) $personalization->personalization_action_id
-                            : null,
+                    $personalization->personalization_action_id !== null
+                        ? (int) $personalization->personalization_action_id
+                        : null,
 
                     'action' =>
-                        $personalization
-                            ->personalizationAction
-                            ?->action_name
+                    $personalization
+                        ->personalizationAction
+                        ?->action_name
                         ?? $personalization
-                            ->personalizationAction
-                            ?->name,
+                        ->personalizationAction
+                        ?->name,
 
                     'applies_to' =>
-                        $personalization->applies_to,
+                    $personalization->applies_to,
 
                     'modification_type' =>
-                        $personalization->modification_type,
+                    $personalization->modification_type,
 
                     'extra_price' =>
-                        $this->money(
-                            $personalization->extra_price ?? 0,
-                        ),
+                    $this->money(
+                        $personalization->extra_price ?? 0,
+                    ),
                 ];
             })
             ->values()
@@ -353,8 +363,8 @@ final class OrderResource extends JsonResource
     {
         return $this->statusChanges
             ->sortBy(
-                static fn ($change) =>
-                    $change->changed_at
+                static fn($change) =>
+                $change->changed_at
                     ?? $change->created_at,
             )
             ->map(function ($change): array {
@@ -362,30 +372,30 @@ final class OrderResource extends JsonResource
                     'id' => (int) $change->id,
 
                     'from_status' =>
-                        $change->fromStatus?->status_name,
+                    $change->fromStatus?->status_name,
 
                     'to_status' =>
-                        $change->toStatus?->status_name,
+                    $change->toStatus?->status_name,
 
                     'note' =>
-                        $this->nullableString(
-                            $change->note,
-                        ),
+                    $this->nullableString(
+                        $change->note,
+                    ),
 
                     'changed_at' =>
-                        $change->changed_at?->toISOString()
+                    $change->changed_at?->toISOString()
                         ?? $change->created_at?->toISOString(),
 
                     'changed_by' =>
-                        $change->changedBy === null
-                            ? null
-                            : [
-                                'id' => (int) $change->changedBy->id,
+                    $change->changedBy === null
+                        ? null
+                        : [
+                            'id' => (int) $change->changedBy->id,
 
-                                'name' => $this->resolveUserName(
-                                    $change->changedBy,
-                                ),
-                            ],
+                            'name' => $this->resolveUserName(
+                                $change->changedBy,
+                            ),
+                        ],
                 ];
             })
             ->values()
@@ -403,8 +413,8 @@ final class OrderResource extends JsonResource
         if ($this->relationLoaded('orderItems')) {
             return $this->money(
                 $this->orderItems->sum(
-                    static fn ($item): float =>
-                        (float) ($item->subtotal ?? 0),
+                    static fn($item): float =>
+                    (float) ($item->subtotal ?? 0),
                 ),
             );
         }
@@ -424,8 +434,8 @@ final class OrderResource extends JsonResource
 
         if ($this->relationLoaded('orderItems')) {
             return (int) $this->orderItems->sum(
-                static fn ($item): int =>
-                    max(1, (int) ($item->quantity ?? 1)),
+                static fn($item): int =>
+                max(1, (int) ($item->quantity ?? 1)),
             );
         }
 

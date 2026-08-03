@@ -10,21 +10,23 @@ use App\Http\Controllers\Api\V1\Admin\Catalog\IngredientTypeController as AdminI
 use App\Http\Controllers\Api\V1\Admin\Catalog\PizzaController as AdminPizzaController;
 use App\Http\Controllers\Api\V1\Admin\Catalog\SizeController as AdminSizeController;
 use App\Http\Controllers\Api\V1\Admin\MachineLearningController;
+use App\Http\Controllers\Api\V1\Admin\PromotionController as AdminPromotionController;
+use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
+use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\V1\Auth\AuthenticatedUserController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Operator\OrdersController as OperatorOrdersController;
+use App\Http\Controllers\Api\V1\Operator\PaymentReceiptController as OperatorPaymentReceiptController;
 use App\Http\Controllers\Api\V1\Orders\CheckoutController;
 use App\Http\Controllers\Api\V1\Orders\MyOrdersController;
+use App\Http\Controllers\Api\V1\Orders\PaymentReceiptController as CustomerPaymentReceiptController;
 use App\Http\Controllers\Api\V1\Payments\PayPalPaymentController;
 use App\Http\Controllers\Api\V1\Payments\PayPalWebhookController;
 use App\Http\Controllers\Api\V1\Public\BuilderController;
 use App\Http\Controllers\Api\V1\Public\CartController;
 use App\Http\Controllers\Api\V1\Public\CatalogController;
 use App\Http\Controllers\Api\V1\Public\GeoController;
-use App\Http\Controllers\Api\V1\Admin\PromotionController as AdminPromotionController;
-use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Public\PromotionController;
 use App\Http\Controllers\Api\V1\Public\SettingController as PublicSettingController;
 use Illuminate\Support\Facades\Route;
@@ -36,32 +38,39 @@ Route::prefix('v1')->group(function (): void {
     |--------------------------------------------------------------------------
     */
 
-    Route::prefix('auth')->group(function (): void {
-        Route::post(
-            'firebase/google',
-            [
-                AuthController::class,
-                'loginWithGoogle',
-            ],
-        )
-            ->middleware('throttle:auth')
-            ->name('api.v1.auth.firebase.google');
-
-        Route::middleware([
-            'auth:sanctum',
-            'active.user',
-        ])->group(function (): void {
-            Route::get(
-                'me',
-                AuthenticatedUserController::class,
-            )->name('api.v1.auth.me');
-
+    Route::prefix('auth')
+        ->group(function (): void {
             Route::post(
-                'logout',
-                LogoutController::class,
-            )->name('api.v1.auth.logout');
+                'firebase/google',
+                [
+                    AuthController::class,
+                    'loginWithGoogle',
+                ],
+            )
+                ->middleware('throttle:auth')
+                ->name(
+                    'api.v1.auth.firebase.google',
+                );
+
+            Route::middleware([
+                'auth:sanctum',
+                'active.user',
+            ])->group(function (): void {
+                Route::get(
+                    'me',
+                    AuthenticatedUserController::class,
+                )->name(
+                    'api.v1.auth.me',
+                );
+
+                Route::post(
+                    'logout',
+                    LogoutController::class,
+                )->name(
+                    'api.v1.auth.logout',
+                );
+            });
         });
-    });
 
     /*
     |--------------------------------------------------------------------------
@@ -73,8 +82,12 @@ Route::prefix('v1')->group(function (): void {
         'payments/paypal/webhook',
         PayPalWebhookController::class,
     )
-        ->middleware('throttle:paypal-webhook')
-        ->name('api.v1.payments.paypal.webhook');
+        ->middleware(
+            'throttle:paypal-webhook',
+        )
+        ->name(
+            'api.v1.payments.paypal.webhook',
+        );
 
     /*
     |--------------------------------------------------------------------------
@@ -83,7 +96,9 @@ Route::prefix('v1')->group(function (): void {
     */
 
     Route::prefix('public/catalog')
-        ->middleware('throttle:public-api')
+        ->middleware(
+            'throttle:public-api',
+        )
         ->group(function (): void {
             Route::get(
                 'categories',
@@ -141,7 +156,9 @@ Route::prefix('v1')->group(function (): void {
     */
 
     Route::prefix('public/builder')
-        ->middleware('throttle:public-api')
+        ->middleware(
+            'throttle:public-api',
+        )
         ->group(function (): void {
             Route::post(
                 'quote',
@@ -159,7 +176,9 @@ Route::prefix('v1')->group(function (): void {
     */
 
     Route::prefix('public/promotions')
-        ->middleware('throttle:public-api')
+        ->middleware(
+            'throttle:public-api',
+        )
         ->group(function (): void {
             Route::get(
                 '',
@@ -236,7 +255,9 @@ Route::prefix('v1')->group(function (): void {
                     CartController::class,
                     'updateQuantity',
                 ],
-            )->whereNumber('itemId');
+            )->whereNumber(
+                'itemId',
+            );
 
             Route::delete(
                 'items/{itemId}',
@@ -244,7 +265,9 @@ Route::prefix('v1')->group(function (): void {
                     CartController::class,
                     'remove',
                 ],
-            )->whereNumber('itemId');
+            )->whereNumber(
+                'itemId',
+            );
 
             Route::delete(
                 '',
@@ -262,7 +285,9 @@ Route::prefix('v1')->group(function (): void {
     */
 
     Route::prefix('public/checkout')
-        ->middleware('throttle:public-api')
+        ->middleware(
+            'throttle:public-api',
+        )
         ->group(function (): void {
             Route::get(
                 'config',
@@ -280,7 +305,9 @@ Route::prefix('v1')->group(function (): void {
     */
 
     Route::prefix('public/geo')
-        ->middleware('throttle:geo')
+        ->middleware(
+            'throttle:geo',
+        )
         ->group(function (): void {
             Route::get(
                 'reverse',
@@ -290,6 +317,39 @@ Route::prefix('v1')->group(function (): void {
                 ],
             );
         });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Archivo privado del comprobante
+    |--------------------------------------------------------------------------
+    |
+    | Puede ser consultado por:
+    | - cliente dueño del pedido;
+    | - operador;
+    | - administrador.
+    |
+    | La autorización final se valida en el servicio.
+    |
+    */
+
+    Route::middleware([
+        'auth:sanctum',
+        'active.user',
+    ])->group(function (): void {
+        Route::get(
+            'payment-receipts/{receiptUuid}/file',
+            [
+                CustomerPaymentReceiptController::class,
+                'file',
+            ],
+        )
+            ->whereUuid(
+                'receiptUuid',
+            )
+            ->name(
+                'api.v1.payment-receipts.file',
+            );
+    });
 
     /*
     |--------------------------------------------------------------------------
@@ -309,11 +369,23 @@ Route::prefix('v1')->group(function (): void {
                 'checkout',
             ],
         )
-            ->middleware('throttle:checkout')
-            ->name('api.v1.checkout.store');
+            ->middleware(
+                'throttle:checkout',
+            )
+            ->name(
+                'api.v1.checkout.store',
+            );
+
+        /*
+        |--------------------------------------------------------------------------
+        | PayPal
+        |--------------------------------------------------------------------------
+        */
 
         Route::prefix('payments/paypal')
-            ->middleware('throttle:payments')
+            ->middleware(
+                'throttle:payments',
+            )
             ->group(function (): void {
                 Route::post(
                     'orders',
@@ -322,7 +394,7 @@ Route::prefix('v1')->group(function (): void {
                         'store',
                     ],
                 )->name(
-                    'api.v1.payments.paypal.orders.store'
+                    'api.v1.payments.paypal.orders.store',
                 );
 
                 Route::get(
@@ -332,9 +404,11 @@ Route::prefix('v1')->group(function (): void {
                         'show',
                     ],
                 )
-                    ->whereUuid('paymentUuid')
+                    ->whereUuid(
+                        'paymentUuid',
+                    )
                     ->name(
-                        'api.v1.payments.paypal.orders.show'
+                        'api.v1.payments.paypal.orders.show',
                     );
 
                 Route::post(
@@ -344,11 +418,19 @@ Route::prefix('v1')->group(function (): void {
                         'capture',
                     ],
                 )
-                    ->whereUuid('paymentUuid')
+                    ->whereUuid(
+                        'paymentUuid',
+                    )
                     ->name(
-                        'api.v1.payments.paypal.orders.capture'
+                        'api.v1.payments.paypal.orders.capture',
                     );
             });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Pedidos del cliente
+        |--------------------------------------------------------------------------
+        */
 
         Route::get(
             'my/orders',
@@ -356,6 +438,8 @@ Route::prefix('v1')->group(function (): void {
                 MyOrdersController::class,
                 'index',
             ],
+        )->name(
+            'api.v1.my-orders.index',
         );
 
         Route::get(
@@ -364,7 +448,61 @@ Route::prefix('v1')->group(function (): void {
                 MyOrdersController::class,
                 'show',
             ],
-        )->whereNumber('orderId');
+        )
+            ->whereNumber(
+                'orderId',
+            )
+            ->name(
+                'api.v1.my-orders.show',
+            );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Comprobantes del cliente
+        |--------------------------------------------------------------------------
+        */
+
+        Route::prefix(
+            'my/orders/{orderId}/payment-receipts',
+        )
+            ->whereNumber(
+                'orderId',
+            )
+            ->group(function (): void {
+                Route::get(
+                    '',
+                    [
+                        CustomerPaymentReceiptController::class,
+                        'index',
+                    ],
+                )->name(
+                    'api.v1.payment-receipts.index',
+                );
+
+                Route::get(
+                    'latest',
+                    [
+                        CustomerPaymentReceiptController::class,
+                        'latest',
+                    ],
+                )->name(
+                    'api.v1.payment-receipts.latest',
+                );
+
+                Route::post(
+                    '',
+                    [
+                        CustomerPaymentReceiptController::class,
+                        'store',
+                    ],
+                )
+                    ->middleware(
+                        'throttle:payments',
+                    )
+                    ->name(
+                        'api.v1.payment-receipts.store',
+                    );
+            });
     });
 
     /*
@@ -379,13 +517,22 @@ Route::prefix('v1')->group(function (): void {
         'role:operator,admin',
     ])
         ->prefix('operator')
+        ->name('api.v1.operator.')
         ->group(function (): void {
+            /*
+            |--------------------------------------------------------------------------
+            | Pedidos
+            |--------------------------------------------------------------------------
+            */
+
             Route::get(
                 'orders',
                 [
                     OperatorOrdersController::class,
                     'index',
                 ],
+            )->name(
+                'orders.index',
             );
 
             Route::get(
@@ -394,6 +541,8 @@ Route::prefix('v1')->group(function (): void {
                     OperatorOrdersController::class,
                     'queue',
                 ],
+            )->name(
+                'orders.queue',
             );
 
             Route::get(
@@ -402,6 +551,8 @@ Route::prefix('v1')->group(function (): void {
                     OperatorOrdersController::class,
                     'statuses',
                 ],
+            )->name(
+                'orders.statuses',
             );
 
             Route::get(
@@ -410,7 +561,13 @@ Route::prefix('v1')->group(function (): void {
                     OperatorOrdersController::class,
                     'show',
                 ],
-            )->whereNumber('orderId');
+            )
+                ->whereNumber(
+                    'orderId',
+                )
+                ->name(
+                    'orders.show',
+                );
 
             Route::patch(
                 'orders/{orderId}/status',
@@ -419,9 +576,64 @@ Route::prefix('v1')->group(function (): void {
                     'updateStatus',
                 ],
             )
-                ->whereNumber('orderId')
+                ->whereNumber(
+                    'orderId',
+                )
                 ->middleware(
-                    'throttle:operator-actions'
+                    'throttle:operator-actions',
+                )
+                ->name(
+                    'orders.status.update',
+                );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Comprobantes de transferencia
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                'payment-receipts',
+                [
+                    OperatorPaymentReceiptController::class,
+                    'index',
+                ],
+            )->name(
+                'payment-receipts.index',
+            );
+
+            Route::patch(
+                'payment-receipts/{receiptUuid}/approve',
+                [
+                    OperatorPaymentReceiptController::class,
+                    'approve',
+                ],
+            )
+                ->whereUuid(
+                    'receiptUuid',
+                )
+                ->middleware(
+                    'throttle:operator-actions',
+                )
+                ->name(
+                    'payment-receipts.approve',
+                );
+
+            Route::patch(
+                'payment-receipts/{receiptUuid}/reject',
+                [
+                    OperatorPaymentReceiptController::class,
+                    'reject',
+                ],
+            )
+                ->whereUuid(
+                    'receiptUuid',
+                )
+                ->middleware(
+                    'throttle:operator-actions',
+                )
+                ->name(
+                    'payment-receipts.reject',
                 );
         });
 
@@ -460,9 +672,7 @@ Route::prefix('v1')->group(function (): void {
                     'update',
                 ],
             )
-                ->middleware(
-                    'throttle:operator-actions'
-                )
+                ->middleware('throttle:operator-actions')
                 ->name('settings.update');
 
             /*
@@ -480,7 +690,9 @@ Route::prefix('v1')->group(function (): void {
                             AdminUserController::class,
                             'roles',
                         ],
-                    )->name('roles');
+                    )->name(
+                        'roles',
+                    );
 
                     Route::get(
                         '',
@@ -488,7 +700,9 @@ Route::prefix('v1')->group(function (): void {
                             AdminUserController::class,
                             'index',
                         ],
-                    )->name('index');
+                    )->name(
+                        'index',
+                    );
 
                     Route::post(
                         '',
@@ -498,9 +712,11 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )
                         ->middleware(
-                            'throttle:operator-actions'
+                            'throttle:operator-actions',
                         )
-                        ->name('store');
+                        ->name(
+                            'store',
+                        );
 
                     Route::get(
                         '{user}',
@@ -509,8 +725,12 @@ Route::prefix('v1')->group(function (): void {
                             'show',
                         ],
                     )
-                        ->whereNumber('user')
-                        ->name('show');
+                        ->whereNumber(
+                            'user',
+                        )
+                        ->name(
+                            'show',
+                        );
 
                     Route::put(
                         '{user}',
@@ -519,11 +739,15 @@ Route::prefix('v1')->group(function (): void {
                             'update',
                         ],
                     )
-                        ->whereNumber('user')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'user',
                         )
-                        ->name('update');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'update',
+                        );
 
                     Route::patch(
                         '{user}/role',
@@ -532,11 +756,15 @@ Route::prefix('v1')->group(function (): void {
                             'updateRole',
                         ],
                     )
-                        ->whereNumber('user')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'user',
                         )
-                        ->name('role');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'role',
+                        );
 
                     Route::patch(
                         '{user}/status',
@@ -545,11 +773,15 @@ Route::prefix('v1')->group(function (): void {
                             'updateStatus',
                         ],
                     )
-                        ->whereNumber('user')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'user',
                         )
-                        ->name('status');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'status',
+                        );
                 });
 
             /*
@@ -573,7 +805,9 @@ Route::prefix('v1')->group(function (): void {
                             AdminCategoryController::class,
                             'index',
                         ],
-                    )->name('categories.index');
+                    )->name(
+                        'categories.index',
+                    );
 
                     Route::post(
                         'categories',
@@ -583,9 +817,11 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )
                         ->middleware(
-                            'throttle:operator-actions'
+                            'throttle:operator-actions',
                         )
-                        ->name('categories.store');
+                        ->name(
+                            'categories.store',
+                        );
 
                     Route::get(
                         'categories/{category}',
@@ -594,8 +830,12 @@ Route::prefix('v1')->group(function (): void {
                             'show',
                         ],
                     )
-                        ->whereNumber('category')
-                        ->name('categories.show');
+                        ->whereNumber(
+                            'category',
+                        )
+                        ->name(
+                            'categories.show',
+                        );
 
                     Route::put(
                         'categories/{category}',
@@ -604,11 +844,15 @@ Route::prefix('v1')->group(function (): void {
                             'update',
                         ],
                     )
-                        ->whereNumber('category')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'category',
                         )
-                        ->name('categories.update');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'categories.update',
+                        );
 
                     Route::delete(
                         'categories/{category}',
@@ -617,11 +861,15 @@ Route::prefix('v1')->group(function (): void {
                             'destroy',
                         ],
                     )
-                        ->whereNumber('category')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'category',
                         )
-                        ->name('categories.destroy');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'categories.destroy',
+                        );
 
                     /*
                     |--------------------------------------------------------------------------
@@ -635,7 +883,9 @@ Route::prefix('v1')->group(function (): void {
                             AdminSizeController::class,
                             'index',
                         ],
-                    )->name('sizes.index');
+                    )->name(
+                        'sizes.index',
+                    );
 
                     Route::post(
                         'sizes',
@@ -645,9 +895,11 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )
                         ->middleware(
-                            'throttle:operator-actions'
+                            'throttle:operator-actions',
                         )
-                        ->name('sizes.store');
+                        ->name(
+                            'sizes.store',
+                        );
 
                     Route::get(
                         'sizes/{size}',
@@ -656,8 +908,12 @@ Route::prefix('v1')->group(function (): void {
                             'show',
                         ],
                     )
-                        ->whereNumber('size')
-                        ->name('sizes.show');
+                        ->whereNumber(
+                            'size',
+                        )
+                        ->name(
+                            'sizes.show',
+                        );
 
                     Route::put(
                         'sizes/{size}',
@@ -666,11 +922,15 @@ Route::prefix('v1')->group(function (): void {
                             'update',
                         ],
                     )
-                        ->whereNumber('size')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'size',
                         )
-                        ->name('sizes.update');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'sizes.update',
+                        );
 
                     Route::delete(
                         'sizes/{size}',
@@ -679,11 +939,15 @@ Route::prefix('v1')->group(function (): void {
                             'destroy',
                         ],
                     )
-                        ->whereNumber('size')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'size',
                         )
-                        ->name('sizes.destroy');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'sizes.destroy',
+                        );
 
                     /*
                     |--------------------------------------------------------------------------
@@ -697,7 +961,9 @@ Route::prefix('v1')->group(function (): void {
                             AdminCategoryPriceController::class,
                             'index',
                         ],
-                    )->name('prices.index');
+                    )->name(
+                        'prices.index',
+                    );
 
                     Route::put(
                         'prices',
@@ -707,9 +973,11 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )
                         ->middleware(
-                            'throttle:operator-actions'
+                            'throttle:operator-actions',
                         )
-                        ->name('prices.update');
+                        ->name(
+                            'prices.update',
+                        );
 
                     /*
                     |--------------------------------------------------------------------------
@@ -723,7 +991,9 @@ Route::prefix('v1')->group(function (): void {
                             AdminPizzaController::class,
                             'index',
                         ],
-                    )->name('pizzas.index');
+                    )->name(
+                        'pizzas.index',
+                    );
 
                     Route::post(
                         'pizzas',
@@ -733,9 +1003,11 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )
                         ->middleware(
-                            'throttle:operator-actions'
+                            'throttle:operator-actions',
                         )
-                        ->name('pizzas.store');
+                        ->name(
+                            'pizzas.store',
+                        );
 
                     Route::get(
                         'pizzas/{pizza}',
@@ -744,8 +1016,12 @@ Route::prefix('v1')->group(function (): void {
                             'show',
                         ],
                     )
-                        ->whereNumber('pizza')
-                        ->name('pizzas.show');
+                        ->whereNumber(
+                            'pizza',
+                        )
+                        ->name(
+                            'pizzas.show',
+                        );
 
                     Route::put(
                         'pizzas/{pizza}',
@@ -754,11 +1030,15 @@ Route::prefix('v1')->group(function (): void {
                             'update',
                         ],
                     )
-                        ->whereNumber('pizza')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'pizza',
                         )
-                        ->name('pizzas.update');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'pizzas.update',
+                        );
 
                     Route::patch(
                         'pizzas/{pizza}/visibility',
@@ -767,11 +1047,15 @@ Route::prefix('v1')->group(function (): void {
                             'updateVisibility',
                         ],
                     )
-                        ->whereNumber('pizza')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'pizza',
                         )
-                        ->name('pizzas.visibility');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'pizzas.visibility',
+                        );
 
                     Route::delete(
                         'pizzas/{pizza}',
@@ -780,11 +1064,15 @@ Route::prefix('v1')->group(function (): void {
                             'destroy',
                         ],
                     )
-                        ->whereNumber('pizza')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'pizza',
                         )
-                        ->name('pizzas.destroy');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'pizzas.destroy',
+                        );
 
                     /*
                     |--------------------------------------------------------------------------
@@ -798,7 +1086,9 @@ Route::prefix('v1')->group(function (): void {
                             AdminIngredientTypeController::class,
                             'index',
                         ],
-                    )->name('ingredient-types.index');
+                    )->name(
+                        'ingredient-types.index',
+                    );
 
                     Route::post(
                         'ingredient-types',
@@ -808,9 +1098,11 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )
                         ->middleware(
-                            'throttle:operator-actions'
+                            'throttle:operator-actions',
                         )
-                        ->name('ingredient-types.store');
+                        ->name(
+                            'ingredient-types.store',
+                        );
 
                     Route::get(
                         'ingredient-types/{ingredientType}',
@@ -819,8 +1111,12 @@ Route::prefix('v1')->group(function (): void {
                             'show',
                         ],
                     )
-                        ->whereNumber('ingredientType')
-                        ->name('ingredient-types.show');
+                        ->whereNumber(
+                            'ingredientType',
+                        )
+                        ->name(
+                            'ingredient-types.show',
+                        );
 
                     Route::put(
                         'ingredient-types/{ingredientType}',
@@ -829,11 +1125,15 @@ Route::prefix('v1')->group(function (): void {
                             'update',
                         ],
                     )
-                        ->whereNumber('ingredientType')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'ingredientType',
                         )
-                        ->name('ingredient-types.update');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'ingredient-types.update',
+                        );
 
                     Route::delete(
                         'ingredient-types/{ingredientType}',
@@ -842,11 +1142,15 @@ Route::prefix('v1')->group(function (): void {
                             'destroy',
                         ],
                     )
-                        ->whereNumber('ingredientType')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'ingredientType',
                         )
-                        ->name('ingredient-types.destroy');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'ingredient-types.destroy',
+                        );
 
                     /*
                     |--------------------------------------------------------------------------
@@ -860,7 +1164,9 @@ Route::prefix('v1')->group(function (): void {
                             AdminIngredientController::class,
                             'index',
                         ],
-                    )->name('ingredients.index');
+                    )->name(
+                        'ingredients.index',
+                    );
 
                     Route::post(
                         'ingredients',
@@ -870,9 +1176,11 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )
                         ->middleware(
-                            'throttle:operator-actions'
+                            'throttle:operator-actions',
                         )
-                        ->name('ingredients.store');
+                        ->name(
+                            'ingredients.store',
+                        );
 
                     Route::get(
                         'ingredients/{ingredient}',
@@ -881,8 +1189,12 @@ Route::prefix('v1')->group(function (): void {
                             'show',
                         ],
                     )
-                        ->whereNumber('ingredient')
-                        ->name('ingredients.show');
+                        ->whereNumber(
+                            'ingredient',
+                        )
+                        ->name(
+                            'ingredients.show',
+                        );
 
                     Route::put(
                         'ingredients/{ingredient}',
@@ -891,11 +1203,15 @@ Route::prefix('v1')->group(function (): void {
                             'update',
                         ],
                     )
-                        ->whereNumber('ingredient')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'ingredient',
                         )
-                        ->name('ingredients.update');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'ingredients.update',
+                        );
 
                     Route::delete(
                         'ingredients/{ingredient}',
@@ -904,11 +1220,15 @@ Route::prefix('v1')->group(function (): void {
                             'destroy',
                         ],
                     )
-                        ->whereNumber('ingredient')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'ingredient',
                         )
-                        ->name('ingredients.destroy');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'ingredients.destroy',
+                        );
 
                     /*
                     |--------------------------------------------------------------------------
@@ -922,7 +1242,9 @@ Route::prefix('v1')->group(function (): void {
                             AdminIngredientPriceController::class,
                             'index',
                         ],
-                    )->name('ingredient-prices.index');
+                    )->name(
+                        'ingredient-prices.index',
+                    );
 
                     Route::put(
                         'ingredients/{ingredient}/prices',
@@ -931,11 +1253,15 @@ Route::prefix('v1')->group(function (): void {
                             'update',
                         ],
                     )
-                        ->whereNumber('ingredient')
-                        ->middleware(
-                            'throttle:operator-actions'
+                        ->whereNumber(
+                            'ingredient',
                         )
-                        ->name('ingredient-prices.update');
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name(
+                            'ingredient-prices.update',
+                        );
                 });
 
             /*
@@ -950,7 +1276,9 @@ Route::prefix('v1')->group(function (): void {
                     AdminPromotionController::class,
                     'index',
                 ],
-            )->name('promotions.index');
+            )->name(
+                'promotions.index',
+            );
 
             Route::post(
                 'promotions',
@@ -960,9 +1288,11 @@ Route::prefix('v1')->group(function (): void {
                 ],
             )
                 ->middleware(
-                    'throttle:operator-actions'
+                    'throttle:operator-actions',
                 )
-                ->name('promotions.store');
+                ->name(
+                    'promotions.store',
+                );
 
             Route::get(
                 'promotions/{promotion}',
@@ -971,8 +1301,12 @@ Route::prefix('v1')->group(function (): void {
                     'show',
                 ],
             )
-                ->whereNumber('promotion')
-                ->name('promotions.show');
+                ->whereNumber(
+                    'promotion',
+                )
+                ->name(
+                    'promotions.show',
+                );
 
             Route::put(
                 'promotions/{promotion}',
@@ -981,11 +1315,15 @@ Route::prefix('v1')->group(function (): void {
                     'update',
                 ],
             )
-                ->whereNumber('promotion')
-                ->middleware(
-                    'throttle:operator-actions'
+                ->whereNumber(
+                    'promotion',
                 )
-                ->name('promotions.update');
+                ->middleware(
+                    'throttle:operator-actions',
+                )
+                ->name(
+                    'promotions.update',
+                );
 
             Route::patch(
                 'promotions/{promotion}/visibility',
@@ -994,11 +1332,15 @@ Route::prefix('v1')->group(function (): void {
                     'updateVisibility',
                 ],
             )
-                ->whereNumber('promotion')
-                ->middleware(
-                    'throttle:operator-actions'
+                ->whereNumber(
+                    'promotion',
                 )
-                ->name('promotions.visibility');
+                ->middleware(
+                    'throttle:operator-actions',
+                )
+                ->name(
+                    'promotions.visibility',
+                );
 
             Route::delete(
                 'promotions/{promotion}',
@@ -1007,11 +1349,15 @@ Route::prefix('v1')->group(function (): void {
                     'destroy',
                 ],
             )
-                ->whereNumber('promotion')
-                ->middleware(
-                    'throttle:operator-actions'
+                ->whereNumber(
+                    'promotion',
                 )
-                ->name('promotions.destroy');
+                ->middleware(
+                    'throttle:operator-actions',
+                )
+                ->name(
+                    'promotions.destroy',
+                );
 
             /*
             |--------------------------------------------------------------------------
@@ -1019,8 +1365,12 @@ Route::prefix('v1')->group(function (): void {
             |--------------------------------------------------------------------------
             */
 
-            Route::prefix('machine-learning')
-                ->name('machine-learning.')
+            Route::prefix(
+                'machine-learning',
+            )
+                ->name(
+                    'machine-learning.',
+                )
                 ->group(function (): void {
                     Route::get(
                         'latest',
@@ -1028,7 +1378,9 @@ Route::prefix('v1')->group(function (): void {
                             MachineLearningController::class,
                             'latest',
                         ],
-                    )->name('latest');
+                    )->name(
+                        'latest',
+                    );
 
                     Route::get(
                         'history',
@@ -1036,7 +1388,9 @@ Route::prefix('v1')->group(function (): void {
                             MachineLearningController::class,
                             'history',
                         ],
-                    )->name('history');
+                    )->name(
+                        'history',
+                    );
 
                     Route::get(
                         'runs/{uuid}',
@@ -1045,8 +1399,12 @@ Route::prefix('v1')->group(function (): void {
                             'show',
                         ],
                     )
-                        ->whereUuid('uuid')
-                        ->name('runs.show');
+                        ->whereUuid(
+                            'uuid',
+                        )
+                        ->name(
+                            'runs.show',
+                        );
 
                     Route::get(
                         'service/model',
@@ -1054,7 +1412,9 @@ Route::prefix('v1')->group(function (): void {
                             MachineLearningController::class,
                             'serviceModel',
                         ],
-                    )->name('service.model');
+                    )->name(
+                        'service.model',
+                    );
 
                     Route::post(
                         'preview',
@@ -1064,9 +1424,11 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )
                         ->middleware(
-                            'throttle:operator-actions'
+                            'throttle:operator-actions',
                         )
-                        ->name('preview');
+                        ->name(
+                            'preview',
+                        );
 
                     Route::post(
                         'generate',
@@ -1076,9 +1438,11 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )
                         ->middleware(
-                            'throttle:operator-actions'
+                            'throttle:operator-actions',
                         )
-                        ->name('generate');
+                        ->name(
+                            'generate',
+                        );
 
                     Route::post(
                         'import',
@@ -1088,9 +1452,11 @@ Route::prefix('v1')->group(function (): void {
                         ],
                     )
                         ->middleware(
-                            'throttle:operator-actions'
+                            'throttle:operator-actions',
                         )
-                        ->name('import');
+                        ->name(
+                            'import',
+                        );
                 });
         });
 });

@@ -7,6 +7,7 @@ namespace App\Http\Resources\Api\V1\Operator;
 use App\Enums\OrderStatusName;
 use App\Services\Order\OrderStatusTransitionService;
 use App\Services\Order\WhatsAppDeliveryDispatchLinkService;
+use App\Http\Resources\Api\V1\PaymentReceiptResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -68,10 +69,10 @@ final class OperatorOrderDetailResource extends JsonResource
             'status' => $statusName,
 
             'allowed_transitions' =>
-                $allowedTransitions,
+            $allowedTransitions,
 
             'delivery_type' =>
-                $deliveryType,
+            $deliveryType,
 
             'payment_method' => (string) (
                 $order->paymentMethod?->name
@@ -89,11 +90,11 @@ final class OperatorOrderDetailResource extends JsonResource
                         $order->user?->first_name
                         ?? ''
                     )
-                    .' '.
-                    (string) (
-                        $order->user?->last_name
-                        ?? ''
-                    ),
+                        . ' ' .
+                        (string) (
+                            $order->user?->last_name
+                            ?? ''
+                        ),
                 ),
 
                 'phone' => (string) (
@@ -133,12 +134,25 @@ final class OperatorOrderDetailResource extends JsonResource
             ],
 
             'delivery_whatsapp_url' =>
-                $deliveryType ===
-                    OrderStatusTransitionService::DELIVERY_TYPE_DELIVERY
-                    ? app(
-                        WhatsAppDeliveryDispatchLinkService::class,
-                    )->build($order)
-                    : null,
+            $deliveryType ===
+                OrderStatusTransitionService::DELIVERY_TYPE_DELIVERY
+                ? app(
+                    WhatsAppDeliveryDispatchLinkService::class,
+                )->build($order)
+                : null,
+
+            'payment_receipt' =>
+            $order->relationLoaded(
+                'latestPaymentReceipt',
+            )
+                ? (
+                    $order->latestPaymentReceipt === null
+                    ? null
+                    : new PaymentReceiptResource(
+                        $order->latestPaymentReceipt,
+                    )
+                )
+                : null,
 
             'kitchen' => [
                 'items' => $this->kitchenItems(
@@ -147,9 +161,9 @@ final class OperatorOrderDetailResource extends JsonResource
             ],
 
             'status_changes' =>
-                $this->statusChanges(
-                    $order,
-                ),
+            $this->statusChanges(
+                $order,
+            ),
         ];
     }
 
@@ -175,39 +189,37 @@ final class OperatorOrderDetailResource extends JsonResource
                 ): array {
                     $base = [
                         'id' =>
-                            (int) $item->id,
+                        (int) $item->id,
 
                         'quantity' =>
-                            (int) (
-                                $item->quantity
-                                ?? 1
-                            ),
+                        (int) (
+                            $item->quantity
+                            ?? 1
+                        ),
 
                         'size_name' =>
-                            (string) (
-                                $item->size_name
-                                ?? ''
-                            ),
+                        (string) (
+                            $item->size_name
+                            ?? ''
+                        ),
 
                         'category_name' =>
-                            (string) (
-                                $item->category_name
-                                ?? ''
-                            ),
+                        (string) (
+                            $item->category_name
+                            ?? ''
+                        ),
 
                         'type' =>
-                            'pizza',
+                        'pizza',
 
                         'personalizations' =>
-                            $this->personalizations(
-                                $item,
-                            ),
+                        $this->personalizations(
+                            $item,
+                        ),
                     ];
 
                     if (
-                        !empty(
-                            $item->promotion_id
-                        )
+                        !empty($item->promotion_id)
                     ) {
                         return $this
                             ->promotionItem(
@@ -250,35 +262,35 @@ final class OperatorOrderDetailResource extends JsonResource
             'orderPromotionItems',
         )
             ? $item
-                ->orderPromotionItems
-                ->map(
-                    function (
-                        mixed $promotionItem,
-                    ): array {
-                        return [
-                            'pizza_id' => (int) (
-                                $promotionItem
-                                    ->pizza_id
-                                ?? 0
-                            ),
+            ->orderPromotionItems
+            ->map(
+                function (
+                    mixed $promotionItem,
+                ): array {
+                    return [
+                        'pizza_id' => (int) (
+                            $promotionItem
+                            ->pizza_id
+                            ?? 0
+                        ),
 
-                            'pizza_name' => (string) (
-                                $promotionItem
-                                    ->pizza_name
-                                ?? ''
-                            ),
+                        'pizza_name' => (string) (
+                            $promotionItem
+                            ->pizza_name
+                            ?? ''
+                        ),
 
-                            'ingredients' =>
-                                $this
-                                    ->extractPizzaIngredients(
-                                        $promotionItem
-                                            ->pizza,
-                                    ),
-                        ];
-                    },
-                )
-                ->values()
-                ->all()
+                        'ingredients' =>
+                        $this
+                            ->extractPizzaIngredients(
+                                $promotionItem
+                                    ->pizza,
+                            ),
+                    ];
+                },
+            )
+            ->values()
+            ->all()
             : [];
 
         return array_merge(
@@ -316,50 +328,50 @@ final class OperatorOrderDetailResource extends JsonResource
             $base,
             [
                 'type' =>
-                    'half_and_half',
+                'half_and_half',
 
                 'half' => [
                     'A' => [
                         'pizza_id' =>
-                            (int) (
-                                $item->pizza_id
-                                ?? 0
-                            ),
+                        (int) (
+                            $item->pizza_id
+                            ?? 0
+                        ),
 
                         'pizza_name' =>
-                            (string) (
-                                $item->pizza_name
-                                ?? ''
-                            ),
+                        (string) (
+                            $item->pizza_name
+                            ?? ''
+                        ),
 
                         'ingredients' =>
-                            $this
-                                ->extractPizzaIngredients(
-                                    $item->pizza,
-                                ),
+                        $this
+                            ->extractPizzaIngredients(
+                                $item->pizza,
+                            ),
                     ],
 
                     'B' => [
                         'pizza_id' =>
-                            (int) (
-                                $item
-                                    ->pizza_id_second
-                                ?? 0
-                            ),
+                        (int) (
+                            $item
+                            ->pizza_id_second
+                            ?? 0
+                        ),
 
                         'pizza_name' =>
-                            (string) (
-                                $item
-                                    ->pizza_name_second
-                                ?? ''
-                            ),
+                        (string) (
+                            $item
+                            ->pizza_name_second
+                            ?? ''
+                        ),
 
                         'ingredients' =>
-                            $this
-                                ->extractPizzaIngredients(
-                                    $item
-                                        ->pizzaSecond,
-                                ),
+                        $this
+                            ->extractPizzaIngredients(
+                                $item
+                                    ->pizzaSecond,
+                            ),
                     ],
                 ],
             ],
@@ -392,10 +404,10 @@ final class OperatorOrderDetailResource extends JsonResource
                     ),
 
                     'ingredients' =>
-                        $this
-                            ->extractPizzaIngredients(
-                                $item->pizza,
-                            ),
+                    $this
+                        ->extractPizzaIngredients(
+                            $item->pizza,
+                        ),
                 ],
             ],
         );
@@ -416,17 +428,17 @@ final class OperatorOrderDetailResource extends JsonResource
                 'ingredients',
             )
             && $pizza->ingredients
-                ?->isNotEmpty()
+            ?->isNotEmpty()
         ) {
             return $pizza
                 ->ingredients
                 ->map(
-                    static fn (
+                    static fn(
                         mixed $ingredient,
                     ): string => trim(
                         (string) (
                             $ingredient
-                                ->ingredient_name
+                            ->ingredient_name
                             ?? ''
                         ),
                     ),
@@ -441,18 +453,18 @@ final class OperatorOrderDetailResource extends JsonResource
                 'pizzaIngredients',
             )
             && $pizza->pizzaIngredients
-                ?->isNotEmpty()
+            ?->isNotEmpty()
         ) {
             return $pizza
                 ->pizzaIngredients
                 ->map(
-                    static fn (
+                    static fn(
                         mixed $pizzaIngredient,
                     ): string => trim(
                         (string) (
                             $pizzaIngredient
-                                ->ingredient
-                                ?->ingredient_name
+                            ->ingredient
+                            ?->ingredient_name
                             ?? ''
                         ),
                     ),
@@ -480,7 +492,7 @@ final class OperatorOrderDetailResource extends JsonResource
             ),
         )
             ->map(
-                static fn (
+                static fn(
                     string $ingredient,
                 ): string => trim(
                     $ingredient,
@@ -513,40 +525,40 @@ final class OperatorOrderDetailResource extends JsonResource
                 ): array {
                     return [
                         'ingredient_id' =>
-                            (int) (
-                                $personalization
-                                    ->ingredient_id
-                                ?? 0
-                            ),
+                        (int) (
+                            $personalization
+                            ->ingredient_id
+                            ?? 0
+                        ),
 
                         'ingredient_name' =>
-                            (string) (
-                                $personalization
-                                    ->ingredient_name
-                                ?? ''
-                            ),
+                        (string) (
+                            $personalization
+                            ->ingredient_name
+                            ?? ''
+                        ),
 
                         'action' =>
-                            (string) (
-                                $personalization
-                                    ->personalizationAction
-                                    ?->action_name
-                                ?? ''
-                            ),
+                        (string) (
+                            $personalization
+                            ->personalizationAction
+                            ?->action_name
+                            ?? ''
+                        ),
 
                         'applies_to' =>
-                            (string) (
-                                $personalization
-                                    ->applies_to
-                                ?? 'ALL'
-                            ),
+                        (string) (
+                            $personalization
+                            ->applies_to
+                            ?? 'ALL'
+                        ),
 
                         'extra_price' =>
-                            (float) (
-                                $personalization
-                                    ->extra_price
-                                ?? 0
-                            ),
+                        (float) (
+                            $personalization
+                            ->extra_price
+                            ?? 0
+                        ),
                     ];
                 },
             )
@@ -577,37 +589,37 @@ final class OperatorOrderDetailResource extends JsonResource
                     $changedBy = trim(
                         (string) (
                             $change
-                                ->changedBy
-                                ?->first_name
+                            ->changedBy
+                            ?->first_name
                             ?? ''
                         )
-                        .' '.
-                        (string) (
-                            $change
+                            . ' ' .
+                            (string) (
+                                $change
                                 ->changedBy
                                 ?->last_name
-                            ?? ''
-                        ),
+                                ?? ''
+                            ),
                     );
 
                     return [
                         'from' => (string) (
                             $change
-                                ->fromStatus
-                                ?->status_name
+                            ->fromStatus
+                            ?->status_name
                             ?? ''
                         ),
 
                         'to' => (string) (
                             $change
-                                ->toStatus
-                                ?->status_name
+                            ->toStatus
+                            ?->status_name
                             ?? ''
                         ),
 
                         'changed_at' =>
-                            $change->changed_at
-                                ?->toIso8601String(),
+                        $change->changed_at
+                            ?->toIso8601String(),
 
                         'note' => (string) (
                             $change->note

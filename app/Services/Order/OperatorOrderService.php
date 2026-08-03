@@ -63,6 +63,7 @@ final class OperatorOrderService
                 'orderStatus:id,status_name',
                 'deliveryType:id,delivery_type_name',
                 'paymentMethod:id,name',
+                'latestPaymentReceipt.reviewer:id,first_name,last_name',
                 'user:id,first_name,last_name,email,phone',
 
                 'orderItems' => static function (

@@ -96,4 +96,20 @@ final class User extends Authenticatable
             (string) $this->role?->role_name,
         ) === 'admin';
     }
+
+    public function paymentReceipts(): HasMany
+    {
+        return $this->hasMany(
+            PaymentReceipt::class,
+            'user_id',
+        );
+    }
+
+    public function reviewedPaymentReceipts(): HasMany
+    {
+        return $this->hasMany(
+            PaymentReceipt::class,
+            'reviewed_by',
+        );
+    }
 }
