@@ -7,6 +7,7 @@ namespace App\Http\Resources\Api\V1\Operator;
 use App\Enums\OrderStatusName;
 use App\Services\Order\OrderStatusTransitionService;
 use App\Services\Order\WhatsAppDeliveryDispatchLinkService;
+use App\Services\Order\WhatsAppCustomerConfirmationLinkService;
 use App\Http\Resources\Api\V1\PaymentReceiptResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -132,6 +133,11 @@ final class OperatorOrderDetailResource extends JsonResource
                     ?? ''
                 ),
             ],
+
+            'customer_confirmation_whatsapp_url' =>
+            app(
+                WhatsAppCustomerConfirmationLinkService::class,
+            )->build($order),
 
             'delivery_whatsapp_url' =>
             $deliveryType ===
