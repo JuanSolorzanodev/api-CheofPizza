@@ -80,85 +80,102 @@ final class WhatsAppCustomerConfirmationLinkService
     }
 
     private function buildMessage(Order $order): string
-    {
-        $customerName = $this->customerName($order);
-        $orderNumber = trim(
-            (string) ($order->order_number ?? ''),
-        );
+{
+    $customerName = $this->customerName($order);
 
-        $deliveryType = $this->friendlyDeliveryType(
+    $orderNumber = trim(
+        (string) ($order->order_number ?? ''),
+    );
+
+    $deliveryTypeName = strtolower(
+        trim(
             (string) (
                 $order->deliveryType?->delivery_type_name
                 ?? ''
             ),
-        );
+        ),
+    );
 
-        $paymentMethod = $this->friendlyPaymentMethod(
-            (string) (
-                $order->paymentMethod?->name
-                ?? ''
-            ),
-        );
+    $deliveryType = $this->friendlyDeliveryType(
+        $deliveryTypeName,
+    );
 
-        $summary = $this->buildOrderSummary($order);
+    $paymentMethod = $this->friendlyPaymentMethod(
+        (string) (
+            $order->paymentMethod?->name
+            ?? ''
+        ),
+    );
 
-        $lines = [
-            "Hola, {$customerName}. 👋",
-            '',
-            "Le saluda Cheo' Pizza 🍕.",
-            '',
-            "Nos comunicamos para confirmar su pedido #{$orderNumber}.",
-            '',
-            '🧾 Detalle del pedido:',
-            $summary,
-            '',
-            "📦 Tipo de entrega: {$deliveryType}",
-            "💳 Método de pago: {$paymentMethod}",
-            '💰 Total: $' . number_format(
+    $summary = $this->buildOrderSummary($order);
+
+    /*
+     * Los emojis se expresan mediante Unicode para evitar
+     * problemas de codificación al desplegar en Railway.
+     */
+    $waveEmoji = "\u{1F44B}";
+    $pizzaEmoji = "\u{1F355}";
+    $receiptEmoji = "\u{1F9FE}";
+    $packageEmoji = "\u{1F4E6}";
+    $cardEmoji = "\u{1F4B3}";
+    $moneyEmoji = "\u{1F4B0}";
+    $locationEmoji = "\u{1F4CD}";
+    $noteEmoji = "\u{1F4DD}";
+
+    $lines = [
+        "Hola, {$customerName}. {$waveEmoji}",
+        '',
+        "Le saluda Cheo' Pizza {$pizzaEmoji}.",
+        '',
+        "Nos comunicamos para confirmar su pedido #{$orderNumber}.",
+        '',
+        "{$receiptEmoji} Detalle del pedido:",
+        $summary,
+        '',
+        "{$packageEmoji} Tipo de entrega: {$deliveryType}",
+        "{$cardEmoji} Método de pago: {$paymentMethod}",
+        "{$moneyEmoji} Total: $"
+            . number_format(
                 (float) ($order->total ?? 0),
                 2,
                 '.',
                 '',
             ),
-        ];
+    ];
 
-        if (
-            strtolower(
-                trim(
-                    (string) (
-                        $order->deliveryType?->delivery_type_name
-                        ?? ''
-                    ),
-                ),
-            ) === 'delivery'
-        ) {
-            $address = trim(
-                (string) ($order->address ?? ''),
-            );
+    if ($deliveryTypeName === 'delivery') {
+        $address = trim(
+            (string) ($order->address ?? ''),
+        );
 
-            $reference = trim(
-                (string) (
-                    $order->delivery_reference
-                    ?? ''
-                ),
-            );
+        $reference = trim(
+            (string) (
+                $order->delivery_reference
+                ?? ''
+            ),
+        );
 
-            if ($address !== '') {
-                $lines[] = "📍 Dirección: {$address}";
-            }
-
-            if ($reference !== '') {
-                $lines[] = "📝 Referencia: {$reference}";
-            }
+        if ($address !== '') {
+            $lines[] =
+                "{$locationEmoji} Dirección: {$address}";
         }
 
-        $lines[] = '';
-        $lines[] = 'Por favor, confírmenos si los datos son correctos para continuar con la preparación.';
-        $lines[] = '';
-        $lines[] = 'Muchas gracias.';
-
-        return implode("\n", $lines);
+        if ($reference !== '') {
+            $lines[] =
+                "{$noteEmoji} Referencia: {$reference}";
+        }
     }
+
+    $lines[] = '';
+    $lines[] =
+        'Por favor, confírmenos si los datos son correctos '
+        . 'para continuar con la preparación.';
+
+    $lines[] = '';
+    $lines[] = 'Muchas gracias.';
+
+    return implode("\n", $lines);
+}
 
     private function customerName(Order $order): string
     {
