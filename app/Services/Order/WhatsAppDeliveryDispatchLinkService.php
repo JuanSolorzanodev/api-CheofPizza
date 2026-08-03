@@ -1,20 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Order;
 
 use App\Models\Order;
 use App\Models\OrderItem;
 
-class WhatsAppDeliveryDispatchLinkService
+final class WhatsAppDeliveryDispatchLinkService
 {
     public function build(Order $order): ?string
     {
         $order->loadMissing([
             'user:id,first_name,last_name,phone',
             'deliveryType:id,delivery_type_name',
+            'paymentMethod:id,name',
             'orderStatus:id,status_name',
 
             'orderItems:id,order_id,promotion_id,promotion_name,pizza_id,pizza_name,pizza_id_second,pizza_name_second,size_name,category_name,is_half_and_half,quantity',
+
             'orderItems.pizza:id,pizza_name,description',
             'orderItems.pizza.ingredients:id,ingredient_name',
             'orderItems.pizza.pizzaIngredients:id,pizza_id,ingredient_id',
@@ -32,62 +36,165 @@ class WhatsAppDeliveryDispatchLinkService
             'orderItems.orderPromotionItems.pizza.pizzaIngredients.ingredient:id,ingredient_name',
         ]);
 
-        $deliveryType = strtolower(trim((string) ($order->deliveryType?->delivery_type_name ?? '')));
+        $deliveryType = strtolower(
+            trim(
+                (string) (
+                    $order->deliveryType?->delivery_type_name
+                    ?? ''
+                ),
+            ),
+        );
+
         if ($deliveryType !== 'delivery') {
             return null;
         }
 
-        $text = trim($this->buildMessage($order));
+        $text = trim(
+            $this->buildMessage($order),
+        );
+
         if ($text === '') {
             return null;
         }
 
-        return 'https://wa.me/?' . http_build_query([
-            'text' => $text,
-        ]);
+        return 'https://wa.me/?'
+            . http_build_query([
+                'text' => $text,
+            ]);
     }
 
     private function buildMessage(Order $order): string
     {
-        $customerName = trim(
-            (string) ($order->user?->first_name ?? '') . ' ' . (string) ($order->user?->last_name ?? '')
-        ) ?: 'Cliente no especificado';
+        $orderNumber = trim(
+            (string) ($order->order_number ?? ''),
+        );
 
-        $customerPhone = trim((string) ($order->user?->phone ?? '')) ?: 'No registrado';
-        $address = trim((string) ($order->address ?? '')) ?: 'Dirección no registrada';
-        $reference = trim((string) ($order->delivery_reference ?? ''));
-        $mapsUrl = trim((string) ($order->delivery_maps_url ?? ''));
+        $customerName = $this->customerName($order);
 
-        if ($mapsUrl === '' && $order->delivery_lat !== null && $order->delivery_lng !== null) {
-            $mapsUrl = 'https://www.google.com/maps?q=' . $order->delivery_lat . ',' . $order->delivery_lng;
-        }
+        $customerPhone = trim(
+            (string) ($order->user?->phone ?? ''),
+        );
 
-        $orderSummary = $this->buildOrderSummary($order);
-        $friendlyStatus = $this->friendlyStatus($order);
+        $address = trim(
+            (string) ($order->address ?? ''),
+        );
+
+        $reference = trim(
+            (string) (
+                $order->delivery_reference
+                ?? ''
+            ),
+        );
+
+        $mapsUrl = trim(
+            (string) (
+                $order->delivery_location
+                ?? ''
+            ),
+        );
+
+        $paymentMethod = $this->friendlyPaymentMethod(
+            (string) (
+                $order->paymentMethod?->name
+                ?? ''
+            ),
+        );
+
+        $summary = $this->buildOrderSummary($order);
 
         $lines = [
-            'Hola, buenas. ¿Me podrían ayudar con un servicio de delivery, por favor?',
+            "SOLICITUD DE DELIVERY - CHEO' PIZZA",
             '',
-            '🍕 Pedido: ' . $orderSummary,
-            '📌 Estado del pedido: ' . $friendlyStatus,
-            '👤 Cliente: ' . $customerName,
-            '📞 Teléfono: ' . $customerPhone,
-            '📍 Dirección: ' . $address,
+            "Pedido: #{$orderNumber}",
+            "Cliente: {$customerName}",
         ];
 
+        if ($customerPhone !== '') {
+            $lines[] = "Teléfono: {$customerPhone}";
+        }
+
+        $lines[] = '';
+        $lines[] = 'DETALLE DEL PEDIDO';
+        $lines[] = $summary;
+        $lines[] = '';
+        $lines[] = 'Total: $'
+            . number_format(
+                (float) ($order->total ?? 0),
+                2,
+                '.',
+                '',
+            );
+
+        $lines[] = "Método de pago: {$paymentMethod}";
+
+        if ($address !== '') {
+            $lines[] = "Dirección: {$address}";
+        }
+
         if ($reference !== '') {
-            $lines[] = '📝 Referencia: ' . $reference;
+            $lines[] = "Referencia: {$reference}";
         }
 
         if ($mapsUrl !== '') {
-            $lines[] = '🗺️ Ubicación: ' . $mapsUrl;
+            $lines[] = "Ubicación: {$mapsUrl}";
         }
 
-        $lines[] = '💰 Total del pedido: $' . number_format((float) ($order->total ?? 0), 2, '.', '');
         $lines[] = '';
-        $lines[] = 'Quedo atento a su confirmación. Muchas gracias.';
+        $lines[] =
+            'Por favor, confirmar disponibilidad para realizar la entrega.';
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * Obtiene un nombre legible para el cliente.
+     */
+    private function customerName(Order $order): string
+    {
+        $firstName = trim(
+            (string) (
+                $order->user?->first_name
+                ?? ''
+            ),
+        );
+
+        $lastName = trim(
+            (string) (
+                $order->user?->last_name
+                ?? ''
+            ),
+        );
+
+        $fullName = trim(
+            "{$firstName} {$lastName}",
+        );
+
+        return $fullName !== ''
+            ? $fullName
+            : 'Cliente no identificado';
+    }
+
+    /**
+     * Convierte el nombre interno del método de pago
+     * en un texto apropiado para el mensaje.
+     */
+    private function friendlyPaymentMethod(
+        string $paymentMethod,
+    ): string {
+        $normalized = strtolower(
+            trim($paymentMethod),
+        );
+
+        return match ($normalized) {
+            'cash' => 'Efectivo',
+            'transfer' => 'Transferencia bancaria',
+            'card' => 'Tarjeta',
+            'paypal' => 'PayPal',
+
+            default => $paymentMethod !== ''
+                ? ucfirst($paymentMethod)
+                : 'No especificado',
+        };
     }
 
     private function buildOrderSummary(Order $order): string
@@ -95,117 +202,202 @@ class WhatsAppDeliveryDispatchLinkService
         $summaries = [];
 
         foreach ($order->orderItems as $item) {
-            $summaries[] = $this->buildItemSummary($item);
+            $summary = trim(
+                $this->buildItemSummary($item),
+            );
+
+            if ($summary !== '') {
+                $summaries[] = '* ' . $summary;
+            }
         }
 
-        $summaries = array_values(array_filter($summaries, fn ($value) => trim((string) $value) !== ''));
-
-        return !empty($summaries)
-            ? implode(' + ', $summaries)
+        return $summaries !== []
+            ? implode("\n", $summaries)
             : 'Pedido sin detalle';
     }
 
-    private function buildItemSummary(OrderItem $item): string
-    {
-        $qty = max(1, (int) ($item->quantity ?? 1));
-        $size = trim((string) ($item->size_name ?? ''));
-        $promotionName = trim((string) ($item->promotion_name ?? ''));
+    private function buildItemSummary(
+        OrderItem $item,
+    ): string {
+        $quantity = max(
+            1,
+            (int) ($item->quantity ?? 1),
+        );
+
+        $size = trim(
+            (string) ($item->size_name ?? ''),
+        );
+
+        $promotionName = trim(
+            (string) ($item->promotion_name ?? ''),
+        );
 
         if (!empty($item->promotion_id)) {
-            return $this->buildPromotionSummary($qty, $promotionName, $size);
+            return $this->buildPromotionSummary(
+                $quantity,
+                $promotionName,
+                $size,
+            );
         }
 
         if ((bool) $item->is_half_and_half) {
-            $label = $qty . ' ' . ($qty === 1 ? 'pizza' : 'pizzas') . ' mitad y mitad';
+            $firstPizza = trim(
+                (string) (
+                    $item->pizza_name
+                    ?? $item->pizza?->pizza_name
+                    ?? 'Pizza'
+                ),
+            );
 
-            if ($size !== '') {
-                $label .= ' ' . $size;
-            }
+            $secondPizza = trim(
+                (string) (
+                    $item->pizza_name_second
+                    ?? $item->pizzaSecond?->pizza_name
+                    ?? 'Pizza'
+                ),
+            );
 
-            return $label;
+            $label = sprintf(
+                '%dx Mitad %s / Mitad %s',
+                $quantity,
+                $firstPizza,
+                $secondPizza,
+            );
+
+            return $this->appendSize(
+                $label,
+                $size,
+            );
         }
 
-        $pizzaName = trim((string) ($item->pizza_name ?? $item->pizza?->pizza_name ?? 'Pizza'));
-        $label = $qty . ' ' . ($qty === 1 ? 'pizza' : 'pizzas') . ' ' . $pizzaName;
+        $pizzaName = trim(
+            (string) (
+                $item->pizza_name
+                ?? $item->pizza?->pizza_name
+                ?? 'Pizza'
+            ),
+        );
 
-        if ($size !== '') {
-            $label .= ' ' . $size;
-        }
+        $label = sprintf(
+            '%dx %s',
+            $quantity,
+            $pizzaName,
+        );
 
-        return trim($label);
+        return $this->appendSize(
+            $label,
+            $size,
+        );
     }
 
-    private function buildPromotionSummary(int $qty, string $promotionName, string $size): string
-    {
-        $normalizedPromotion = $this->normalize($promotionName);
-        $normalizedSize = $this->normalize($size);
+    private function buildPromotionSummary(
+        int $quantity,
+        string $promotionName,
+        string $size,
+    ): string {
+        $normalizedPromotion = $this->normalize(
+            $promotionName,
+        );
+
+        $normalizedSize = $this->normalize(
+            $size,
+        );
 
         if (
-            str_contains($normalizedPromotion, '2x1') &&
-            (
-                str_contains($normalizedPromotion, 'familiar') ||
-                str_contains($normalizedSize, 'familiar')
+            str_contains($normalizedPromotion, '2x1')
+            && (
+                str_contains(
+                    $normalizedPromotion,
+                    'familiar',
+                )
+                || str_contains(
+                    $normalizedSize,
+                    'familiar',
+                )
             )
         ) {
-            return $qty . ' ' . ($qty === 1 ? 'promoción' : 'promociones') . ' 2x1 Familiares';
+            return sprintf(
+                '%dx Promoción 2x1 Familiares',
+                $quantity,
+            );
         }
 
         if (
-            str_contains($normalizedPromotion, '2x1') &&
-            (
-                str_contains($normalizedPromotion, 'mediana') ||
-                str_contains($normalizedSize, 'mediana')
+            str_contains($normalizedPromotion, '2x1')
+            && (
+                str_contains(
+                    $normalizedPromotion,
+                    'mediana',
+                )
+                || str_contains(
+                    $normalizedSize,
+                    'mediana',
+                )
             )
         ) {
-            return $qty . ' ' . ($qty === 1 ? 'promoción' : 'promociones') . ' 2x1 Medianas';
+            return sprintf(
+                '%dx Promoción 2x1 Medianas',
+                $quantity,
+            );
         }
 
         if ($promotionName !== '') {
-            return $qty . ' ' . ($qty === 1 ? 'promoción' : 'promociones') . ' ' . $promotionName;
+            return $this->appendSize(
+                sprintf(
+                    '%dx %s',
+                    $quantity,
+                    $promotionName,
+                ),
+                $size,
+            );
         }
 
         if ($size !== '') {
-            return $qty . ' ' . ($qty === 1 ? 'promoción' : 'promociones') . ' ' . $size;
+            return sprintf(
+                '%dx Promoción · %s',
+                $quantity,
+                $size,
+            );
         }
 
-        return $qty . ' ' . ($qty === 1 ? 'promoción' : 'promociones');
+        return sprintf(
+            '%dx Promoción',
+            $quantity,
+        );
     }
 
-    private function friendlyStatus(Order $order): string
-    {
-        $status = strtolower(trim((string) ($order->orderStatus?->status_name ?? '')));
+    private function appendSize(
+        string $description,
+        string $size,
+    ): string {
+        $description = trim($description);
+        $size = trim($size);
 
-        return match ($status) {
-            'pending' => 'Pendiente de confirmación',
-            'confirmed' => 'Confirmado',
-            'preparing' => 'En preparación',
-            'ready' => 'Listo para entregar',
-            'on_the_way' => 'En camino',
-            'delivered' => 'Entregado',
-            'cancelled' => 'Cancelado',
-            default => 'Pendiente',
-        };
+        if ($size === '') {
+            return $description;
+        }
+
+        return "{$description} · {$size}";
     }
 
     private function normalize(string $value): string
     {
-        $value = mb_strtolower(trim($value), 'UTF-8');
+        $value = mb_strtolower(
+            trim($value),
+            'UTF-8',
+        );
 
-        $replacements = [
-            'á' => 'a',
-            'é' => 'e',
-            'í' => 'i',
-            'ó' => 'o',
-            'ú' => 'u',
-            'Á' => 'a',
-            'É' => 'e',
-            'Í' => 'i',
-            'Ó' => 'o',
-            'Ú' => 'u',
-            'ñ' => 'n',
-            'Ñ' => 'n',
-        ];
-
-        return strtr($value, $replacements);
+        return strtr(
+            $value,
+            [
+                'á' => 'a',
+                'é' => 'e',
+                'í' => 'i',
+                'ó' => 'o',
+                'ú' => 'u',
+                'ü' => 'u',
+                'ñ' => 'n',
+            ],
+        );
     }
 }

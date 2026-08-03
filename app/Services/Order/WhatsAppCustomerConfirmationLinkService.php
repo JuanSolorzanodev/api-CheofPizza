@@ -80,102 +80,88 @@ final class WhatsAppCustomerConfirmationLinkService
     }
 
     private function buildMessage(Order $order): string
-{
-    $customerName = $this->customerName($order);
+    {
+        $customerName = $this->customerName($order);
 
-    $orderNumber = trim(
-        (string) ($order->order_number ?? ''),
-    );
-
-    $deliveryTypeName = strtolower(
-        trim(
-            (string) (
-                $order->deliveryType?->delivery_type_name
-                ?? ''
-            ),
-        ),
-    );
-
-    $deliveryType = $this->friendlyDeliveryType(
-        $deliveryTypeName,
-    );
-
-    $paymentMethod = $this->friendlyPaymentMethod(
-        (string) (
-            $order->paymentMethod?->name
-            ?? ''
-        ),
-    );
-
-    $summary = $this->buildOrderSummary($order);
-
-    /*
-     * Los emojis se expresan mediante Unicode para evitar
-     * problemas de codificación al desplegar en Railway.
-     */
-    $waveEmoji = "\u{1F44B}";
-    $pizzaEmoji = "\u{1F355}";
-    $receiptEmoji = "\u{1F9FE}";
-    $packageEmoji = "\u{1F4E6}";
-    $cardEmoji = "\u{1F4B3}";
-    $moneyEmoji = "\u{1F4B0}";
-    $locationEmoji = "\u{1F4CD}";
-    $noteEmoji = "\u{1F4DD}";
-
-    $lines = [
-        "Hola, {$customerName}. {$waveEmoji}",
-        '',
-        "Le saluda Cheo' Pizza {$pizzaEmoji}.",
-        '',
-        "Nos comunicamos para confirmar su pedido #{$orderNumber}.",
-        '',
-        "{$receiptEmoji} Detalle del pedido:",
-        $summary,
-        '',
-        "{$packageEmoji} Tipo de entrega: {$deliveryType}",
-        "{$cardEmoji} Método de pago: {$paymentMethod}",
-        "{$moneyEmoji} Total: $"
-            . number_format(
-                (float) ($order->total ?? 0),
-                2,
-                '.',
-                '',
-            ),
-    ];
-
-    if ($deliveryTypeName === 'delivery') {
-        $address = trim(
-            (string) ($order->address ?? ''),
+        $orderNumber = trim(
+            (string) ($order->order_number ?? ''),
         );
 
-        $reference = trim(
+        $deliveryTypeName = strtolower(
+            trim(
+                (string) (
+                    $order->deliveryType?->delivery_type_name
+                    ?? ''
+                ),
+            ),
+        );
+
+        $deliveryType = $this->friendlyDeliveryType(
+            $deliveryTypeName,
+        );
+
+        $paymentMethod = $this->friendlyPaymentMethod(
             (string) (
-                $order->delivery_reference
+                $order->paymentMethod?->name
                 ?? ''
             ),
         );
 
-        if ($address !== '') {
-            $lines[] =
-                "{$locationEmoji} Dirección: {$address}";
+        $summary = $this->buildOrderSummary($order);
+
+        $lines = [
+            "Hola, {$customerName}.",
+            '',
+            "Le saluda Cheo' Pizza.",
+            '',
+            "Nos comunicamos para confirmar su pedido #{$orderNumber}.",
+            '',
+            'DETALLE DEL PEDIDO',
+            $summary,
+            '',
+            "Tipo de entrega: {$deliveryType}",
+            "Método de pago: {$paymentMethod}",
+            'Total: $'
+                . number_format(
+                    (float) ($order->total ?? 0),
+                    2,
+                    '.',
+                    '',
+                ),
+        ];
+
+        if ($deliveryTypeName === 'delivery') {
+            $address = trim(
+                (string) ($order->address ?? ''),
+            );
+
+            $reference = trim(
+                (string) (
+                    $order->delivery_reference
+                    ?? ''
+                ),
+            );
+
+            if ($address !== '') {
+                $lines[] = "Dirección: {$address}";
+            }
+
+            if ($reference !== '') {
+                $lines[] = "Referencia: {$reference}";
+            }
         }
 
-        if ($reference !== '') {
-            $lines[] =
-                "{$noteEmoji} Referencia: {$reference}";
-        }
+        $lines[] = '';
+        $lines[] =
+            'Por favor, confírmenos si los datos son correctos '
+            . 'para continuar con la preparación.';
+
+        $lines[] = '';
+        $lines[] =
+            "Gracias por preferir Cheo' Pizza.";
+
+        return implode("\n", $lines);
     }
-
-    $lines[] = '';
-    $lines[] =
-        'Por favor, confírmenos si los datos son correctos '
-        . 'para continuar con la preparación.';
-
-    $lines[] = '';
-    $lines[] = 'Muchas gracias.';
-
-    return implode("\n", $lines);
-}
 
     private function customerName(Order $order): string
     {
@@ -211,12 +197,12 @@ final class WhatsAppCustomerConfirmationLinkService
         return $order
             ->orderItems
             ->map(
-                fn (OrderItem $item): string =>
-                    '• ' . $this->buildItemSummary($item),
+                fn(OrderItem $item): string =>
+                '• ' . $this->buildItemSummary($item),
             )
             ->filter(
-                fn (string $value): bool =>
-                    trim($value) !== '•',
+                fn(string $value): bool =>
+                trim($value) !== '•',
             )
             ->implode("\n");
     }
@@ -300,42 +286,38 @@ final class WhatsAppCustomerConfirmationLinkService
     private function friendlyDeliveryType(
         string $deliveryType,
     ): string {
-        return match (
-            strtolower(trim($deliveryType))
-        ) {
+        return match (strtolower(trim($deliveryType))) {
             'delivery' =>
-                'Entrega a domicilio',
+            'Entrega a domicilio',
 
             'pickup' =>
-                'Retiro en el local',
+            'Retiro en el local',
 
             default =>
-                'No especificado',
+            'No especificado',
         };
     }
 
     private function friendlyPaymentMethod(
         string $paymentMethod,
     ): string {
-        return match (
-            strtolower(trim($paymentMethod))
-        ) {
+        return match (strtolower(trim($paymentMethod))) {
             'cash' =>
-                'Efectivo',
+            'Efectivo',
 
             'transfer' =>
-                'Transferencia bancaria',
+            'Transferencia bancaria',
 
             'card' =>
-                'Tarjeta',
+            'Tarjeta',
 
             'paypal' =>
-                'PayPal',
+            'PayPal',
 
             default =>
-                $paymentMethod !== ''
-                    ? ucfirst($paymentMethod)
-                    : 'No especificado',
+            $paymentMethod !== ''
+                ? ucfirst($paymentMethod)
+                : 'No especificado',
         };
     }
 
