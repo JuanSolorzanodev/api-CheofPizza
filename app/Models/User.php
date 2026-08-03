@@ -112,4 +112,20 @@ final class User extends Authenticatable
             'reviewed_by',
         );
     }
+
+    public function openedCashSessions(): HasMany
+    {
+        return $this->hasMany(
+            CashSession::class,
+            'opened_by',
+        );
+    }
+
+    public function closedCashSessions(): HasMany
+    {
+        return $this->hasMany(
+            CashSession::class,
+            'closed_by',
+        );
+    }
 }

@@ -11,9 +11,11 @@ use App\Http\Controllers\Api\V1\Admin\Catalog\PizzaController as AdminPizzaContr
 use App\Http\Controllers\Api\V1\Admin\Catalog\SizeController as AdminSizeController;
 use App\Http\Controllers\Api\V1\Admin\MachineLearningController;
 use App\Http\Controllers\Api\V1\Admin\PromotionController as AdminPromotionController;
+use App\Http\Controllers\Api\V1\Admin\CashSessionSummaryController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\V1\Auth\AuthenticatedUserController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\DailySalesController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Operator\OrdersController as OperatorOrdersController;
@@ -21,6 +23,8 @@ use App\Http\Controllers\Api\V1\Operator\PaymentReceiptController as OperatorPay
 use App\Http\Controllers\Api\V1\Orders\CheckoutController;
 use App\Http\Controllers\Api\V1\Orders\MyOrdersController;
 use App\Http\Controllers\Api\V1\Orders\PaymentReceiptController as CustomerPaymentReceiptController;
+use App\Http\Controllers\Api\V1\Admin\CashRegisterController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\HourlySalesController;
 use App\Http\Controllers\Api\V1\Payments\PayPalPaymentController;
 use App\Http\Controllers\Api\V1\Payments\PayPalWebhookController;
 use App\Http\Controllers\Api\V1\Public\BuilderController;
@@ -29,6 +33,11 @@ use App\Http\Controllers\Api\V1\Public\CatalogController;
 use App\Http\Controllers\Api\V1\Public\GeoController;
 use App\Http\Controllers\Api\V1\Public\PromotionController;
 use App\Http\Controllers\Api\V1\Public\SettingController as PublicSettingController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\PaymentAnalyticsController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\ProductPerformanceController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\PaymentTransactionController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\SalesDashboardController;
+use App\Http\Controllers\Api\V1\Admin\CashSessionDetailController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -651,6 +660,127 @@ Route::prefix('v1')->group(function (): void {
         ->prefix('admin')
         ->name('api.v1.admin.')
         ->group(function (): void {
+            /*
+|--------------------------------------------------------------------------
+| Analítica administrativa
+|--------------------------------------------------------------------------
+*/
+
+            Route::prefix('analytics')
+                ->name('analytics.')
+                ->group(function (): void {
+                    Route::get(
+                        'dashboard',
+                        SalesDashboardController::class,
+                    )->name('dashboard');
+
+                    Route::get(
+                        'sales/daily',
+                        DailySalesController::class,
+                    )->name('sales.daily');
+
+                    Route::get(
+                        'sales/hourly',
+                        HourlySalesController::class,
+                    )->name('sales.hourly');
+
+                    Route::get(
+                        'products',
+                        ProductPerformanceController::class,
+                    )->name('products');
+
+                    Route::get(
+                        'payments',
+                        PaymentAnalyticsController::class,
+                    )->name('payments');
+
+                    Route::get(
+                        'payment-transactions',
+                        PaymentTransactionController::class,
+                    )->name('payment-transactions');
+                });
+            /*
+/*
+|--------------------------------------------------------------------------
+| Caja administrativa
+|--------------------------------------------------------------------------
+*/
+
+            Route::prefix('cash-register')
+                ->name('cash-register.')
+                ->group(function (): void {
+                    Route::get(
+                        'current',
+                        [
+                            CashRegisterController::class,
+                            'current',
+                        ],
+                    )->name('current');
+
+                    Route::get(
+                        'history',
+                        [
+                            CashRegisterController::class,
+                            'history',
+                        ],
+                    )->name('history');
+
+                    Route::post(
+                        'open',
+                        [
+                            CashRegisterController::class,
+                            'open',
+                        ],
+                    )
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name('open');
+
+                    Route::get(
+                        '{cashSession:uuid}',
+                        CashSessionDetailController::class,
+                    )->name('show');
+
+                    Route::get(
+                        '{cashSession:uuid}/summary',
+                        CashSessionSummaryController::class,
+                    )->name('summary');
+
+                    Route::post(
+                        '{cashSession:uuid}/movements',
+                        [
+                            CashRegisterController::class,
+                            'storeMovement',
+                        ],
+                    )
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name('movements.store');
+
+                    Route::get(
+                        '{cashSession:uuid}/movements',
+                        [
+                            CashRegisterController::class,
+                            'movements',
+                        ],
+                    )->name('movements.index');
+
+                    Route::post(
+                        '{cashSession:uuid}/close',
+                        [
+                            CashRegisterController::class,
+                            'close',
+                        ],
+                    )
+                        ->middleware(
+                            'throttle:operator-actions',
+                        )
+                        ->name('close');
+                });
+
+
             /*
             |--------------------------------------------------------------------------
             | Configuración administrativa
