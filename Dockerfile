@@ -60,7 +60,8 @@ RUN composer dump-autoload \
     && chmod +x \
         docker/start-api.sh \
         docker/start-worker.sh \
-        docker/start-reverb.sh
+        docker/start-reverb.sh \
+        docker/start-scheduler.sh
 
 EXPOSE 8080
 
