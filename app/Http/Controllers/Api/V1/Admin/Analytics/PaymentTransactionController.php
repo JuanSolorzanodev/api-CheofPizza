@@ -16,31 +16,45 @@ final class PaymentTransactionController
         PaymentTransactionIndexRequest $request,
         PaymentTransactionAnalyticsService $service,
     ): JsonResponse {
-        $validated = $request->validated();
+        $validated =
+            $request->validated();
 
-        $range = AnalyticsDateRangeData::fromValidated(
-            $validated,
-        );
+        $range =
+            AnalyticsDateRangeData::fromValidated(
+                $validated,
+            );
 
-        $paginator = $service->paginate(
-            range: $range,
-            filters: [
-                'method' =>
-                    $validated['method'] ?? null,
+        $filters = [
+            'method' =>
+                $validated['method']
+                ?? null,
 
-                'status' =>
-                    $validated['status'] ?? null,
+            'status' =>
+                $validated['status']
+                ?? null,
 
-                'search' =>
-                    $validated['search'] ?? null,
+            'search' =>
+                $validated['search']
+                ?? null,
 
-                'page' =>
-                    (int) $validated['page'],
+            'page' =>
+                (int) $validated['page'],
 
-                'per_page' =>
-                    (int) $validated['per_page'],
-            ],
-        );
+            'per_page' =>
+                (int) $validated['per_page'],
+        ];
+
+        $paginator =
+            $service->paginate(
+                range: $range,
+                filters: $filters,
+            );
+
+        $summary =
+            $service->summary(
+                range: $range,
+                filters: $filters,
+            );
 
         return ApiResponse::success(
             data: [
@@ -49,20 +63,28 @@ final class PaymentTransactionController
 
                 'filters' => [
                     'method' =>
-                        $validated['method'] ?? null,
+                        $validated['method']
+                        ?? null,
 
                     'status' =>
-                        $validated['status'] ?? null,
+                        $validated['status']
+                        ?? null,
 
                     'search' =>
-                        $validated['search'] ?? null,
+                        $validated['search']
+                        ?? null,
                 ],
+
+                'summary' =>
+                    $summary,
 
                 'transactions' =>
                     $paginator->items(),
             ],
+
             message:
                 'Transacciones financieras recuperadas correctamente.',
+
             meta: [
                 'current_page' =>
                     $paginator->currentPage(),
