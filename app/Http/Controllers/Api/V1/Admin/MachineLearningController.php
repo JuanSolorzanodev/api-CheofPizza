@@ -15,6 +15,8 @@ use App\Services\MachineLearning\MachineLearningClient;
 use App\Services\MachineLearning\RemoteForecastPersistenceService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use App\Http\Requests\Admin\MachineLearning\TrainingDatasetRequest;
+use App\Services\MachineLearning\Dataset\MlTrainingDatasetService;
 use Illuminate\Http\Request;
 
 final class MachineLearningController
@@ -278,4 +280,54 @@ final class MachineLearningController
             code: $code,
         );
     }
+
+    /**
+ * Expone el dataset consolidado únicamente para diagnóstico
+ * administrativo y para validar el futuro payload de entrenamiento.
+ *
+ * FastAPI no consumirá directamente este endpoint desde Internet.
+ * Laravel utilizará el mismo servicio para enviar el dataset mediante
+ * una llamada autenticada al endpoint de entrenamiento.
+ */
+public function dataset(
+    TrainingDatasetRequest $request,
+    MlTrainingDatasetService $service,
+): JsonResponse {
+    $validated =
+        $request->validated();
+
+    $dataset =
+        $service->build(
+            dateFrom:
+                $validated['date_from']
+                ?? null,
+
+            dateTo:
+                $validated['date_to']
+                ?? null,
+
+            limit:
+                (int) (
+                    $validated['limit']
+                    ?? 365
+                ),
+
+            includeEmptyDays:
+                filter_var(
+                    $validated[
+                        'include_empty_days'
+                    ] ?? true,
+                    FILTER_VALIDATE_BOOL,
+                    FILTER_NULL_ON_FAILURE,
+                ) ?? true,
+        );
+
+    return ApiResponse::success(
+        data:
+            $dataset,
+
+        message:
+            'Dataset de entrenamiento recuperado correctamente.',
+    );
+}
 }

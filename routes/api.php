@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\Admin\PromotionController as AdminPromotionContr
 use App\Http\Controllers\Api\V1\Admin\CashSessionSummaryController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Api\V1\Admin\MachineLearningTrainingController;
 use App\Http\Controllers\Api\V1\Auth\AuthenticatedUserController;
 use App\Http\Controllers\Api\V1\Admin\Analytics\DailySalesController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
@@ -1546,6 +1547,16 @@ Route::prefix('v1')->group(function (): void {
                         'service.model',
                     );
 
+                    Route::get(
+                        'dataset',
+                        [
+                            MachineLearningController::class,
+                            'dataset',
+                        ],
+                    )->name(
+                        'dataset',
+                    );
+
                     Route::post(
                         'preview',
                         [
@@ -1587,6 +1598,96 @@ Route::prefix('v1')->group(function (): void {
                         ->name(
                             'import',
                         );
+
+                    Route::prefix('training')
+                        ->name('training.')
+                        ->group(function (): void {
+                            Route::get(
+                                'registry',
+                                [
+                                    MachineLearningTrainingController::class,
+                                    'registry',
+                                ],
+                            )->name(
+                                'registry',
+                            );
+
+                            Route::get(
+                                'runs',
+                                [
+                                    MachineLearningTrainingController::class,
+                                    'index',
+                                ],
+                            )->name(
+                                'runs.index',
+                            );
+
+                            Route::get(
+                                'runs/{trainingRun:uuid}',
+                                [
+                                    MachineLearningTrainingController::class,
+                                    'show',
+                                ],
+                            )->name(
+                                'runs.show',
+                            );
+
+                            Route::post(
+                                'preview',
+                                [
+                                    MachineLearningTrainingController::class,
+                                    'preview',
+                                ],
+                            )
+                                ->middleware(
+                                    'throttle:operator-actions',
+                                )
+                                ->name(
+                                    'preview',
+                                );
+
+                            Route::post(
+                                'build',
+                                [
+                                    MachineLearningTrainingController::class,
+                                    'build',
+                                ],
+                            )
+                                ->middleware(
+                                    'throttle:operator-actions',
+                                )
+                                ->name(
+                                    'build',
+                                );
+
+                            Route::post(
+                                'runs/{trainingRun:uuid}/activate',
+                                [
+                                    MachineLearningTrainingController::class,
+                                    'activate',
+                                ],
+                            )
+                                ->middleware(
+                                    'throttle:operator-actions',
+                                )
+                                ->name(
+                                    'runs.activate',
+                                );
+
+                            Route::post(
+                                'rollback',
+                                [
+                                    MachineLearningTrainingController::class,
+                                    'rollback',
+                                ],
+                            )
+                                ->middleware(
+                                    'throttle:operator-actions',
+                                )
+                                ->name(
+                                    'rollback',
+                                );
+                        });
                 });
         });
 });
