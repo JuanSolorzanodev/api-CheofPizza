@@ -2,28 +2,22 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Order;
+namespace App\Services\Order\Operator;
 
 use App\Enums\OrderStatusName;
-use App\Events\Customer\OrderUpdated as CustomerOrderUpdated;
-use App\Events\Operator\OrderStatusChanged;
 use App\Models\Order;
 use App\Models\OrderStatus;
-use App\Models\OrderStatusChange;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Pagination\LengthAwarePaginator;
 
-final class OperatorOrderService
+final class OperatorOrderQueryService
 {
-    public function __construct(
-        private readonly OrderStatusTransitionService $transitionService,
-    ) {}
-
     /**
+     * Recupera los pedidos visibles en el panel del operador.
+     *
      * @param  array<string, mixed>  $filters
-     * @return LengthAwarePaginator<int, Order>
+     * @return LengthAwarePaginator<Order>
      */
     public function paginate(
         array $filters,
@@ -50,9 +44,27 @@ final class OperatorOrderService
             filters: $filters,
         );
 
-        return $query->paginate($perPage);
+        $orders = $query->paginate(
+            $perPage,
+        );
+
+        /*
+         * Los recursos de listado requieren los ítems y promociones
+         * para calcular correctamente el resumen de cada pedido.
+         */
+        $orders
+            ->getCollection()
+            ->load([
+                'orderItems',
+                'orderItems.orderPromotionItems',
+            ]);
+
+        return $orders;
     }
 
+    /**
+     * Recupera el detalle completo de un pedido.
+     */
     public function findOrFail(
         int $orderId,
     ): Order {
@@ -65,7 +77,7 @@ final class OperatorOrderService
                 'user:id,first_name,last_name,email,phone',
 
                 'orderItems' => static function (
-                    $query,
+                    HasMany $query,
                 ): void {
                     $query->select([
                         'id',
@@ -113,132 +125,14 @@ final class OperatorOrderService
                 'statusChanges.toStatus:id,status_name',
                 'statusChanges.changedBy:id,first_name,last_name,email',
             ])
-            ->findOrFail($orderId);
-    }
-
-    public function changeStatus(
-        int $orderId,
-        OrderStatusName $destinationStatus,
-        ?string $note,
-        int $changedByUserId,
-    ): Order {
-        /**
-         * @var array{
-         *     order: Order,
-         *     from_status: OrderStatusName,
-         *     to_status: OrderStatusName
-         * } $result
-         */
-        $result = DB::transaction(
-            function () use (
+            ->findOrFail(
                 $orderId,
-                $destinationStatus,
-                $note,
-                $changedByUserId,
-            ): array {
-                /** @var Order $order */
-                $order = Order::query()
-                    ->with([
-                        'deliveryType:id,delivery_type_name',
-                        'orderStatus:id,status_name',
-                    ])
-                    ->lockForUpdate()
-                    ->findOrFail($orderId);
-
-                $currentStatusName = trim(
-                    (string) $order->orderStatus?->status_name,
-                );
-
-                $currentStatus = OrderStatusName::tryFrom(
-                    $currentStatusName,
-                );
-
-                if ($currentStatus === null) {
-                    throw ValidationException::withMessages([
-                        'to_status' => [
-                            'La orden no tiene un estado actual válido.',
-                        ],
-                    ]);
-                }
-
-                $deliveryType = trim(
-                    (string) $order
-                        ->deliveryType
-                        ?->delivery_type_name,
-                );
-
-                $this->transitionService->assertCanTransition(
-                    currentStatus: $currentStatus,
-                    destinationStatus: $destinationStatus,
-                    deliveryType: $deliveryType,
-                );
-
-                $destinationStatusModel = OrderStatus::query()
-                    ->where(
-                        'status_name',
-                        $destinationStatus->value,
-                    )
-                    ->first();
-
-                if ($destinationStatusModel === null) {
-                    throw ValidationException::withMessages([
-                        'to_status' => [
-                            sprintf(
-                                'El estado %s no existe en order_statuses. Ejecuta el seeder de comercio.',
-                                $destinationStatus->value,
-                            ),
-                        ],
-                    ]);
-                }
-
-                $fromStatusId = (int) $order->order_status_id;
-                $toStatusId = (int) $destinationStatusModel->id;
-
-                $order->forceFill([
-                    'order_status_id' => $toStatusId,
-                ])->save();
-
-                OrderStatusChange::query()->create([
-                    'order_id' => (int) $order->id,
-                    'from_order_status_id' => $fromStatusId,
-                    'to_order_status_id' => $toStatusId,
-                    'changed_by_user_id' => $changedByUserId,
-                    'changed_at' => now(),
-                    'note' => $note,
-                ]);
-
-                return [
-                    'order' => $order,
-                    'from_status' => $currentStatus,
-                    'to_status' => $destinationStatus,
-                ];
-            },
-            attempts: 3,
-        );
-
-        /*
-         * La transacción ya confirmó el cambio.
-         * Los eventos además implementan ShouldDispatchAfterCommit.
-         */
-        $freshOrder = $this->findOrFail(
-            (int) $result['order']->id,
-        );
-
-        event(new OrderStatusChanged(
-            order: $freshOrder,
-            fromStatus: $result['from_status']->value,
-            toStatus: $result['to_status']->value,
-        ));
-
-        event(new CustomerOrderUpdated(
-            order: $freshOrder,
-            action: 'status_changed',
-        ));
-
-        return $freshOrder;
+            );
     }
 
     /**
+     * Devuelve la cantidad de pedidos agrupada por estado.
+     *
      * @return array<string, int>
      */
     public function queueCounts(): array
@@ -265,6 +159,8 @@ final class OperatorOrderService
     }
 
     /**
+     * Devuelve todos los estados reconocidos por el sistema.
+     *
      * @return list<string>
      */
     public function allStatuses(): array
