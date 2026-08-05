@@ -823,3 +823,377 @@ it(
             ]);
     },
 );
+
+it(
+    'forbids non administrators from accessing payment transactions',
+    function (): void {
+        /** @var TestCase $this */
+        $customer = User::factory()
+            ->customer()
+            ->create();
+
+        $operator = User::factory()
+            ->operator()
+            ->create();
+
+        $this
+            ->actingAs(
+                $customer,
+                'sanctum',
+            )
+            ->getJson(
+                '/api/v1/admin/analytics/payment-transactions',
+            )
+            ->assertForbidden();
+
+        $this
+            ->actingAs(
+                $operator,
+                'sanctum',
+            )
+            ->getJson(
+                '/api/v1/admin/analytics/payment-transactions',
+            )
+            ->assertForbidden();
+    },
+);
+
+it(
+    'uses only the latest transfer receipt for each order',
+    function (): void {
+        /** @var TestCase $this */
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $customer = User::factory()
+            ->customer()
+            ->create();
+
+        $catalog = paymentTransactionCatalog();
+
+        $order = paymentTransactionOrder(
+            customer: $customer,
+            catalog: $catalog,
+            number: 'CH-TRANSFER-LATEST-001',
+            paymentMethodId: $catalog['transfer_method_id'],
+            total: '32.00',
+        );
+
+        PaymentReceipt::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'order_id' => $order->id,
+            'user_id' => $customer->id,
+            'disk' => 'payment_receipts',
+            'file_path' => 'tests/old-receipt.jpg',
+            'original_name' => 'old-receipt.jpg',
+            'mime_type' => 'image/jpeg',
+            'file_size' => 1024,
+            'status' => PaymentReceiptStatus::Rejected,
+            'rejection_reason' => 'Comprobante anterior.',
+            'submitted_at' => '2026-08-01 09:00:00',
+            'reviewed_at' => '2026-08-01 09:15:00',
+            'reviewed_by' => $admin->id,
+        ]);
+
+        $latestReceipt = PaymentReceipt::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'order_id' => $order->id,
+            'user_id' => $customer->id,
+            'disk' => 'payment_receipts',
+            'file_path' => 'tests/latest-receipt.jpg',
+            'original_name' => 'latest-receipt.jpg',
+            'mime_type' => 'image/jpeg',
+            'file_size' => 1024,
+            'status' => PaymentReceiptStatus::Approved,
+            'rejection_reason' => null,
+            'submitted_at' => '2026-08-01 10:00:00',
+            'reviewed_at' => '2026-08-01 10:15:00',
+            'reviewed_by' => $admin->id,
+        ]);
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->getJson(
+                '/api/v1/admin/analytics/payment-transactions'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-01'
+                    .'&method=transfer'
+                    .'&timezone=America/Guayaquil',
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'meta.total',
+                1,
+            )
+            ->assertJsonCount(
+                1,
+                'data.transactions',
+            )
+            ->assertJsonPath(
+                'data.transactions.0.status',
+                'approved',
+            )
+            ->assertJsonPath(
+                'data.transactions.0.receipt_uuid',
+                $latestReceipt->uuid,
+            )
+            ->assertJsonPath(
+                'data.summary.volume.amount',
+                32,
+            )
+            ->assertJsonPath(
+                'data.summary.volume.transactions',
+                1,
+            )
+            ->assertJsonPath(
+                'data.summary.collected.amount',
+                32,
+            )
+            ->assertJsonPath(
+                'data.summary.collected.transactions',
+                1,
+            );
+    },
+);
+
+it(
+    'searches paypal transactions by provider reference',
+    function (): void {
+        /** @var TestCase $this */
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $customer = User::factory()
+            ->customer()
+            ->create();
+
+        Payment::query()->forceCreate([
+            'uuid' => (string) Str::uuid(),
+            'idempotency_key' => (string) Str::uuid(),
+            'user_id' => $customer->id,
+            'cart_id' => null,
+            'order_id' => null,
+            'provider' => 'paypal',
+            'provider_order_id' => 'PAYPAL-SEARCH-REFERENCE-001',
+            'provider_capture_id' => 'CAPTURE-SEARCH-001',
+            'provider_status' => 'COMPLETED',
+            'amount' => '47.50',
+            'currency' => 'USD',
+            'status' => PaymentStatus::COMPLETED,
+            'paid_at' => '2026-08-01 12:00:00',
+            'created_at' => '2026-08-01 11:00:00',
+            'updated_at' => '2026-08-01 12:00:00',
+        ]);
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->getJson(
+                '/api/v1/admin/analytics/payment-transactions'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-01'
+                    .'&search=PAYPAL-SEARCH-REFERENCE-001',
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'meta.total',
+                1,
+            )
+            ->assertJsonPath(
+                'data.transactions.0.method',
+                'paypal',
+            )
+            ->assertJsonPath(
+                'data.transactions.0.status',
+                'completed',
+            )
+            ->assertJsonPath(
+                'data.transactions.0.reference',
+                'CAPTURE-SEARCH-001',
+            )
+            ->assertJsonPath(
+                'data.transactions.0.amount',
+                47.5,
+            );
+    },
+);
+
+it(
+    'lists full and partial refunds as unsuccessful transactions',
+    function (): void {
+        /** @var TestCase $this */
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $customer = User::factory()
+            ->customer()
+            ->create();
+
+        foreach (
+            [
+                [
+                    'status' => PaymentStatus::REFUNDED,
+                    'amount' => '30.00',
+                    'reference' => 'PAYPAL-REFUNDED-001',
+                    'refunded_at' => '2026-08-01 10:00:00',
+                ],
+                [
+                    'status' => PaymentStatus::PARTIALLY_REFUNDED,
+                    'amount' => '45.00',
+                    'reference' => 'PAYPAL-PARTIAL-001',
+                    'refunded_at' => '2026-08-01 11:00:00',
+                ],
+            ] as $data
+        ) {
+            Payment::query()->forceCreate([
+                'uuid' => (string) Str::uuid(),
+                'idempotency_key' => (string) Str::uuid(),
+                'user_id' => $customer->id,
+                'cart_id' => null,
+                'order_id' => null,
+                'provider' => 'paypal',
+                'provider_order_id' => $data['reference'],
+                'provider_capture_id' => null,
+                'provider_status' => strtoupper(
+                    $data['status']->value,
+                ),
+                'amount' => $data['amount'],
+                'currency' => 'USD',
+                'status' => $data['status'],
+                'paid_at' => '2026-07-25 10:00:00',
+                'refunded_at' => $data['refunded_at'],
+                'created_at' => '2026-07-25 09:00:00',
+                'updated_at' => $data['refunded_at'],
+            ]);
+        }
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->getJson(
+                '/api/v1/admin/analytics/payment-transactions'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-01'
+                    .'&method=paypal',
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'meta.total',
+                2,
+            )
+            ->assertJsonPath(
+                'data.summary.volume.amount',
+                75,
+            )
+            ->assertJsonPath(
+                'data.summary.volume.transactions',
+                2,
+            )
+            ->assertJsonPath(
+                'data.summary.collected.amount',
+                0,
+            )
+            ->assertJsonPath(
+                'data.summary.collected.transactions',
+                0,
+            )
+            ->assertJsonPath(
+                'data.summary.pending.amount',
+                0,
+            )
+            ->assertJsonPath(
+                'data.summary.unsuccessful.amount',
+                75,
+            )
+            ->assertJsonPath(
+                'data.summary.unsuccessful.transactions',
+                2,
+            );
+    },
+);
+
+it(
+    'orders transactions by financial date from newest to oldest',
+    function (): void {
+        /** @var TestCase $this */
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $customer = User::factory()
+            ->customer()
+            ->create();
+
+        $catalog = paymentTransactionCatalog();
+
+        foreach (
+            [
+                [
+                    'number' => 'CH-ORDER-OLD',
+                    'time' => '2026-08-01 09:00:00',
+                ],
+                [
+                    'number' => 'CH-ORDER-NEW',
+                    'time' => '2026-08-01 18:00:00',
+                ],
+            ] as $row
+        ) {
+            $order = paymentTransactionOrder(
+                customer: $customer,
+                catalog: $catalog,
+                number: $row['number'],
+                paymentMethodId: $catalog['cash_method_id'],
+                total: '10.00',
+            );
+
+            OrderStatusChange::query()->create([
+                'order_id' => $order->id,
+                'from_order_status_id' => null,
+                'to_order_status_id' => $catalog[
+                    'delivered_status_id'
+                ],
+                'changed_by_user_id' => $admin->id,
+                'changed_at' => $row['time'],
+            ]);
+        }
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->getJson(
+                '/api/v1/admin/analytics/payment-transactions'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-01'
+                    .'&method=cash',
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'data.transactions.0.order_number',
+                'CH-ORDER-NEW',
+            )
+            ->assertJsonPath(
+                'data.transactions.1.order_number',
+                'CH-ORDER-OLD',
+            )
+            ->assertJsonPath(
+                'meta.from',
+                1,
+            )
+            ->assertJsonPath(
+                'meta.to',
+                2,
+            );
+    },
+);

@@ -300,14 +300,14 @@ final class PaymentTransactionAnalyticsService
 
             'methods' => [
                 'cash' => [
-                'amount' => $this->money(
-                    $row->cash_amount ?? 0,
-                ),
+                    'amount' => $this->money(
+                        $row->cash_amount ?? 0,
+                    ),
 
-                'transactions' => (int) (
-                    $row->cash_transactions
-                    ?? 0
-                ),
+                    'transactions' => (int) (
+                        $row->cash_transactions
+                        ?? 0
+                    ),
                 ],
 
                 'transfer' => [
@@ -428,6 +428,16 @@ final class PaymentTransactionAnalyticsService
                         )
                         ->orWhere(
                             'payment_transactions.reference',
+                            'like',
+                            $search,
+                        )
+                        ->orWhere(
+                            'payment_transactions.provider_order_id',
+                            'like',
+                            $search,
+                        )
+                        ->orWhere(
+                            'payment_transactions.provider_capture_id',
                             'like',
                             $search,
                         );
@@ -551,6 +561,8 @@ final class PaymentTransactionAnalyticsService
                 users.email AS customer_email,
                 users.phone AS customer_phone,
                 orders.order_number AS reference,
+                NULL AS provider_order_id,
+                NULL AS provider_capture_id,
                 NULL AS receipt_uuid,
                 NULL AS reviewed_by,
                 NULL AS failure_code
@@ -662,6 +674,8 @@ final class PaymentTransactionAnalyticsService
                 users.email AS customer_email,
                 users.phone AS customer_phone,
                 payment_receipts.uuid AS reference,
+                NULL AS provider_order_id,
+                NULL AS provider_capture_id,
                 payment_receipts.uuid AS receipt_uuid,
 
                 NULLIF(
@@ -789,6 +803,9 @@ final class PaymentTransactionAnalyticsService
                     payments.uuid
                 ) AS reference,
 
+                payments.provider_order_id AS provider_order_id,
+                payments.provider_capture_id AS provider_capture_id,
+
                 NULL AS receipt_uuid,
                 NULL AS reviewed_by,
                 payments.failure_code AS failure_code
@@ -831,21 +848,21 @@ final class PaymentTransactionAnalyticsService
                     : null,
 
             'customer' => [
-            'id' => $row->customer_id !== null
-                    ? (int) $row->customer_id
-                    : null,
+                'id' => $row->customer_id !== null
+                        ? (int) $row->customer_id
+                        : null,
 
-            'name' => trim(
-                (string) $row->customer_name,
-            ),
+                'name' => trim(
+                    (string) $row->customer_name,
+                ),
 
-            'email' => $row->customer_email !== null
-                    ? (string) $row->customer_email
-                    : null,
+                'email' => $row->customer_email !== null
+                        ? (string) $row->customer_email
+                        : null,
 
-            'phone' => $row->customer_phone !== null
-                    ? (string) $row->customer_phone
-                    : null,
+                'phone' => $row->customer_phone !== null
+                        ? (string) $row->customer_phone
+                        : null,
             ],
 
             'reference' => $row->reference !== null
