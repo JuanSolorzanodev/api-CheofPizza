@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Admin\Analytics\DailySalesController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\HourlySalesController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\PaymentAnalyticsController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\PaymentTransactionController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\ProductPerformanceController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\SalesDashboardController;
+use App\Http\Controllers\Api\V1\Admin\CashRegisterController;
+use App\Http\Controllers\Api\V1\Admin\CashSessionDetailController;
+use App\Http\Controllers\Api\V1\Admin\CashSessionSummaryController;
 use App\Http\Controllers\Api\V1\Admin\Catalog\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\Catalog\CategoryPriceController as AdminCategoryPriceController;
 use App\Http\Controllers\Api\V1\Admin\Catalog\IngredientController as AdminIngredientController;
@@ -10,13 +19,11 @@ use App\Http\Controllers\Api\V1\Admin\Catalog\IngredientTypeController as AdminI
 use App\Http\Controllers\Api\V1\Admin\Catalog\PizzaController as AdminPizzaController;
 use App\Http\Controllers\Api\V1\Admin\Catalog\SizeController as AdminSizeController;
 use App\Http\Controllers\Api\V1\Admin\MachineLearningController;
+use App\Http\Controllers\Api\V1\Admin\MachineLearningTrainingController;
 use App\Http\Controllers\Api\V1\Admin\PromotionController as AdminPromotionController;
-use App\Http\Controllers\Api\V1\Admin\CashSessionSummaryController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Api\V1\Admin\MachineLearningTrainingController;
 use App\Http\Controllers\Api\V1\Auth\AuthenticatedUserController;
-use App\Http\Controllers\Api\V1\Admin\Analytics\DailySalesController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Operator\OrdersController as OperatorOrdersController;
@@ -24,8 +31,6 @@ use App\Http\Controllers\Api\V1\Operator\PaymentReceiptController as OperatorPay
 use App\Http\Controllers\Api\V1\Orders\CheckoutController;
 use App\Http\Controllers\Api\V1\Orders\MyOrdersController;
 use App\Http\Controllers\Api\V1\Orders\PaymentReceiptController as CustomerPaymentReceiptController;
-use App\Http\Controllers\Api\V1\Admin\CashRegisterController;
-use App\Http\Controllers\Api\V1\Admin\Analytics\HourlySalesController;
 use App\Http\Controllers\Api\V1\Payments\PayPalPaymentController;
 use App\Http\Controllers\Api\V1\Payments\PayPalWebhookController;
 use App\Http\Controllers\Api\V1\Public\BuilderController;
@@ -34,22 +39,66 @@ use App\Http\Controllers\Api\V1\Public\CatalogController;
 use App\Http\Controllers\Api\V1\Public\GeoController;
 use App\Http\Controllers\Api\V1\Public\PromotionController;
 use App\Http\Controllers\Api\V1\Public\SettingController as PublicSettingController;
-use App\Http\Controllers\Api\V1\Admin\Analytics\PaymentAnalyticsController;
-use App\Http\Controllers\Api\V1\Admin\Analytics\ProductPerformanceController;
-use App\Http\Controllers\Api\V1\Admin\Analytics\PaymentTransactionController;
-use App\Http\Controllers\Api\V1\Admin\Analytics\SalesDashboardController;
-use App\Http\Controllers\Api\V1\Admin\CashSessionDetailController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
     /*
-    |--------------------------------------------------------------------------
-    | Autenticación
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| Autenticación
+|--------------------------------------------------------------------------
+|
+| Rutas públicas:
+| - Registro con correo y contraseña.
+| - Inicio de sesión con correo y contraseña.
+| - Inicio o registro mediante Google/Firebase.
+|
+| Rutas privadas:
+| - Consulta del usuario autenticado.
+| - Cierre de la sesión actual.
+|
+*/
 
     Route::prefix('auth')
+        ->name('api.v1.auth.')
         ->group(function (): void {
+            /*
+        |--------------------------------------------------------------------------
+        | Registro con correo y contraseña
+        |--------------------------------------------------------------------------
+        */
+
+            Route::post(
+                'register',
+                [
+                    AuthController::class,
+                    'register',
+                ],
+            )
+                ->middleware('throttle:auth')
+                ->name('register');
+
+            /*
+        |--------------------------------------------------------------------------
+        | Inicio de sesión con correo y contraseña
+        |--------------------------------------------------------------------------
+        */
+
+            Route::post(
+                'login',
+                [
+                    AuthController::class,
+                    'login',
+                ],
+            )
+                ->middleware('throttle:auth')
+                ->name('login');
+
+            /*
+        |--------------------------------------------------------------------------
+        | Inicio o registro mediante Google
+        |--------------------------------------------------------------------------
+        */
+
             Route::post(
                 'firebase/google',
                 [
@@ -58,27 +107,39 @@ Route::prefix('v1')->group(function (): void {
                 ],
             )
                 ->middleware('throttle:auth')
-                ->name(
-                    'api.v1.auth.firebase.google',
-                );
+                ->name('firebase.google');
+
+            /*
+        |--------------------------------------------------------------------------
+        | Sesión autenticada
+        |--------------------------------------------------------------------------
+        */
 
             Route::middleware([
                 'auth:sanctum',
                 'active.user',
             ])->group(function (): void {
+                /*
+            |--------------------------------------------------------------------------
+            | Usuario autenticado
+            |--------------------------------------------------------------------------
+            */
+
                 Route::get(
                     'me',
                     AuthenticatedUserController::class,
-                )->name(
-                    'api.v1.auth.me',
-                );
+                )->name('me');
+
+                /*
+            |--------------------------------------------------------------------------
+            | Cerrar sesión actual
+            |--------------------------------------------------------------------------
+            */
 
                 Route::post(
                     'logout',
                     LogoutController::class,
-                )->name(
-                    'api.v1.auth.logout',
-                );
+                )->name('logout');
             });
         });
 
