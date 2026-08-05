@@ -157,7 +157,7 @@ describe('Captura de órdenes PayPal', function (): void {
                     if (
                         $request->method() === 'POST'
                         && $request->url()
-                            === "{$baseUrl}/v1/oauth2/token"
+                        === "{$baseUrl}/v1/oauth2/token"
                     ) {
                         return Http::response([
                             'access_token' => 'ACCESS-TOKEN-CAPTURE-TEST',
@@ -174,7 +174,7 @@ describe('Captura de órdenes PayPal', function (): void {
                     if (
                         $request->method() === 'POST'
                         && $request->url()
-                            === "{$baseUrl}/v2/checkout/orders"
+                        === "{$baseUrl}/v2/checkout/orders"
                     ) {
                         return Http::response([
                             'id' => $paypalOrderId,
@@ -200,7 +200,7 @@ describe('Captura de órdenes PayPal', function (): void {
                     if (
                         $request->method() === 'GET'
                         && $request->url()
-                            === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}"
+                        === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}"
                     ) {
                         return Http::response([
                             'id' => $paypalOrderId,
@@ -233,7 +233,7 @@ describe('Captura de órdenes PayPal', function (): void {
                     if (
                         $request->method() === 'POST'
                         && $request->url()
-                            === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}/capture"
+                        === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}/capture"
                     ) {
                         return Http::response([
                             'id' => $paypalOrderId,
@@ -539,12 +539,331 @@ describe('Captura de órdenes PayPal', function (): void {
                     return
                         $request->method() === 'POST'
                         && $request->url()
-                            === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}/capture";
+                        === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}/capture";
                 },
             );
 
             expect($captureRequests)
                 ->toHaveCount(1);
+        },
+    );
+    it(
+        'concilia una captura completada cuando PayPal responde con error temporal',
+        function (): void {
+            /** @var TestCase $this */
+            [
+                'user' => $user,
+                'cart' => $cart,
+            ] = createPayPalCaptureFixture();
+
+            Sanctum::actingAs(
+                $user,
+            );
+
+            Cache::clear();
+
+            $baseUrl = rtrim(
+                (string) config(
+                    'paypal.base_urls.sandbox',
+                    'https://api-m.sandbox.paypal.com',
+                ),
+                '/',
+            );
+
+            $paypalOrderId = 'PAYPAL-ORDER-RECONCILED-001';
+            $paypalCaptureId = 'PAYPAL-CAPTURE-RECONCILED-001';
+
+            $paymentUuid = null;
+            $orderConsultations = 0;
+            $captureAttempts = 0;
+
+            Http::fake(
+                function (
+                    Request $request,
+                ) use (
+                    $baseUrl,
+                    $paypalOrderId,
+                    $paypalCaptureId,
+                    &$paymentUuid,
+                    &$orderConsultations,
+                    &$captureAttempts,
+                ) {
+                    if (
+                        $request->method() === 'POST'
+                        && $request->url()
+                        === "{$baseUrl}/v1/oauth2/token"
+                    ) {
+                        return Http::response([
+                            'access_token' => 'ACCESS-TOKEN-RECONCILIATION',
+                            'token_type' => 'Bearer',
+                            'expires_in' => 32400,
+                        ], 200);
+                    }
+
+                    if (
+                        $request->method() === 'POST'
+                        && $request->url()
+                        === "{$baseUrl}/v2/checkout/orders"
+                    ) {
+                        return Http::response([
+                            'id' => $paypalOrderId,
+                            'status' => 'CREATED',
+
+                            'links' => [
+                                [
+                                    'href' => "https://www.sandbox.paypal.com/checkoutnow?token={$paypalOrderId}",
+                                    'rel' => 'approve',
+                                    'method' => 'GET',
+                                ],
+                            ],
+                        ], 201);
+                    }
+
+                    if (
+                        $request->method() === 'GET'
+                        && $request->url()
+                        === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}"
+                    ) {
+                        $orderConsultations++;
+
+                        /*
+                     * Primera consulta: PayPal informa que el comprador
+                     * aprobó la operación.
+                     */
+                        if ($orderConsultations === 1) {
+                            return Http::response([
+                                'id' => $paypalOrderId,
+                                'intent' => 'CAPTURE',
+                                'status' => 'APPROVED',
+
+                                'purchase_units' => [
+                                    [
+                                        'reference_id' => $paymentUuid,
+                                        'custom_id' => $paymentUuid,
+
+                                        'amount' => [
+                                            'currency_code' => 'USD',
+                                            'value' => '5.00',
+                                        ],
+                                    ],
+                                ],
+
+                                'update_time' => now()->toISOString(),
+                            ], 200);
+                        }
+
+                        /*
+                     * Segunda consulta: aunque el endpoint de captura
+                     * respondió con error, PayPal sí completó el cobro.
+                     */
+                        return Http::response([
+                            'id' => $paypalOrderId,
+                            'intent' => 'CAPTURE',
+                            'status' => 'COMPLETED',
+
+                            'purchase_units' => [
+                                [
+                                    'reference_id' => $paymentUuid,
+                                    'custom_id' => $paymentUuid,
+
+                                    'amount' => [
+                                        'currency_code' => 'USD',
+                                        'value' => '5.00',
+                                    ],
+
+                                    'payments' => [
+                                        'captures' => [
+                                            [
+                                                'id' => $paypalCaptureId,
+                                                'status' => 'COMPLETED',
+
+                                                'amount' => [
+                                                    'currency_code' => 'USD',
+                                                    'value' => '5.00',
+                                                ],
+
+                                                'final_capture' => true,
+
+                                                'seller_protection' => [
+                                                    'status' => 'ELIGIBLE',
+                                                ],
+
+                                                'create_time' => now()
+                                                    ->subSecond()
+                                                    ->toISOString(),
+
+                                                'update_time' => now()
+                                                    ->toISOString(),
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+
+                            'update_time' => now()->toISOString(),
+                        ], 200);
+                    }
+
+                    if (
+                        $request->method() === 'POST'
+                        && $request->url()
+                        === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}/capture"
+                    ) {
+                        $captureAttempts++;
+
+                        /*
+                     * Simulamos un error temporal recibido después de
+                     * que PayPal ya procesó la captura.
+                     */
+                        return Http::response([
+                            'name' => 'INTERNAL_SERVER_ERROR',
+                            'message' => 'PayPal presentó un error temporal.',
+                            'debug_id' => 'DEBUG-RECONCILIATION-001',
+                        ], 500);
+                    }
+
+                    return Http::response([
+                        'name' => 'UNEXPECTED_REQUEST',
+                        'message' => "Petición no configurada: {$request->method()} {$request->url()}",
+                    ], 500);
+                },
+            );
+
+            $idempotencyKey = fake()->uuid();
+
+            $createResponse = $this->postJson(
+                '/api/v1/payments/paypal/orders',
+                [
+                    'delivery_type' => 'pickup',
+                    'address' => null,
+                    'delivery_location' => null,
+                    'notes' => 'Pedido conciliado después de error PayPal',
+                ],
+                [
+                    'Idempotency-Key' => $idempotencyKey,
+                ],
+            );
+
+            $createResponse
+                ->assertOk()
+                ->assertJsonPath(
+                    'data.paypal_order_id',
+                    $paypalOrderId,
+                );
+
+            $payment = Payment::query()
+                ->where(
+                    'idempotency_key',
+                    $idempotencyKey,
+                )
+                ->firstOrFail();
+
+            $paymentUuid = $payment->uuid;
+
+            $captureResponse = $this->postJson(
+                "/api/v1/payments/paypal/orders/{$paymentUuid}/capture",
+            );
+
+            $captureResponse
+                ->assertOk()
+                ->assertJsonPath(
+                    'payment.status',
+                    'completed',
+                )
+                ->assertJsonPath(
+                    'data.total',
+                    5,
+                )
+                ->assertJsonPath(
+                    'data.payment_method',
+                    'card',
+                )
+                ->assertJsonPath(
+                    'data.status',
+                    'pending',
+                );
+
+            $payment->refresh();
+            $cart->refresh();
+
+            expect($payment->status)
+                ->toBe(PaymentStatus::COMPLETED);
+
+            expect($payment->provider_status)
+                ->toBe('COMPLETED');
+
+            expect($payment->provider_capture_id)
+                ->toBe($paypalCaptureId);
+
+            expect($payment->order_id)
+                ->not
+                ->toBeNull();
+
+            expect(
+                $cart->cartStatus?->status_name,
+            )->toBe('ordered');
+
+            $order = Order::query()
+                ->with([
+                    'paymentMethod',
+                    'deliveryType',
+                    'orderStatus',
+                    'orderItems',
+                ])
+                ->findOrFail(
+                    $payment->order_id,
+                );
+
+            expect((string) $order->total)
+                ->toBe('5.00');
+
+            expect(
+                $order->paymentMethod?->name,
+            )->toBe('card');
+
+            expect(
+                $order->deliveryType?->delivery_type_name,
+            )->toBe('pickup');
+
+            expect(
+                $order->orderStatus?->status_name,
+            )->toBe('pending');
+
+            expect($order->orderItems)
+                ->toHaveCount(1);
+
+            $this->assertDatabaseCount(
+                'orders',
+                1,
+            );
+
+            $this->assertDatabaseCount(
+                'order_items',
+                1,
+            );
+
+            $this->assertDatabaseCount(
+                'order_status_changes',
+                1,
+            );
+
+            $this->assertDatabaseHas(
+                'payments',
+                [
+                    'id' => $payment->id,
+                    'order_id' => $order->id,
+                    'provider_order_id' => $paypalOrderId,
+                    'provider_capture_id' => $paypalCaptureId,
+                    'provider_status' => 'COMPLETED',
+                    'status' => PaymentStatus::COMPLETED->value,
+                ],
+            );
+
+            expect($captureAttempts)
+                ->toBe(1);
+
+            expect($orderConsultations)
+                ->toBe(2);
         },
     );
 });
