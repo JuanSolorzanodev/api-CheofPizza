@@ -235,6 +235,38 @@ final class AuthenticationTest extends TestCase
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
+    public function test_expired_token_cannot_access_authenticated_routes(): void
+    {
+        config()->set(
+            'sanctum.expiration',
+            60,
+        );
+
+        $role = $this->createRole('customer');
+
+        $user = User::factory()->create([
+            'role_id' => $role->id,
+            'is_active' => true,
+        ]);
+
+        $token = $user
+            ->createToken('expired-device')
+            ->plainTextToken;
+
+        $user->tokens()
+            ->latest('id')
+            ->firstOrFail()
+            ->forceFill([
+                'created_at' => now()->subMinutes(61),
+            ])
+            ->save();
+
+        $this
+            ->withToken($token)
+            ->getJson('/api/v1/auth/me')
+            ->assertUnauthorized();
+    }
+
     private function createRole(string $name): Role
     {
         return Role::query()->firstOrCreate([
