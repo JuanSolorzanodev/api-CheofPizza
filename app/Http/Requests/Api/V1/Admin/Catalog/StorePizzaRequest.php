@@ -125,6 +125,7 @@ final class StorePizzaRequest extends FormRequest
         return [
             'name.unique' => 'Ya existe una pizza con este nombre dentro de la categoría seleccionada.',
 
+            'ingredient_ids.required' => 'Selecciona al menos un ingrediente.',
             'ingredient_ids.min' => 'Selecciona al menos un ingrediente.',
 
             'ingredient_ids.*.distinct' => 'No puedes repetir ingredientes.',
