@@ -2,15 +2,18 @@
 
 declare(strict_types=1);
 
+use App\Exceptions\Admin\LastActiveAdminException;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\OptionalSanctumAuth;
+use App\Support\ApiResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(
@@ -56,6 +59,23 @@ return Application::configure(
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+
+        $exceptions->render(
+            function (
+                LastActiveAdminException $exception,
+                Request $request,
+            ) {
+                if (! $request->expectsJson()) {
+                    return null;
+                }
+
+                return ApiResponse::error(
+                    message: $exception->getMessage(),
+                    status: Response::HTTP_CONFLICT,
+                    code: 'LAST_ACTIVE_ADMIN_REQUIRED',
+                );
+            },
+        );
         $exceptions->shouldRenderJsonWhen(
             static fn (
                 Request $request,

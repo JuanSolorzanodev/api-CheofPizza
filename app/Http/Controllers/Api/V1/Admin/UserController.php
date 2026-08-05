@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Exceptions\Admin\LastActiveAdminException;
 use App\Http\Requests\Api\V1\Admin\StoreAdminUserRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateAdminUserRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateAdminUserRoleRequest;
@@ -196,9 +197,7 @@ final class UserController
 
                     'name' => (string) $role->role_name,
 
-                    'label' => match (
-                        $role->role_name
-                    ) {
+                    'label' => match ($role->role_name) {
                         'admin' => 'Administrador',
 
                         'operator' => 'Operador',
@@ -399,9 +398,8 @@ final class UserController
                             ->count();
 
                     if ($activeAdmins <= 1) {
-                        abort(
-                            Response::HTTP_CONFLICT,
-                            'No puedes quitar el rol al último administrador activo.',
+                        throw new LastActiveAdminException(
+                            'No puedes bloquear al último administrador activo.',
                         );
                     }
                 }
