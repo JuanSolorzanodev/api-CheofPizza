@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Exceptions\Admin\LastActiveAdminException;
+use App\Http\Middleware\AddRequestId;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\OptionalSanctumAuth;
@@ -36,6 +37,7 @@ return Application::configure(
         ],
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(AddRequestId::class);
         $middleware->prepend(HandleCors::class);
 
         /*

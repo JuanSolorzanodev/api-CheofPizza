@@ -58,6 +58,7 @@ RUN composer dump-autoload \
         bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache \
     && chmod +x \
+        docker/prepare-runtime.sh \
         docker/start-api.sh \
         docker/start-worker.sh \
         docker/start-reverb.sh \

@@ -1,8 +1,11 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 set -eu
 
 echo "Starting CheofPizza Reverb server..."
+
+sh docker/prepare-runtime.sh
+
 echo "Host: ${REVERB_SERVER_HOST:-0.0.0.0}"
 echo "Port: ${REVERB_SERVER_PORT:-8080}"
 

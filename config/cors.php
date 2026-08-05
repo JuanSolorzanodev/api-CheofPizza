@@ -65,6 +65,8 @@ return [
         'X-Socket-Id',
 
         'X-Requested-With',
+        'X-Request-Id',
+
     ],
 
     'exposed_headers' => [
