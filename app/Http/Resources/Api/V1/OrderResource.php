@@ -326,12 +326,18 @@ final class OrderResource extends JsonResource
                         ? (int) $personalization->personalization_action_id
                         : null,
 
-                    'action' => $personalization
-                        ->personalizationAction
-                        ?->action_name
-                        ?? $personalization
-                            ->personalizationAction
-                            ?->name,
+                    'action' => strtolower(
+                        (string) (
+                            $personalization
+                                ->personalizationAction
+                                ?->action_name
+                            ?? $personalization
+                                ->personalizationAction
+                                ?->name
+                            ?? $personalization->modification_type
+                            ?? ''
+                        ),
+                    ),
 
                     'applies_to' => $personalization->applies_to,
 
@@ -430,7 +436,7 @@ final class OrderResource extends JsonResource
             implode(
                 ' ',
                 array_filter([
-                    $user->name ?? null,
+                    $user->first_name ?? null,
                     $user->last_name ?? null,
                 ]),
             ),

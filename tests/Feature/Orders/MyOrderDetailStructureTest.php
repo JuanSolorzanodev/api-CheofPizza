@@ -415,7 +415,7 @@ it(
             )
             ->assertJsonPath(
                 'data.items.0.personalizations.0.action',
-                'Extra',
+                'extra',
             )
             ->assertJsonPath(
                 'data.items.0.personalizations.0.applies_to',
@@ -605,7 +605,7 @@ it(
             )
             ->assertJsonPath(
                 'data.items.0.personalizations.0.action',
-                'Extra',
+                'extra',
             )
             ->assertJsonPath(
                 'data.items.0.personalizations.0.extra_price',

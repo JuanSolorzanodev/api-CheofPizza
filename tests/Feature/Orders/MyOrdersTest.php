@@ -439,7 +439,7 @@ it(
             )
             ->assertJsonPath(
                 'data.customer.name',
-                'Zambrano',
+                'Jandry Zambrano',
             )
             ->assertJsonPath(
                 'data.customer.email',
