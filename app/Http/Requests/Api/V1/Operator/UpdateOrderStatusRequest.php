@@ -56,20 +56,15 @@ final class UpdateOrderStatusRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'to_status.required' =>
-                'Debes indicar el nuevo estado del pedido.',
+            'to_status.required' => 'Debes indicar el nuevo estado del pedido.',
 
-            'to_status.string' =>
-                'El estado del pedido debe ser un texto válido.',
+            'to_status.string' => 'El estado del pedido debe ser un texto válido.',
 
-            'to_status.enum' =>
-                'El estado seleccionado no es válido.',
+            'to_status.enum' => 'El estado seleccionado no es válido.',
 
-            'note.string' =>
-                'La nota debe ser un texto válido.',
+            'note.string' => 'La nota debe ser un texto válido.',
 
-            'note.max' =>
-                'La nota no puede superar los 255 caracteres.',
+            'note.max' => 'La nota no puede superar los 255 caracteres.',
         ];
     }
 
@@ -84,7 +79,7 @@ final class UpdateOrderStatusRequest extends FormRequest
     {
         $note = $this->validated('note');
 
-        if (!is_string($note)) {
+        if (! is_string($note)) {
             return null;
         }
 

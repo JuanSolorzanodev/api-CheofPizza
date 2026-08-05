@@ -58,7 +58,7 @@ final class WhatsAppDeliveryDispatchLinkService
         }
 
         return 'https://wa.me/?'
-            . http_build_query([
+            .http_build_query([
                 'text' => $text,
             ]);
     }
@@ -147,7 +147,7 @@ final class WhatsAppDeliveryDispatchLinkService
                     ) {
                         $mapsUrl =
                             'https://www.google.com/maps/search/?api=1&query='
-                            . rawurlencode($locationValue);
+                            .rawurlencode($locationValue);
                     }
                 }
             }
@@ -216,7 +216,7 @@ final class WhatsAppDeliveryDispatchLinkService
         $lines[] = '';
 
         $lines[] = 'Total: $'
-            . number_format(
+            .number_format(
                 (float) ($order->total ?? 0),
                 2,
                 '.',
@@ -243,6 +243,7 @@ final class WhatsAppDeliveryDispatchLinkService
 
         return implode("\n", $lines);
     }
+
     /**
      * Obtiene un nombre legible para el cliente.
      */
@@ -304,7 +305,7 @@ final class WhatsAppDeliveryDispatchLinkService
             );
 
             if ($summary !== '') {
-                $summaries[] = '* ' . $summary;
+                $summaries[] = '* '.$summary;
             }
         }
 
@@ -329,7 +330,7 @@ final class WhatsAppDeliveryDispatchLinkService
             (string) ($item->promotion_name ?? ''),
         );
 
-        if (!empty($item->promotion_id)) {
+        if (! empty($item->promotion_id)) {
             return $this->buildPromotionSummary(
                 $quantity,
                 $promotionName,

@@ -39,164 +39,124 @@ function createMlDailySalesCatalog(): array
 {
     $deliveredStatus =
         OrderStatus::query()->firstOrCreate([
-            'status_name' =>
-                'delivered',
+            'status_name' => 'delivered',
         ]);
 
     $cancelledStatus =
         OrderStatus::query()->firstOrCreate([
-            'status_name' =>
-                'cancelled',
+            'status_name' => 'cancelled',
         ]);
 
     $pickupType =
         DeliveryType::query()->firstOrCreate([
-            'delivery_type_name' =>
-                'pickup',
+            'delivery_type_name' => 'pickup',
         ]);
 
     $deliveryType =
         DeliveryType::query()->firstOrCreate([
-            'delivery_type_name' =>
-                'delivery',
+            'delivery_type_name' => 'delivery',
         ]);
 
     $paymentMethod =
         PaymentMethod::query()->firstOrCreate(
             [
-                'name' =>
-                    'cash',
+                'name' => 'cash',
             ],
             [
-                'description' =>
-                    'Pago en efectivo para pruebas de ML',
+                'description' => 'Pago en efectivo para pruebas de ML',
 
-                'active' =>
-                    true,
+                'active' => true,
             ],
         );
 
     $size =
         Size::query()->create([
-            'size_name' =>
-                'Mediana',
+            'size_name' => 'Mediana',
 
-            'portion' =>
-                8,
+            'portion' => 8,
         ]);
 
     $category =
         Category::query()->create([
-            'category_name' =>
-                'Especial',
+            'category_name' => 'Especial',
 
-            'description' =>
-                'Categoría para pruebas de Machine Learning',
+            'description' => 'Categoría para pruebas de Machine Learning',
         ]);
 
     $pizza =
         Pizza::query()->create([
-            'category_id' =>
-                $category->id,
+            'category_id' => $category->id,
 
-            'pizza_name' =>
-                'Pizza especial ML',
+            'pizza_name' => 'Pizza especial ML',
 
-            'description' =>
-                'Pizza para consolidación diaria',
+            'description' => 'Pizza para consolidación diaria',
 
-            'image_url' =>
-                null,
+            'image_url' => null,
 
-            'is_visible' =>
-                true,
+            'is_visible' => true,
         ]);
 
     $secondPizza =
         Pizza::query()->create([
-            'category_id' =>
-                $category->id,
+            'category_id' => $category->id,
 
-            'pizza_name' =>
-                'Segunda pizza ML',
+            'pizza_name' => 'Segunda pizza ML',
 
-            'description' =>
-                'Segunda pizza para promociones',
+            'description' => 'Segunda pizza para promociones',
 
-            'image_url' =>
-                null,
+            'image_url' => null,
 
-            'is_visible' =>
-                true,
+            'is_visible' => true,
         ]);
 
     $promotion =
         Promotion::query()->create([
-            'promotion_name' =>
-                'Promoción ML',
+            'promotion_name' => 'Promoción ML',
 
-            'slug' =>
-                'promocion-ml-test',
+            'slug' => 'promocion-ml-test',
 
-            'description' =>
-                'Promoción para pruebas de consolidación',
+            'description' => 'Promoción para pruebas de consolidación',
 
-            'banner_image_url' =>
-                null,
+            'banner_image_url' => null,
 
-            'promotion_type' =>
-                Promotion::TYPE_FIXED_COMBO,
+            'promotion_type' => Promotion::TYPE_FIXED_COMBO,
 
-            'selection_quantity' =>
-                2,
+            'selection_quantity' => 2,
 
-            'promotion_price' =>
-                '15.00',
+            'promotion_price' => '15.00',
 
-            'starts_at' =>
-                '2026-01-01 00:00:00',
+            'starts_at' => '2026-01-01 00:00:00',
 
-            'ends_at' =>
-                '2026-12-31 23:59:59',
+            'ends_at' => '2026-12-31 23:59:59',
 
-            'is_active' =>
-                true,
+            'is_active' => true,
         ]);
 
     return [
-        'delivered_status_id' =>
-            (int) $deliveredStatus->id,
+        'delivered_status_id' => (int) $deliveredStatus->id,
 
-        'cancelled_status_id' =>
-            (int) $cancelledStatus->id,
+        'cancelled_status_id' => (int) $cancelledStatus->id,
 
-        'pickup_type_id' =>
-            (int) $pickupType->id,
+        'pickup_type_id' => (int) $pickupType->id,
 
-        'delivery_type_id' =>
-            (int) $deliveryType->id,
+        'delivery_type_id' => (int) $deliveryType->id,
 
-        'payment_method_id' =>
-            (int) $paymentMethod->id,
+        'payment_method_id' => (int) $paymentMethod->id,
 
-        'size_id' =>
-            (int) $size->id,
+        'size_id' => (int) $size->id,
 
-        'pizza_id' =>
-            (int) $pizza->id,
+        'pizza_id' => (int) $pizza->id,
 
-        'second_pizza_id' =>
-            (int) $secondPizza->id,
+        'second_pizza_id' => (int) $secondPizza->id,
 
-        'promotion_id' =>
-            (int) $promotion->id,
+        'promotion_id' => (int) $promotion->id,
     ];
 }
 
 /**
  * Crea un pedido con los campos obligatorios de la tabla.
  *
- * @param array<string, int> $catalog
+ * @param  array<string, int>  $catalog
  */
 function createMlDailySalesOrder(
     User $customer,
@@ -208,50 +168,35 @@ function createMlDailySalesOrder(
     string $total,
 ): Order {
     return Order::query()->create([
-        'order_number' =>
-            $orderNumber,
+        'order_number' => $orderNumber,
 
-        'user_id' =>
-            $customer->id,
+        'user_id' => $customer->id,
 
-        'ordered_at' =>
-            $orderedAt,
+        'ordered_at' => $orderedAt,
 
-        'subtotal' =>
-            $total,
+        'subtotal' => $total,
 
-        'delivery_fee' =>
-            '0.00',
+        'delivery_fee' => '0.00',
 
-        'total' =>
-            $total,
+        'total' => $total,
 
-        'delivery_type_id' =>
-            $deliveryTypeId,
+        'delivery_type_id' => $deliveryTypeId,
 
-        'address' =>
-            null,
+        'address' => null,
 
-        'delivery_lat' =>
-            null,
+        'delivery_lat' => null,
 
-        'delivery_lng' =>
-            null,
+        'delivery_lng' => null,
 
-        'delivery_maps_url' =>
-            null,
+        'delivery_maps_url' => null,
 
-        'delivery_place_id' =>
-            null,
+        'delivery_place_id' => null,
 
-        'delivery_reference' =>
-            null,
+        'delivery_reference' => null,
 
-        'payment_method_id' =>
-            $catalog['payment_method_id'],
+        'payment_method_id' => $catalog['payment_method_id'],
 
-        'order_status_id' =>
-            $statusId,
+        'order_status_id' => $statusId,
     ]);
 }
 
@@ -268,104 +213,75 @@ it(
 
         $deliveredOrder =
             createMlDailySalesOrder(
-                customer:
-                    $customer,
+                customer: $customer,
 
-                catalog:
-                    $catalog,
+                catalog: $catalog,
 
-                orderNumber:
-                    'ML-TEST-001',
+                orderNumber: 'ML-TEST-001',
 
-                orderedAt:
-                    '2026-08-03 18:00:00',
+                orderedAt: '2026-08-03 18:00:00',
 
-                statusId:
-                    $catalog[
+                statusId: $catalog[
                         'delivered_status_id'
                     ],
 
-                deliveryTypeId:
-                    $catalog[
+                deliveryTypeId: $catalog[
                         'pickup_type_id'
                     ],
 
-                total:
-                    '25.00',
+                total: '25.00',
             );
 
         OrderItem::query()->create([
-            'order_id' =>
-                $deliveredOrder->id,
+            'order_id' => $deliveredOrder->id,
 
-            'promotion_id' =>
-                null,
+            'promotion_id' => null,
 
-            'promotion_name' =>
-                null,
+            'promotion_name' => null,
 
-            'pizza_id' =>
-                $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-                'Pizza especial ML',
+            'pizza_name' => 'Pizza especial ML',
 
-            'pizza_id_second' =>
-                null,
+            'pizza_id_second' => null,
 
-            'pizza_name_second' =>
-                null,
+            'pizza_name_second' => null,
 
-            'size_id' =>
-                $catalog['size_id'],
+            'size_id' => $catalog['size_id'],
 
-            'size_name' =>
-                'Mediana',
+            'size_name' => 'Mediana',
 
-            'category_name' =>
-                'Especial',
+            'category_name' => 'Especial',
 
-            'category_name_second' =>
-                null,
+            'category_name_second' => null,
 
-            'is_half_and_half' =>
-                false,
+            'is_half_and_half' => false,
 
-            'quantity' =>
-                2,
+            'quantity' => 2,
 
-            'unit_price' =>
-                '12.50',
+            'unit_price' => '12.50',
 
-            'subtotal' =>
-                '25.00',
+            'subtotal' => '25.00',
         ]);
 
         createMlDailySalesOrder(
-            customer:
-                $customer,
+            customer: $customer,
 
-            catalog:
-                $catalog,
+            catalog: $catalog,
 
-            orderNumber:
-                'ML-TEST-002',
+            orderNumber: 'ML-TEST-002',
 
-            orderedAt:
-                '2026-08-03 19:00:00',
+            orderedAt: '2026-08-03 19:00:00',
 
-            statusId:
-                $catalog[
+            statusId: $catalog[
                     'cancelled_status_id'
                 ],
 
-            deliveryTypeId:
-                $catalog[
+            deliveryTypeId: $catalog[
                     'delivery_type_id'
                 ],
 
-            total:
-                '80.00',
+            total: '80.00',
         );
 
         $feature =
@@ -430,80 +346,58 @@ it(
 
         $order =
             createMlDailySalesOrder(
-                customer:
-                    $customer,
+                customer: $customer,
 
-                catalog:
-                    $catalog,
+                catalog: $catalog,
 
-                orderNumber:
-                    'ML-PROMO-001',
+                orderNumber: 'ML-PROMO-001',
 
-                orderedAt:
-                    '2026-08-03 20:00:00',
+                orderedAt: '2026-08-03 20:00:00',
 
-                statusId:
-                    $catalog[
+                statusId: $catalog[
                         'delivered_status_id'
                     ],
 
-                deliveryTypeId:
-                    $catalog[
+                deliveryTypeId: $catalog[
                         'delivery_type_id'
                     ],
 
-                total:
-                    '30.00',
+                total: '30.00',
             );
 
         $orderItem =
             OrderItem::query()->create([
-                'order_id' =>
-                    $order->id,
+                'order_id' => $order->id,
 
-                'promotion_id' =>
-                    $catalog[
+                'promotion_id' => $catalog[
                         'promotion_id'
                     ],
 
-                'promotion_name' =>
-                    'Promoción ML',
+                'promotion_name' => 'Promoción ML',
 
-                'pizza_id' =>
-                    null,
+                'pizza_id' => null,
 
-                'pizza_name' =>
-                    null,
+                'pizza_name' => null,
 
-                'pizza_id_second' =>
-                    null,
+                'pizza_id_second' => null,
 
-                'pizza_name_second' =>
-                    null,
+                'pizza_name_second' => null,
 
-                'size_id' =>
-                    $catalog['size_id'],
+                'size_id' => $catalog['size_id'],
 
-                'size_name' =>
-                    'Mediana',
+                'size_name' => 'Mediana',
 
-                'category_name' =>
-                    null,
+                'category_name' => null,
 
-                'category_name_second' =>
-                    null,
+                'category_name_second' => null,
 
-                'is_half_and_half' =>
-                    false,
+                'is_half_and_half' => false,
 
-                'quantity' =>
-                    2,
+                'quantity' => 2,
 
-                'unit_price' =>
-                    '15.00',
+                'unit_price' => '15.00',
 
-                'subtotal' =>
-                    '30.00',
+                'subtotal' => '30.00',
             ]);
 
         /*
@@ -513,27 +407,21 @@ it(
          * 2 pizzas × 2 paquetes = 4 pizzas físicas.
          */
         OrderPromotionItem::query()->create([
-            'order_item_id' =>
-                $orderItem->id,
+            'order_item_id' => $orderItem->id,
 
-            'pizza_id' =>
-                $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-                'Pizza promocional uno',
+            'pizza_name' => 'Pizza promocional uno',
         ]);
 
         OrderPromotionItem::query()->create([
-            'order_item_id' =>
-                $orderItem->id,
+            'order_item_id' => $orderItem->id,
 
-            'pizza_id' =>
-                $catalog[
+            'pizza_id' => $catalog[
                     'second_pizza_id'
                 ],
 
-            'pizza_name' =>
-                'Pizza promocional dos',
+            'pizza_name' => 'Pizza promocional dos',
         ]);
 
         $feature =
@@ -586,79 +474,57 @@ it(
 
         $order =
             createMlDailySalesOrder(
-                customer:
-                    $customer,
+                customer: $customer,
 
-                catalog:
-                    $catalog,
+                catalog: $catalog,
 
-                orderNumber:
-                    'ML-HALF-001',
+                orderNumber: 'ML-HALF-001',
 
-                orderedAt:
-                    '2026-08-03 21:00:00',
+                orderedAt: '2026-08-03 21:00:00',
 
-                statusId:
-                    $catalog[
+                statusId: $catalog[
                         'delivered_status_id'
                     ],
 
-                deliveryTypeId:
-                    $catalog[
+                deliveryTypeId: $catalog[
                         'pickup_type_id'
                     ],
 
-                total:
-                    '14.00',
+                total: '14.00',
             );
 
         OrderItem::query()->create([
-            'order_id' =>
-                $order->id,
+            'order_id' => $order->id,
 
-            'promotion_id' =>
-                null,
+            'promotion_id' => null,
 
-            'promotion_name' =>
-                null,
+            'promotion_name' => null,
 
-            'pizza_id' =>
-                $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-                'Pizza mitad uno',
+            'pizza_name' => 'Pizza mitad uno',
 
-            'pizza_id_second' =>
-                $catalog[
+            'pizza_id_second' => $catalog[
                     'second_pizza_id'
                 ],
 
-            'pizza_name_second' =>
-                'Pizza mitad dos',
+            'pizza_name_second' => 'Pizza mitad dos',
 
-            'size_id' =>
-                $catalog['size_id'],
+            'size_id' => $catalog['size_id'],
 
-            'size_name' =>
-                'Mediana',
+            'size_name' => 'Mediana',
 
-            'category_name' =>
-                'Especial',
+            'category_name' => 'Especial',
 
-            'category_name_second' =>
-                'Especial',
+            'category_name_second' => 'Especial',
 
-            'is_half_and_half' =>
-                true,
+            'is_half_and_half' => true,
 
-            'quantity' =>
-                1,
+            'quantity' => 1,
 
-            'unit_price' =>
-                '14.00',
+            'unit_price' => '14.00',
 
-            'subtotal' =>
-                '14.00',
+            'subtotal' => '14.00',
         ]);
 
         $feature =
@@ -735,57 +601,43 @@ it(
             createMlDailySalesCatalog();
 
         createMlDailySalesOrder(
-            customer:
-                $customer,
+            customer: $customer,
 
-            catalog:
-                $catalog,
+            catalog: $catalog,
 
-            orderNumber:
-                'ML-DATE-001',
+            orderNumber: 'ML-DATE-001',
 
-            orderedAt:
-                '2026-08-02 23:59:59',
+            orderedAt: '2026-08-02 23:59:59',
 
-            statusId:
-                $catalog[
+            statusId: $catalog[
                     'delivered_status_id'
                 ],
 
-            deliveryTypeId:
-                $catalog[
+            deliveryTypeId: $catalog[
                     'pickup_type_id'
                 ],
 
-            total:
-                '20.00',
+            total: '20.00',
         );
 
         createMlDailySalesOrder(
-            customer:
-                $customer,
+            customer: $customer,
 
-            catalog:
-                $catalog,
+            catalog: $catalog,
 
-            orderNumber:
-                'ML-DATE-002',
+            orderNumber: 'ML-DATE-002',
 
-            orderedAt:
-                '2026-08-04 00:00:00',
+            orderedAt: '2026-08-04 00:00:00',
 
-            statusId:
-                $catalog[
+            statusId: $catalog[
                     'delivered_status_id'
                 ],
 
-            deliveryTypeId:
-                $catalog[
+            deliveryTypeId: $catalog[
                     'pickup_type_id'
                 ],
 
-            total:
-                '30.00',
+            total: '30.00',
         );
 
         $feature =

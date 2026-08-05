@@ -59,7 +59,7 @@ final class RunDailyMaintenance extends Command
 
             $this->components->error(
                 'El mantenimiento diario no pudo completarse: '
-                . $exception->getMessage(),
+                .$exception->getMessage(),
             );
 
             return self::FAILURE;
@@ -76,7 +76,7 @@ final class RunDailyMaintenance extends Command
      * Ejecuta un comando Artisan interno y detiene el flujo
      * si la tarea termina con error.
      *
-     * @param array<string, bool|string|int> $parameters
+     * @param  array<string, bool|string|int>  $parameters
      */
     private function executeMaintenanceCommand(
         string $command,

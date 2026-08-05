@@ -16,14 +16,12 @@ final class SettingController
         BusinessSettingService $service,
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new BusinessSettingResource(
-                    $service->current(),
-                    $service->whatsapp(),
-                ),
+            data: new BusinessSettingResource(
+                $service->current(),
+                $service->whatsapp(),
+            ),
 
-            message:
-                'Configuración recuperada correctamente.',
+            message: 'Configuración recuperada correctamente.',
         );
     }
 
@@ -37,14 +35,12 @@ final class SettingController
             );
 
         return ApiResponse::success(
-            data:
-                new BusinessSettingResource(
-                    $setting,
-                    $service->whatsapp(),
-                ),
+            data: new BusinessSettingResource(
+                $setting,
+                $service->whatsapp(),
+            ),
 
-            message:
-                'Configuración actualizada correctamente.',
+            message: 'Configuración actualizada correctamente.',
         );
     }
 }

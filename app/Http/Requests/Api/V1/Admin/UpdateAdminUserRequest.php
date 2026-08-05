@@ -102,11 +102,9 @@ final class UpdateAdminUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.unique' =>
-                'Ya existe un usuario con este correo.',
+            'email.unique' => 'Ya existe un usuario con este correo.',
 
-            'phone.unique' =>
-                'Ya existe un usuario con este teléfono.',
+            'phone.unique' => 'Ya existe un usuario con este teléfono.',
         ];
     }
 }

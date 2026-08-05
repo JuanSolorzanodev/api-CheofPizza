@@ -17,16 +17,14 @@ final class SettingController
         TransferAccountService $transferAccountService,
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new PublicBusinessSettingResource(
-                    $settingService->current(),
-                    $settingService->whatsapp(),
-                    $transferAccountService
-                        ->getActivePrimary(),
-                ),
+            data: new PublicBusinessSettingResource(
+                $settingService->current(),
+                $settingService->whatsapp(),
+                $transferAccountService
+                    ->getActivePrimary(),
+            ),
 
-            message:
-                'Configuración pública recuperada correctamente.',
+            message: 'Configuración pública recuperada correctamente.',
         );
     }
 }

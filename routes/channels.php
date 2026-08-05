@@ -9,7 +9,7 @@ Broadcast::channel('operator.orders', function (User $user) {
 }, ['guards' => ['sanctum']]);
 
 Broadcast::channel('operator.orders.{orderId}', function (User $user, int $orderId) {
-    if (!in_array($user->role?->role_name, ['operator', 'admin'], true)) {
+    if (! in_array($user->role?->role_name, ['operator', 'admin'], true)) {
         return false;
     }
 

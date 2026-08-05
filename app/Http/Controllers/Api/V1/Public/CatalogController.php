@@ -6,7 +6,6 @@ use App\Http\Resources\Api\V1\CategoryResource;
 use App\Http\Resources\Api\V1\IngredientResource;
 use App\Http\Resources\Api\V1\PizzaResource;
 use App\Services\Catalog\CatalogService;
-use Illuminate\Http\Request;
 
 class CatalogController
 {
@@ -21,6 +20,7 @@ class CatalogController
             $this->service->categories()
         );
     }
+
     /**
      * GET /api/v1/public/catalog/ingredients
      */
@@ -55,13 +55,13 @@ class CatalogController
         );
     }
 
-      public function searchPizzasByName(string $name)
+    public function searchPizzasByName(string $name)
     {
         $name = trim(urldecode($name));
 
         if ($name === '') {
             return response()->json([
-                'message' => 'El nombre de búsqueda no puede estar vacío.'
+                'message' => 'El nombre de búsqueda no puede estar vacío.',
             ], 422);
         }
 

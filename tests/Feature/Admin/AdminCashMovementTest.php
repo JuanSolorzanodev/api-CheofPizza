@@ -19,20 +19,15 @@ function openCashSessionForMovements(
     string $openingAmount = '50.00',
 ): CashSession {
     return CashSession::query()->create([
-        'uuid' =>
-            (string) Str::uuid(),
+        'uuid' => (string) Str::uuid(),
 
-        'opened_by' =>
-            $admin->id,
+        'opened_by' => $admin->id,
 
-        'status' =>
-            CashSessionStatus::Open,
+        'status' => CashSessionStatus::Open,
 
-        'opening_amount' =>
-            $openingAmount,
+        'opening_amount' => $openingAmount,
 
-        'opened_at' =>
-            now(),
+        'opened_at' => now(),
     ]);
 }
 
@@ -40,7 +35,6 @@ it(
     'registers income and expense movements in an open cash session',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -54,14 +48,11 @@ it(
             ->postJson(
                 "/api/v1/admin/cash-register/{$session->uuid}/movements",
                 [
-                    'type' =>
-                        'income',
+                    'type' => 'income',
 
-                    'amount' =>
-                        10,
+                    'amount' => 10,
 
-                    'reason' =>
-                        'Cambio adicional',
+                    'reason' => 'Cambio adicional',
                 ],
             )
             ->assertCreated()
@@ -79,14 +70,11 @@ it(
             ->postJson(
                 "/api/v1/admin/cash-register/{$session->uuid}/movements",
                 [
-                    'type' =>
-                        'expense',
+                    'type' => 'expense',
 
-                    'amount' =>
-                        4,
+                    'amount' => 4,
 
-                    'reason' =>
-                        'Compra de bolsas',
+                    'reason' => 'Compra de bolsas',
                 ],
             )
             ->assertCreated()
@@ -102,17 +90,13 @@ it(
         $this->assertDatabaseHas(
             'cash_movements',
             [
-                'cash_session_id' =>
-                    $session->id,
+                'cash_session_id' => $session->id,
 
-                'created_by' =>
-                    $admin->id,
+                'created_by' => $admin->id,
 
-                'type' =>
-                    CashMovementType::Income->value,
+                'type' => CashMovementType::Income->value,
 
-                'amount' =>
-                    '10.00',
+                'amount' => '10.00',
             ],
         );
     },
@@ -122,41 +106,30 @@ it(
     'rejects movements when the cash session is closed',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
 
         $session = CashSession::query()->create([
-            'uuid' =>
-                (string) Str::uuid(),
+            'uuid' => (string) Str::uuid(),
 
-            'opened_by' =>
-                $admin->id,
+            'opened_by' => $admin->id,
 
-            'closed_by' =>
-                $admin->id,
+            'closed_by' => $admin->id,
 
-            'status' =>
-                CashSessionStatus::Closed,
+            'status' => CashSessionStatus::Closed,
 
-            'opening_amount' =>
-                '20.00',
+            'opening_amount' => '20.00',
 
-            'expected_cash' =>
-                '20.00',
+            'expected_cash' => '20.00',
 
-            'counted_cash' =>
-                '20.00',
+            'counted_cash' => '20.00',
 
-            'difference' =>
-                '0.00',
+            'difference' => '0.00',
 
-            'opened_at' =>
-                now()->subHour(),
+            'opened_at' => now()->subHour(),
 
-            'closed_at' =>
-                now(),
+            'closed_at' => now(),
         ]);
 
         $this
@@ -164,14 +137,11 @@ it(
             ->postJson(
                 "/api/v1/admin/cash-register/{$session->uuid}/movements",
                 [
-                    'type' =>
-                        'income',
+                    'type' => 'income',
 
-                    'amount' =>
-                        5,
+                    'amount' => 5,
 
-                    'reason' =>
-                        'Movimiento inválido',
+                    'reason' => 'Movimiento inválido',
                 ],
             )
             ->assertUnprocessable()
@@ -185,7 +155,6 @@ it(
     'lists movements for a cash session',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -195,26 +164,19 @@ it(
         );
 
         CashMovement::query()->create([
-            'uuid' =>
-                (string) Str::uuid(),
+            'uuid' => (string) Str::uuid(),
 
-            'cash_session_id' =>
-                $session->id,
+            'cash_session_id' => $session->id,
 
-            'created_by' =>
-                $admin->id,
+            'created_by' => $admin->id,
 
-            'type' =>
-                CashMovementType::Income,
+            'type' => CashMovementType::Income,
 
-            'amount' =>
-                '8.00',
+            'amount' => '8.00',
 
-            'reason' =>
-                'Ingreso de prueba',
+            'reason' => 'Ingreso de prueba',
 
-            'occurred_at' =>
-                now(),
+            'occurred_at' => now(),
         ]);
 
         $this
@@ -242,7 +204,6 @@ it(
     'includes manual movements in the cash closing calculation',
     function (): void {
         /** @var TestCase $this */
-
         CarbonImmutable::setTestNow(
             '2026-08-03 17:00:00'
         );
@@ -257,49 +218,35 @@ it(
         );
 
         CashMovement::query()->create([
-            'uuid' =>
-                (string) Str::uuid(),
+            'uuid' => (string) Str::uuid(),
 
-            'cash_session_id' =>
-                $session->id,
+            'cash_session_id' => $session->id,
 
-            'created_by' =>
-                $admin->id,
+            'created_by' => $admin->id,
 
-            'type' =>
-                CashMovementType::Income,
+            'type' => CashMovementType::Income,
 
-            'amount' =>
-                '10.00',
+            'amount' => '10.00',
 
-            'reason' =>
-                'Ingreso adicional',
+            'reason' => 'Ingreso adicional',
 
-            'occurred_at' =>
-                now(),
+            'occurred_at' => now(),
         ]);
 
         CashMovement::query()->create([
-            'uuid' =>
-                (string) Str::uuid(),
+            'uuid' => (string) Str::uuid(),
 
-            'cash_session_id' =>
-                $session->id,
+            'cash_session_id' => $session->id,
 
-            'created_by' =>
-                $admin->id,
+            'created_by' => $admin->id,
 
-            'type' =>
-                CashMovementType::Expense,
+            'type' => CashMovementType::Expense,
 
-            'amount' =>
-                '4.00',
+            'amount' => '4.00',
 
-            'reason' =>
-                'Egreso operativo',
+            'reason' => 'Egreso operativo',
 
-            'occurred_at' =>
-                now(),
+            'occurred_at' => now(),
         ]);
 
         $this
@@ -307,8 +254,7 @@ it(
             ->postJson(
                 "/api/v1/admin/cash-register/{$session->uuid}/close",
                 [
-                    'counted_cash' =>
-                        56,
+                    'counted_cash' => 56,
                 ],
             )
             ->assertOk()
@@ -333,7 +279,6 @@ it(
     'validates movement data',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -347,14 +292,11 @@ it(
             ->postJson(
                 "/api/v1/admin/cash-register/{$session->uuid}/movements",
                 [
-                    'type' =>
-                        'invalid',
+                    'type' => 'invalid',
 
-                    'amount' =>
-                        0,
+                    'amount' => 0,
 
-                    'reason' =>
-                        '',
+                    'reason' => '',
                 ],
             )
             ->assertUnprocessable()

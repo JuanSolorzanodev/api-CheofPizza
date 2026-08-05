@@ -65,8 +65,7 @@ return new class extends Migration
         );
 
         DB::table('promotions')->update([
-            'promotion_type' =>
-                'fixed_combo',
+            'promotion_type' => 'fixed_combo',
 
             'selection_quantity' => 1,
         ]);
@@ -96,8 +95,7 @@ return new class extends Migration
                             $promotion->id
                         )
                         ->update([
-                            'selection_quantity' =>
-                                max(1, $quantity),
+                            'selection_quantity' => max(1, $quantity),
                         ]);
                 }
             );

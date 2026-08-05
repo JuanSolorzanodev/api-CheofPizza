@@ -19,8 +19,7 @@ final class PizzaConfigurationValidator
      * Ningún precio enviado por el frontend se considera confiable.
      * Los precios se recuperan siempre desde la base de datos.
      *
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array{
      *     pizza_a: Pizza,
      *     pizza_b: Pizza|null,
@@ -55,15 +54,13 @@ final class PizzaConfigurationValidator
 
             if ($secondPizzaId <= 0) {
                 throw ValidationException::withMessages([
-                    'second_pizza_id' =>
-                        'Debes seleccionar el segundo sabor para la pizza mitad y mitad.',
+                    'second_pizza_id' => 'Debes seleccionar el segundo sabor para la pizza mitad y mitad.',
                 ]);
             }
 
             if ($secondPizzaId === (int) $pizzaA->id) {
                 throw ValidationException::withMessages([
-                    'second_pizza_id' =>
-                        'El segundo sabor debe ser diferente al primero.',
+                    'second_pizza_id' => 'El segundo sabor debe ser diferente al primero.',
                 ]);
             }
 
@@ -80,8 +77,7 @@ final class PizzaConfigurationValidator
 
         if ($quantity < 1 || $quantity > 10) {
             throw ValidationException::withMessages([
-                'quantity' =>
-                    'La cantidad debe estar entre 1 y 10 pizzas.',
+                'quantity' => 'La cantidad debe estar entre 1 y 10 pizzas.',
             ]);
         }
 
@@ -110,8 +106,7 @@ final class PizzaConfigurationValidator
 
         if ($basePrice <= 0) {
             throw ValidationException::withMessages([
-                'size_id' =>
-                    'El tamaño seleccionado no tiene un precio válido para esta pizza.',
+                'size_id' => 'El tamaño seleccionado no tiene un precio válido para esta pizza.',
             ]);
         }
 
@@ -152,8 +147,7 @@ final class PizzaConfigurationValidator
          */
         $ingredients = Ingredient::query()
             ->with([
-                'sizes' => static fn ($query) =>
-                    $query->where('sizes.id', $sizeId),
+                'sizes' => static fn ($query) => $query->where('sizes.id', $sizeId),
             ])
             ->whereIn('id', $ingredientIds)
             ->get()
@@ -164,8 +158,7 @@ final class PizzaConfigurationValidator
             $ingredientIds->count()
         ) {
             throw ValidationException::withMessages([
-                'customizations' =>
-                    'Uno o más ingredientes seleccionados no existen.',
+                'customizations' => 'Uno o más ingredientes seleccionados no existen.',
             ]);
         }
 
@@ -200,8 +193,7 @@ final class PizzaConfigurationValidator
                     pizzaAIngredientIds: $pizzaAIngredientIds,
                     pizzaBIngredientIds: $pizzaBIngredientIds,
                     isHalfAndHalf: $isHalfAndHalf,
-                    field:
-                        "customizations.{$index}.ingredient_id",
+                    field: "customizations.{$index}.ingredient_id",
                 );
 
                 continue;
@@ -222,8 +214,7 @@ final class PizzaConfigurationValidator
              */
             if ($extraPrice <= 0) {
                 throw ValidationException::withMessages([
-                    "customizations.{$index}.ingredient_id" =>
-                        'El ingrediente extra no tiene un precio válido para el tamaño seleccionado.',
+                    "customizations.{$index}.ingredient_id" => 'El ingrediente extra no tiene un precio válido para el tamaño seleccionado.',
                 ]);
             }
         }
@@ -260,15 +251,13 @@ final class PizzaConfigurationValidator
 
         if ($pizza === null) {
             throw ValidationException::withMessages([
-                $field =>
-                    'La pizza seleccionada no existe o no está disponible.',
+                $field => 'La pizza seleccionada no existe o no está disponible.',
             ]);
         }
 
         if ($pizza->category === null) {
             throw ValidationException::withMessages([
-                $field =>
-                    'La pizza seleccionada no tiene una categoría válida.',
+                $field => 'La pizza seleccionada no tiene una categoría válida.',
             ]);
         }
 
@@ -304,8 +293,7 @@ final class PizzaConfigurationValidator
             $price <= 0
         ) {
             throw ValidationException::withMessages([
-                $field =>
-                    "El tamaño seleccionado no está disponible para {$pizza->pizza_name}.",
+                $field => "El tamaño seleccionado no está disponible para {$pizza->pizza_name}.",
             ]);
         }
 
@@ -313,7 +301,7 @@ final class PizzaConfigurationValidator
     }
 
     /**
-     * @param Collection<int, array<string, mixed>> $customizations
+     * @param  Collection<int, array<string, mixed>>  $customizations
      *
      * @throws ValidationException
      */
@@ -329,18 +317,16 @@ final class PizzaConfigurationValidator
 
         if ($extraCount > self::MAX_EXTRAS) {
             throw ValidationException::withMessages([
-                'customizations' =>
-                    'Puedes agregar como máximo 4 ingredientes extra.',
+                'customizations' => 'Puedes agregar como máximo 4 ingredientes extra.',
             ]);
         }
 
         $keys = $customizations->map(
-            static fn (array $row): string =>
-                implode('|', [
-                    $row['action'],
-                    $row['ingredient_id'],
-                    $row['applies_to'],
-                ])
+            static fn (array $row): string => implode('|', [
+                $row['action'],
+                $row['ingredient_id'],
+                $row['applies_to'],
+            ])
         );
 
         if (
@@ -348,8 +334,7 @@ final class PizzaConfigurationValidator
             $keys->count()
         ) {
             throw ValidationException::withMessages([
-                'customizations' =>
-                    'No se permiten personalizaciones duplicadas.',
+                'customizations' => 'No se permiten personalizaciones duplicadas.',
             ]);
         }
 
@@ -360,8 +345,7 @@ final class PizzaConfigurationValidator
 
             if ($ingredientId <= 0) {
                 throw ValidationException::withMessages([
-                    "customizations.{$index}.ingredient_id" =>
-                        'El ingrediente seleccionado no es válido.',
+                    "customizations.{$index}.ingredient_id" => 'El ingrediente seleccionado no es válido.',
                 ]);
             }
 
@@ -373,8 +357,7 @@ final class PizzaConfigurationValidator
                 )
             ) {
                 throw ValidationException::withMessages([
-                    "customizations.{$index}.action" =>
-                        'La acción debe ser extra o remove.',
+                    "customizations.{$index}.action" => 'La acción debe ser extra o remove.',
                 ]);
             }
 
@@ -386,8 +369,7 @@ final class PizzaConfigurationValidator
                 )
             ) {
                 throw ValidationException::withMessages([
-                    "customizations.{$index}.applies_to" =>
-                        'El destino de la personalización no es válido.',
+                    "customizations.{$index}.applies_to" => 'El destino de la personalización no es válido.',
                 ]);
             }
 
@@ -396,8 +378,7 @@ final class PizzaConfigurationValidator
                 $appliesTo !== 'ALL'
             ) {
                 throw ValidationException::withMessages([
-                    "customizations.{$index}.applies_to" =>
-                        'En una pizza completa la personalización debe aplicarse a ALL.',
+                    "customizations.{$index}.applies_to" => 'En una pizza completa la personalización debe aplicarse a ALL.',
                 ]);
             }
 
@@ -407,16 +388,15 @@ final class PizzaConfigurationValidator
                 $appliesTo === 'ALL'
             ) {
                 throw ValidationException::withMessages([
-                    "customizations.{$index}.applies_to" =>
-                        'Al quitar un ingrediente en mitad y mitad debes indicar A o B.',
+                    "customizations.{$index}.applies_to" => 'Al quitar un ingrediente en mitad y mitad debes indicar A o B.',
                 ]);
             }
         }
     }
 
     /**
-     * @param array<int, int> $pizzaAIngredientIds
-     * @param array<int, int> $pizzaBIngredientIds
+     * @param  array<int, int>  $pizzaAIngredientIds
+     * @param  array<int, int>  $pizzaBIngredientIds
      *
      * @throws ValidationException
      */
@@ -437,8 +417,7 @@ final class PizzaConfigurationValidator
                 )
             ) {
                 throw ValidationException::withMessages([
-                    $field =>
-                        'No puedes quitar un ingrediente que no pertenece a la pizza.',
+                    $field => 'No puedes quitar un ingrediente que no pertenece a la pizza.',
                 ]);
             }
 
@@ -454,8 +433,7 @@ final class PizzaConfigurationValidator
             )
         ) {
             throw ValidationException::withMessages([
-                $field =>
-                    'El ingrediente no pertenece a la mitad A.',
+                $field => 'El ingrediente no pertenece a la mitad A.',
             ]);
         }
 
@@ -468,8 +446,7 @@ final class PizzaConfigurationValidator
             )
         ) {
             throw ValidationException::withMessages([
-                $field =>
-                    'El ingrediente no pertenece a la mitad B.',
+                $field => 'El ingrediente no pertenece a la mitad B.',
             ]);
         }
     }

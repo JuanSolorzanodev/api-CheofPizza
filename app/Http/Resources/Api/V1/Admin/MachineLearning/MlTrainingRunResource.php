@@ -20,147 +20,110 @@ final class MlTrainingRunResource extends JsonResource
         Request $request,
     ): array {
         return [
-            'id' =>
-                $this->id,
+            'id' => $this->id,
 
-            'uuid' =>
-                $this->uuid,
+            'uuid' => $this->uuid,
 
-            'status' =>
-                $this->status,
+            'status' => $this->status,
 
-            'dataset_hash' =>
-                $this->dataset_hash,
+            'dataset_hash' => $this->dataset_hash,
 
             'artifact' => [
-                'id' =>
-                    $this->artifact_id,
+                'id' => $this->artifact_id,
 
-                'version' =>
-                    $this->version,
+                'version' => $this->version,
 
-                'algorithm' =>
-                    $this->algorithm,
+                'algorithm' => $this->algorithm,
 
-                'algorithm_label' =>
-                    $this->algorithm_label,
+                'algorithm_label' => $this->algorithm_label,
 
-                'is_active' =>
-                    $this->is_active,
+                'is_active' => $this->is_active,
             ],
 
             'training' => [
-                'schema_version' =>
-                    $this->schema_version,
+                'schema_version' => $this->schema_version,
 
-                'from' =>
-                    $this->trained_from
-                        ?->toDateString(),
+                'from' => $this->trained_from
+                    ?->toDateString(),
 
-                'until' =>
-                    $this->trained_until
-                        ?->toDateString(),
+                'until' => $this->trained_until
+                    ?->toDateString(),
 
-                'received_records' =>
-                    $this->received_records,
+                'received_records' => $this->received_records,
 
-                'usable_records' =>
-                    $this->training_records,
+                'usable_records' => $this->training_records,
             ],
 
             'metrics' => [
-                'mean_mae' =>
-                    $this->mean_mae,
+                'mean_mae' => $this->mean_mae,
 
-                'mean_rmse' =>
-                    $this->mean_rmse,
+                'mean_rmse' => $this->mean_rmse,
 
-                'targets' =>
-                    $this->metrics,
+                'targets' => $this->metrics,
             ],
 
             'contract' => [
-                'targets' =>
-                    $this->targets,
+                'targets' => $this->targets,
 
-                'derived_targets' =>
-                    $this->derived_targets,
+                'derived_targets' => $this->derived_targets,
 
-                'features' =>
-                    $this->features,
+                'features' => $this->features,
             ],
 
-            'dataset_summary' =>
-                $this->dataset_summary,
+            'dataset_summary' => $this->dataset_summary,
 
-            'request_options' =>
-                $this->request_options,
+            'request_options' => $this->request_options,
 
-            'warnings' =>
-                $this->warnings,
+            'warnings' => $this->warnings,
 
-            'error' =>
-                $this->status
+            'error' => $this->status
                 === MlTrainingRun::STATUS_FAILED
                     ? [
-                        'message' =>
-                            $this->error_message,
+                        'message' => $this->error_message,
 
-                        'remote_status' =>
-                            $this->remote_status,
+                        'remote_status' => $this->remote_status,
                     ]
                     : null,
 
             'timestamps' => [
-                'built_at' =>
-                    $this->built_at
-                        ?->toIso8601String(),
+                'built_at' => $this->built_at
+                    ?->toIso8601String(),
 
-                'activated_at' =>
-                    $this->activated_at
-                        ?->toIso8601String(),
+                'activated_at' => $this->activated_at
+                    ?->toIso8601String(),
 
-                'rolled_back_at' =>
-                    $this->rolled_back_at
-                        ?->toIso8601String(),
+                'rolled_back_at' => $this->rolled_back_at
+                    ?->toIso8601String(),
 
-                'failed_at' =>
-                    $this->failed_at
-                        ?->toIso8601String(),
+                'failed_at' => $this->failed_at
+                    ?->toIso8601String(),
 
-                'created_at' =>
-                    $this->created_at
-                        ?->toIso8601String(),
+                'created_at' => $this->created_at
+                    ?->toIso8601String(),
 
-                'updated_at' =>
-                    $this->updated_at
-                        ?->toIso8601String(),
+                'updated_at' => $this->updated_at
+                    ?->toIso8601String(),
             ],
 
-            'created_by' =>
-                $this->whenLoaded(
-                    'creator',
-                    fn (): ?array =>
-                        $this->creator === null
-                            ? null
-                            : [
-                                'id' =>
-                                    $this->creator->id,
+            'created_by' => $this->whenLoaded(
+                'creator',
+                fn (): ?array => $this->creator === null
+                        ? null
+                        : [
+                            'id' => $this->creator->id,
 
-                                'name' =>
-                                    trim(
-                                        $this->creator
-                                            ->first_name
-                                        . ' '
-                                        . $this->creator
-                                            ->last_name,
-                                    ),
+                            'name' => trim(
+                                $this->creator
+                                    ->first_name
+                                .' '
+                                .$this->creator
+                                    ->last_name,
+                            ),
 
-                                'email' =>
-                                    $this->creator
-                                        ->email,
-                            ],
-                ),
+                            'email' => $this->creator
+                                ->email,
+                        ],
+            ),
         ];
     }
 }

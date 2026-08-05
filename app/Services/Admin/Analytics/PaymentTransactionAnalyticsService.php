@@ -81,8 +81,7 @@ final class PaymentTransactionAnalyticsService
                 page: (int) $filters['page'],
             )
             ->through(
-                static fn (object $row): array =>
-                    self::mapTransaction($row),
+                static fn (object $row): array => self::mapTransaction($row),
             );
     }
 
@@ -100,7 +99,6 @@ final class PaymentTransactionAnalyticsService
      *     page: int,
      *     per_page: int
      * } $filters
-     *
      * @return array<string, mixed>
      */
     public function summary(
@@ -279,96 +277,82 @@ final class PaymentTransactionAnalyticsService
 
         return [
             'volume' => [
-                'amount' =>
-                    $this->money(
-                        $row->volume_amount ?? 0,
-                    ),
+                'amount' => $this->money(
+                    $row->volume_amount ?? 0,
+                ),
 
-                'transactions' =>
-                    (int) (
-                        $row->volume_transactions
-                        ?? 0
-                    ),
+                'transactions' => (int) (
+                    $row->volume_transactions
+                    ?? 0
+                ),
             ],
 
             'collected' => [
-                'amount' =>
-                    $this->money(
-                        $row->collected_amount ?? 0,
-                    ),
+                'amount' => $this->money(
+                    $row->collected_amount ?? 0,
+                ),
 
-                'transactions' =>
-                    (int) (
-                        $row->collected_transactions
-                        ?? 0
-                    ),
+                'transactions' => (int) (
+                    $row->collected_transactions
+                    ?? 0
+                ),
             ],
 
             'methods' => [
                 'cash' => [
-                    'amount' =>
-                        $this->money(
-                            $row->cash_amount ?? 0,
-                        ),
+                'amount' => $this->money(
+                    $row->cash_amount ?? 0,
+                ),
 
-                    'transactions' =>
-                        (int) (
-                            $row->cash_transactions
-                            ?? 0
-                        ),
+                'transactions' => (int) (
+                    $row->cash_transactions
+                    ?? 0
+                ),
                 ],
 
                 'transfer' => [
-                    'amount' =>
-                        $this->money(
-                            $row->transfer_amount ?? 0,
-                        ),
+                    'amount' => $this->money(
+                        $row->transfer_amount ?? 0,
+                    ),
 
-                    'transactions' =>
-                        (int) (
-                            $row->transfer_transactions
-                            ?? 0
-                        ),
+                    'transactions' => (int) (
+                        $row->transfer_transactions
+                        ?? 0
+                    ),
                 ],
 
                 'paypal' => [
-                    'amount' =>
-                        $this->money(
-                            $row->paypal_amount ?? 0,
-                        ),
+                    'amount' => $this->money(
+                        $row->paypal_amount ?? 0,
+                    ),
 
-                    'transactions' =>
-                        (int) (
-                            $row->paypal_transactions
-                            ?? 0
-                        ),
+                    'transactions' => (int) (
+                        $row->paypal_transactions
+                        ?? 0
+                    ),
                 ],
             ],
 
             'pending' => [
-                'amount' =>
-                    $this->money(
-                        $row->pending_amount ?? 0,
-                    ),
+                'amount' => $this->money(
+                    $row->pending_amount ?? 0,
+                ),
 
-                'transactions' =>
-                    (int) (
-                        $row->pending_transactions
-                        ?? 0
-                    ),
+                'transactions' => (int) (
+                    $row->pending_transactions
+                    ?? 0
+                ),
             ],
 
             'unsuccessful' => [
-                'amount' =>
-                    $this->money(
-                        $row->unsuccessful_amount ?? 0,
-                    ),
+                'amount' => $this->money(
+                    $row->unsuccessful_amount ?? 0,
+                ),
 
-                'transactions' =>
-                    (int) (
-                        $row->unsuccessful_transactions
-                        ?? 0
-                    ),
+                'transactions' => (int) (
+                    $row->unsuccessful_transactions
+                    ?? 0
+                ),
             ],
         ];
     }
@@ -412,10 +396,10 @@ final class PaymentTransactionAnalyticsService
 
         if (filled($filters['search'] ?? null)) {
             $search = '%'
-                . $this->escapeLike(
+                .$this->escapeLike(
                     (string) $filters['search'],
                 )
-                . '%';
+                .'%';
 
             $query->where(
                 static function (
@@ -781,8 +765,8 @@ final class PaymentTransactionAnalyticsService
                 payments.amount AS amount,
                 payments.currency AS currency,
                 '
-                . $effectiveAt
-                . ' AS effective_at,
+                .$effectiveAt
+                .' AS effective_at,
 
                 orders.id AS order_id,
                 orders.order_number AS order_number,
@@ -819,84 +803,66 @@ final class PaymentTransactionAnalyticsService
         object $row,
     ): array {
         return [
-            'transaction_key' =>
-                (string) $row->transaction_key,
+            'transaction_key' => (string) $row->transaction_key,
 
-            'source' =>
-                (string) $row->source,
+            'source' => (string) $row->source,
 
-            'source_id' =>
-                (int) $row->source_id,
+            'source_id' => (int) $row->source_id,
 
-            'method' =>
-                (string) $row->method,
+            'method' => (string) $row->method,
 
-            'status' =>
-                (string) $row->status,
+            'status' => (string) $row->status,
 
-            'amount' =>
-                round(
-                    (float) $row->amount,
-                    2,
-                ),
+            'amount' => round(
+                (float) $row->amount,
+                2,
+            ),
 
-            'currency' =>
-                (string) $row->currency,
+            'currency' => (string) $row->currency,
 
-            'effective_at' =>
-                (string) $row->effective_at,
+            'effective_at' => (string) $row->effective_at,
 
-            'order_id' =>
-                $row->order_id !== null
+            'order_id' => $row->order_id !== null
                     ? (int) $row->order_id
                     : null,
 
-            'order_number' =>
-                $row->order_number !== null
+            'order_number' => $row->order_number !== null
                     ? (string) $row->order_number
                     : null,
 
             'customer' => [
-                'id' =>
-                    $row->customer_id !== null
-                        ? (int) $row->customer_id
-                        : null,
+            'id' => $row->customer_id !== null
+                    ? (int) $row->customer_id
+                    : null,
 
-                'name' =>
-                    trim(
-                        (string) $row->customer_name,
-                    ),
+            'name' => trim(
+                (string) $row->customer_name,
+            ),
 
-                'email' =>
-                    $row->customer_email !== null
-                        ? (string) $row->customer_email
-                        : null,
+            'email' => $row->customer_email !== null
+                    ? (string) $row->customer_email
+                    : null,
 
-                'phone' =>
-                    $row->customer_phone !== null
-                        ? (string) $row->customer_phone
-                        : null,
+            'phone' => $row->customer_phone !== null
+                    ? (string) $row->customer_phone
+                    : null,
             ],
 
-            'reference' =>
-                $row->reference !== null
+            'reference' => $row->reference !== null
                     ? (string) $row->reference
                     : null,
 
-            'receipt_uuid' =>
-                $row->receipt_uuid !== null
+            'receipt_uuid' => $row->receipt_uuid !== null
                     ? (string) $row->receipt_uuid
                     : null,
 
-            'reviewed_by' =>
-                $row->reviewed_by !== null
+            'reviewed_by' => $row->reviewed_by !== null
                     ? trim(
                         (string) $row->reviewed_by,
                     )
                     : null,
 
-            'failure_code' =>
-                $row->failure_code !== null
+            'failure_code' => $row->failure_code !== null
                     ? (string) $row->failure_code
                     : null,
         ];

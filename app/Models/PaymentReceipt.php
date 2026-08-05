@@ -34,32 +34,23 @@ final class PaymentReceipt extends Model
     protected function casts(): array
     {
         return [
-            'order_id' =>
-                'integer',
+            'order_id' => 'integer',
 
-            'user_id' =>
-                'integer',
+            'user_id' => 'integer',
 
-            'file_size' =>
-                'integer',
+            'file_size' => 'integer',
 
-            'status' =>
-                PaymentReceiptStatus::class,
+            'status' => PaymentReceiptStatus::class,
 
-            'submitted_at' =>
-                'datetime',
+            'submitted_at' => 'datetime',
 
-            'reviewed_at' =>
-                'datetime',
+            'reviewed_at' => 'datetime',
 
-            'reviewed_by' =>
-                'integer',
+            'reviewed_by' => 'integer',
 
-            'expires_at' =>
-                'datetime',
+            'expires_at' => 'datetime',
 
-            'file_deleted_at' =>
-                'datetime',
+            'file_deleted_at' => 'datetime',
         ];
     }
 

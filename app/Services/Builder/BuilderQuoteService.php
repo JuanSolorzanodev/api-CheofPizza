@@ -16,7 +16,7 @@ final class BuilderQuoteService
      * Calcula una cotización utilizando exclusivamente
      * precios recuperados desde la base de datos.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      *
      * @throws ValidationException
@@ -65,8 +65,7 @@ final class BuilderQuoteService
                 $removesBreakdown[] = [
                     'action' => 'remove',
                     'ingredient_id' => $ingredientId,
-                    'ingredient_name' =>
-                        $ingredient->ingredient_name,
+                    'ingredient_name' => $ingredient->ingredient_name,
                     'applies_to' => $appliesTo,
                     'line_total' => 0.00,
                 ];
@@ -107,12 +106,10 @@ final class BuilderQuoteService
             $extrasBreakdown[] = [
                 'action' => 'extra',
                 'ingredient_id' => $ingredientId,
-                'ingredient_name' =>
-                    $ingredient->ingredient_name,
+                'ingredient_name' => $ingredient->ingredient_name,
                 'applies_to' => $appliesTo,
                 'size_id' => $sizeId,
-                'unit_extra_price' =>
-                    round($extraPrice, 2),
+                'unit_extra_price' => round($extraPrice, 2),
                 'multiplier' => $multiplier,
                 'line_total' => $lineTotal,
             ];
@@ -138,8 +135,7 @@ final class BuilderQuoteService
             $total <= 0
         ) {
             throw ValidationException::withMessages([
-                'size_id' =>
-                    'La configuración seleccionada no produce un precio válido.',
+                'size_id' => 'La configuración seleccionada no produce un precio válido.',
             ]);
         }
 
@@ -159,29 +155,21 @@ final class BuilderQuoteService
             'size_id' => $sizeId,
             'quantity' => $quantity,
 
-            'base_price_a' =>
-                round($basePriceA, 2),
+            'base_price_a' => round($basePriceA, 2),
 
-            'base_price_b' =>
-                round($basePriceB, 2),
+            'base_price_b' => round($basePriceB, 2),
 
-            'base_price' =>
-                round($basePrice, 2),
+            'base_price' => round($basePrice, 2),
 
-            'extras_total' =>
-                $extrasTotal,
+            'extras_total' => $extrasTotal,
 
-            'unit_price' =>
-                $unitPrice,
+            'unit_price' => $unitPrice,
 
-            'total' =>
-                $total,
+            'total' => $total,
 
-            'extras_breakdown' =>
-                $extrasBreakdown,
+            'extras_breakdown' => $extrasBreakdown,
 
-            'removes_breakdown' =>
-                $removesBreakdown,
+            'removes_breakdown' => $removesBreakdown,
 
             'customizations_breakdown' => [
                 ...$extrasBreakdown,

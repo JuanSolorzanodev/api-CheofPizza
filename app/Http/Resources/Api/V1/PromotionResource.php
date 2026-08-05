@@ -36,125 +36,98 @@ final class PromotionResource extends JsonResource
                 );
 
         return [
-            'id' =>
-                (int) $this->id,
+            'id' => (int) $this->id,
 
-            'slug' =>
-                (string) $this->slug,
+            'slug' => (string) $this->slug,
 
-            'name' =>
-                (string) $this
-                    ->promotion_name,
+            'name' => (string) $this
+                ->promotion_name,
 
-            'description' =>
-                $this->description,
+            'description' => $this->description,
 
-            'banner_image_url' =>
-                $this->banner_image_url,
+            'banner_image_url' => $this->banner_image_url,
 
-            'type' =>
-                (string) $this
-                    ->promotion_type,
+            'type' => (string) $this
+                ->promotion_type,
 
             /*
              * En fixed_combo este es el precio final.
              * En size_fixed_price puede ser 0 porque
              * se utilizan los precios por tamaño.
              */
-            'price' =>
-                (float) $this
-                    ->promotion_price,
+            'price' => (float) $this
+                ->promotion_price,
 
-            'starts_at' =>
-                $this->starts_at
-                    ?->toISOString(),
+            'starts_at' => $this->starts_at
+                ?->toISOString(),
 
-            'ends_at' =>
-                $this->ends_at
-                    ?->toISOString(),
+            'ends_at' => $this->ends_at
+                ?->toISOString(),
 
-            'details' =>
-                PromotionDetailResource::collection(
-                    $this->whenLoaded(
-                        'promotionDetails'
-                    )
-                ),
-
-            'size_prices' =>
+            'details' => PromotionDetailResource::collection(
                 $this->whenLoaded(
-                    'sizePrices',
-                    fn (): array => $this
-                        ->sizePrices
-                        ->map(
-                            static fn (
-                                $price
-                            ): array => [
-                                'id' =>
-                                    (int) $price->id,
+                    'promotionDetails'
+                )
+            ),
 
-                                'size_id' =>
-                                    (int) $price
-                                        ->size_id,
+            'size_prices' => $this->whenLoaded(
+                'sizePrices',
+                fn (): array => $this
+                    ->sizePrices
+                    ->map(
+                        static fn (
+                            $price
+                        ): array => [
+                            'id' => (int) $price->id,
 
-                                'price' =>
-                                    (float) $price
-                                        ->fixed_price,
+                            'size_id' => (int) $price
+                                ->size_id,
 
-                                'size' =>
-                                    $price->size
-                                        ? [
-                                            'id' =>
-                                                (int) $price
-                                                    ->size
-                                                    ->id,
+                            'price' => (float) $price
+                                ->fixed_price,
 
-                                            'name' =>
-                                                (string) $price
-                                                    ->size
-                                                    ->size_name,
+                            'size' => $price->size
+                                    ? [
+                                        'id' => (int) $price
+                                            ->size
+                                            ->id,
 
-                                            'portion' =>
-                                                (int) $price
-                                                    ->size
-                                                    ->portion,
-                                        ]
-                                        : null,
-                            ]
-                        )
-                        ->values()
-                        ->all()
-                ),
+                                        'name' => (string) $price
+                                            ->size
+                                            ->size_name,
+
+                                        'portion' => (int) $price
+                                            ->size
+                                            ->portion,
+                                    ]
+                                    : null,
+                        ]
+                    )
+                    ->values()
+                    ->all()
+            ),
 
             'selection_rules' => [
-                'type' =>
-                    (string) $this
-                        ->promotion_type,
+            'type' => (string) $this
+                ->promotion_type,
 
-                'allows_extras' =>
-                    true,
+            'allows_extras' => true,
 
-                'allows_remove_ingredients' =>
-                    true,
+            'allows_remove_ingredients' => true,
 
-                'allows_half_and_half' =>
-                    false,
+            'allows_half_and_half' => false,
 
-                'allows_any_category' =>
-                    $this->promotion_type ===
-                    Promotion::TYPE_SIZE_FIXED_PRICE,
+            'allows_any_category' => $this->promotion_type ===
+                Promotion::TYPE_SIZE_FIXED_PRICE,
 
-                'requires_size_selection' =>
-                    $this->promotion_type ===
-                    Promotion::TYPE_SIZE_FIXED_PRICE,
+            'requires_size_selection' => $this->promotion_type ===
+                Promotion::TYPE_SIZE_FIXED_PRICE,
 
-                'selection_count' =>
-                    $selectionCount,
+            'selection_count' => $selectionCount,
 
-                'max_extras_per_pizza' =>
-                    8,
+            'max_extras_per_pizza' => 8,
 
-                'allow_duplicate_ingredients_as_extra' =>
-                    false,
+            'allow_duplicate_ingredients_as_extra' => false,
             ],
         ];
     }

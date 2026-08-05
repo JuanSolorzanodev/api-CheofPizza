@@ -54,16 +54,14 @@ final class UpdateIngredientTypeRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'name' =>
-                'nombre del tipo',
+            'name' => 'nombre del tipo',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'name.unique' =>
-                'Ya existe un tipo de ingrediente con este nombre.',
+            'name.unique' => 'Ya existe un tipo de ingrediente con este nombre.',
         ];
     }
 }

@@ -28,14 +28,11 @@ final class RejectPaymentReceiptRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'reason.required' =>
-                'Debes indicar el motivo del rechazo.',
+            'reason.required' => 'Debes indicar el motivo del rechazo.',
 
-            'reason.min' =>
-                'El motivo debe tener al menos 5 caracteres.',
+            'reason.min' => 'El motivo debe tener al menos 5 caracteres.',
 
-            'reason.max' =>
-                'El motivo no puede superar los 500 caracteres.',
+            'reason.max' => 'El motivo no puede superar los 500 caracteres.',
         ];
     }
 

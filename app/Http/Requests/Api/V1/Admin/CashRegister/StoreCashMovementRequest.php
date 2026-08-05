@@ -18,8 +18,7 @@ final class StoreCashMovementRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'type' =>
-                $this->filled('type')
+            'type' => $this->filled('type')
                     ? strtolower(
                         trim(
                             (string) $this->input('type')
@@ -27,8 +26,7 @@ final class StoreCashMovementRequest extends FormRequest
                     )
                     : null,
 
-            'reason' =>
-                $this->filled('reason')
+            'reason' => $this->filled('reason')
                     ? trim(
                         (string) $this->input('reason')
                     )
@@ -71,17 +69,13 @@ final class StoreCashMovementRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'type.required' =>
-                'Debes seleccionar el tipo de movimiento.',
+            'type.required' => 'Debes seleccionar el tipo de movimiento.',
 
-            'type.enum' =>
-                'El tipo debe ser income o expense.',
+            'type.enum' => 'El tipo debe ser income o expense.',
 
-            'amount.gt' =>
-                'El monto debe ser mayor que cero.',
+            'amount.gt' => 'El monto debe ser mayor que cero.',
 
-            'reason.required' =>
-                'Debes indicar el motivo del movimiento.',
+            'reason.required' => 'Debes indicar el motivo del movimiento.',
         ];
     }
 }

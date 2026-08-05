@@ -8,8 +8,8 @@ use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /**
@@ -18,20 +18,15 @@ use Tests\TestCase;
 function paypalRefundWebhookHeaders(): array
 {
     return [
-        'PAYPAL-AUTH-ALGO' =>
-            'SHA256withRSA',
+        'PAYPAL-AUTH-ALGO' => 'SHA256withRSA',
 
-        'PAYPAL-CERT-URL' =>
-            'https://api-m.sandbox.paypal.com/v1/notifications/certs/CERT-REFUND-TEST',
+        'PAYPAL-CERT-URL' => 'https://api-m.sandbox.paypal.com/v1/notifications/certs/CERT-REFUND-TEST',
 
-        'PAYPAL-TRANSMISSION-ID' =>
-            'TRANSMISSION-REFUND-TEST',
+        'PAYPAL-TRANSMISSION-ID' => 'TRANSMISSION-REFUND-TEST',
 
-        'PAYPAL-TRANSMISSION-SIG' =>
-            'SIGNATURE-REFUND-TEST',
+        'PAYPAL-TRANSMISSION-SIG' => 'SIGNATURE-REFUND-TEST',
 
-        'PAYPAL-TRANSMISSION-TIME' =>
-            '2026-07-17T06:00:00Z',
+        'PAYPAL-TRANSMISSION-TIME' => '2026-07-17T06:00:00Z',
     ];
 }
 
@@ -44,20 +39,15 @@ function fakeValidPayPalRefundWebhook(): void
     Cache::clear();
 
     config([
-        'paypal.mode' =>
-            'sandbox',
+        'paypal.mode' => 'sandbox',
 
-        'paypal.webhook_id' =>
-            'WH-REFUND-CONFIGURED-TEST',
+        'paypal.webhook_id' => 'WH-REFUND-CONFIGURED-TEST',
 
-        'paypal.client_id' =>
-            'PAYPAL-CLIENT-REFUND-TEST',
+        'paypal.client_id' => 'PAYPAL-CLIENT-REFUND-TEST',
 
-        'paypal.client_secret' =>
-            'PAYPAL-SECRET-REFUND-TEST',
+        'paypal.client_secret' => 'PAYPAL-SECRET-REFUND-TEST',
 
-        'paypal.base_urls.sandbox' =>
-            'https://api-m.sandbox.paypal.com',
+        'paypal.base_urls.sandbox' => 'https://api-m.sandbox.paypal.com',
     ]);
 
     $baseUrl = rtrim(
@@ -78,14 +68,11 @@ function fakeValidPayPalRefundWebhook(): void
                     === "{$baseUrl}/v1/oauth2/token"
             ) {
                 return Http::response([
-                    'access_token' =>
-                        'ACCESS-TOKEN-REFUND-TEST',
+                    'access_token' => 'ACCESS-TOKEN-REFUND-TEST',
 
-                    'token_type' =>
-                        'Bearer',
+                    'token_type' => 'Bearer',
 
-                    'expires_in' =>
-                        3600,
+                    'expires_in' => 3600,
                 ], 200);
             }
 
@@ -95,17 +82,14 @@ function fakeValidPayPalRefundWebhook(): void
                     === "{$baseUrl}/v1/notifications/verify-webhook-signature"
             ) {
                 return Http::response([
-                    'verification_status' =>
-                        'SUCCESS',
+                    'verification_status' => 'SUCCESS',
                 ], 200);
             }
 
             return Http::response([
-                'name' =>
-                    'UNEXPECTED_REQUEST',
+                'name' => 'UNEXPECTED_REQUEST',
 
-                'message' =>
-                    "Petición no simulada: {$request->method()} {$request->url()}",
+                'message' => "Petición no simulada: {$request->method()} {$request->url()}",
             ], 500);
         },
     );
@@ -125,48 +109,35 @@ function createCompletedPayPalRefundPayment(
         ->create();
 
     return Payment::query()->create([
-        'user_id' =>
-            $user->id,
+        'user_id' => $user->id,
 
-        'cart_id' =>
-            null,
+        'cart_id' => null,
 
-        'order_id' =>
-            null,
+        'order_id' => null,
 
-        'provider' =>
-            PaymentProvider::PAYPAL,
+        'provider' => PaymentProvider::PAYPAL,
 
-        'provider_order_id' =>
-            $providerOrderId,
+        'provider_order_id' => $providerOrderId,
 
-        'provider_capture_id' =>
-            $providerCaptureId,
+        'provider_capture_id' => $providerCaptureId,
 
-        'provider_status' =>
-            'COMPLETED',
+        'provider_status' => 'COMPLETED',
 
-        'amount' =>
-            $amount,
+        'amount' => $amount,
 
-        'currency' =>
-            'USD',
+        'currency' => 'USD',
 
-        'status' =>
-            PaymentStatus::COMPLETED,
+        'status' => PaymentStatus::COMPLETED,
 
         'provider_metadata' => [
             'capture' => [
-                'id' =>
-                    $providerCaptureId,
+                'id' => $providerCaptureId,
 
-                'status' =>
-                    'COMPLETED',
+                'status' => 'COMPLETED',
             ],
         ],
 
-        'paid_at' =>
-            now(),
+        'paid_at' => now(),
     ]);
 }
 
@@ -181,69 +152,53 @@ function paypalRefundCompletedPayload(
     string $amount,
 ): array {
     return [
-        'id' =>
-            $eventId,
+        'id' => $eventId,
 
-        'event_version' =>
-            '1.0',
+        'event_version' => '1.0',
 
-        'create_time' =>
-            '2026-07-17T06:00:00.000Z',
+        'create_time' => '2026-07-17T06:00:00.000Z',
 
-        'resource_type' =>
-            'refund',
+        'resource_type' => 'refund',
 
-        'event_type' =>
-            'PAYMENT.CAPTURE.REFUNDED',
+        'event_type' => 'PAYMENT.CAPTURE.REFUNDED',
 
         'resource' => [
             /*
              * En PAYMENT.CAPTURE.REFUNDED el identificador
              * principal corresponde al reembolso.
              */
-            'id' =>
-                $refundId,
+            'id' => $refundId,
 
-            'status' =>
-                'COMPLETED',
+            'status' => 'COMPLETED',
 
             'amount' => [
-                'currency_code' =>
-                    'USD',
+                'currency_code' => 'USD',
 
-                'value' =>
-                    $amount,
+                'value' => $amount,
             ],
 
             'supplementary_data' => [
                 'related_ids' => [
-                    'capture_id' =>
-                        $captureId,
+                    'capture_id' => $captureId,
 
-                    'order_id' =>
-                        $providerOrderId,
+                    'order_id' => $providerOrderId,
                 ],
             ],
 
-            'update_time' =>
-                '2026-07-17T06:00:00Z',
+            'update_time' => '2026-07-17T06:00:00Z',
 
             'links' => [
                 [
-                    'href' =>
-                        "https://api-m.sandbox.paypal.com/v2/payments/captures/{$captureId}",
+                    'href' => "https://api-m.sandbox.paypal.com/v2/payments/captures/{$captureId}",
 
-                    'rel' =>
-                        'up',
+                    'rel' => 'up',
 
-                    'method' =>
-                        'GET',
+                    'method' => 'GET',
                 ],
             ],
         ],
 
-        'links' =>
-            [],
+        'links' => [],
     ];
 }
 
@@ -256,58 +211,45 @@ function paypalCaptureReversedPayload(
     string $providerOrderId,
 ): array {
     return [
-        'id' =>
-            $eventId,
+        'id' => $eventId,
 
-        'event_version' =>
-            '1.0',
+        'event_version' => '1.0',
 
-        'create_time' =>
-            '2026-07-17T06:00:00.000Z',
+        'create_time' => '2026-07-17T06:00:00.000Z',
 
-        'resource_type' =>
-            'capture',
+        'resource_type' => 'capture',
 
-        'event_type' =>
-            'PAYMENT.CAPTURE.REVERSED',
+        'event_type' => 'PAYMENT.CAPTURE.REVERSED',
 
         'resource' => [
             /*
              * En PAYMENT.CAPTURE.REVERSED el recurso sí
              * corresponde directamente a la captura.
              */
-            'id' =>
-                $captureId,
+            'id' => $captureId,
 
-            'status' =>
-                'REVERSED',
+            'status' => 'REVERSED',
 
             'amount' => [
-                'currency_code' =>
-                    'USD',
+                'currency_code' => 'USD',
 
-                'value' =>
-                    '10.00',
+                'value' => '10.00',
             ],
 
             'status_details' => [
-                'reason' =>
-                    'CHARGEBACK',
+                'reason' => 'CHARGEBACK',
             ],
 
             'supplementary_data' => [
                 'related_ids' => [
-                    'order_id' =>
-                        $providerOrderId,
+                    'order_id' => $providerOrderId,
                 ],
             ],
 
-            'update_time' =>
-                '2026-07-17T06:00:00Z',
+            'update_time' => '2026-07-17T06:00:00Z',
         ],
 
-        'links' =>
-            [],
+        'links' => [],
     ];
 }
 
@@ -318,18 +260,14 @@ describe(
             'marca el pago como parcialmente reembolsado cuando el importe es menor al total',
             function (): void {
                 /** @var TestCase $this */
-
                 fakeValidPayPalRefundWebhook();
 
                 $payment = createCompletedPayPalRefundPayment(
-                    providerOrderId:
-                        'PAYPAL-ORDER-PARTIAL-REFUND',
+                    providerOrderId: 'PAYPAL-ORDER-PARTIAL-REFUND',
 
-                    providerCaptureId:
-                        'PAYPAL-CAPTURE-PARTIAL-REFUND',
+                    providerCaptureId: 'PAYPAL-CAPTURE-PARTIAL-REFUND',
 
-                    amount:
-                        '10.00',
+                    amount: '10.00',
                 );
 
                 $eventId =
@@ -341,20 +279,15 @@ describe(
                 $response = $this->postJson(
                     '/api/v1/payments/paypal/webhook',
                     paypalRefundCompletedPayload(
-                        eventId:
-                            $eventId,
+                        eventId: $eventId,
 
-                        refundId:
-                            $refundId,
+                        refundId: $refundId,
 
-                        captureId:
-                            'PAYPAL-CAPTURE-PARTIAL-REFUND',
+                        captureId: 'PAYPAL-CAPTURE-PARTIAL-REFUND',
 
-                        providerOrderId:
-                            'PAYPAL-ORDER-PARTIAL-REFUND',
+                        providerOrderId: 'PAYPAL-ORDER-PARTIAL-REFUND',
 
-                        amount:
-                            '4.00',
+                        amount: '4.00',
                     ),
                     paypalRefundWebhookHeaders(),
                 );
@@ -421,23 +354,17 @@ describe(
                 $this->assertDatabaseHas(
                     'paypal_webhook_events',
                     [
-                        'event_id' =>
-                            $eventId,
+                        'event_id' => $eventId,
 
-                        'event_type' =>
-                            'PAYMENT.CAPTURE.REFUNDED',
+                        'event_type' => 'PAYMENT.CAPTURE.REFUNDED',
 
-                        'provider_order_id' =>
-                            'PAYPAL-ORDER-PARTIAL-REFUND',
+                        'provider_order_id' => 'PAYPAL-ORDER-PARTIAL-REFUND',
 
-                        'provider_capture_id' =>
-                            'PAYPAL-CAPTURE-PARTIAL-REFUND',
+                        'provider_capture_id' => 'PAYPAL-CAPTURE-PARTIAL-REFUND',
 
-                        'verification_status' =>
-                            'SUCCESS',
+                        'verification_status' => 'SUCCESS',
 
-                        'processing_status' =>
-                            'processed',
+                        'processing_status' => 'processed',
                     ],
                 );
             },
@@ -447,38 +374,29 @@ describe(
             'marca el pago como completamente reembolsado y procesa idempotentemente el mismo evento',
             function (): void {
                 /** @var TestCase $this */
-
                 fakeValidPayPalRefundWebhook();
 
                 $payment = createCompletedPayPalRefundPayment(
-                    providerOrderId:
-                        'PAYPAL-ORDER-FULL-REFUND',
+                    providerOrderId: 'PAYPAL-ORDER-FULL-REFUND',
 
-                    providerCaptureId:
-                        'PAYPAL-CAPTURE-FULL-REFUND',
+                    providerCaptureId: 'PAYPAL-CAPTURE-FULL-REFUND',
 
-                    amount:
-                        '10.00',
+                    amount: '10.00',
                 );
 
                 $eventId =
                     'WH-FULL-REFUND-001';
 
                 $payload = paypalRefundCompletedPayload(
-                    eventId:
-                        $eventId,
+                    eventId: $eventId,
 
-                    refundId:
-                        'PAYPAL-REFUND-FULL-001',
+                    refundId: 'PAYPAL-REFUND-FULL-001',
 
-                    captureId:
-                        'PAYPAL-CAPTURE-FULL-REFUND',
+                    captureId: 'PAYPAL-CAPTURE-FULL-REFUND',
 
-                    providerOrderId:
-                        'PAYPAL-ORDER-FULL-REFUND',
+                    providerOrderId: 'PAYPAL-ORDER-FULL-REFUND',
 
-                    amount:
-                        '10.00',
+                    amount: '10.00',
                 );
 
                 $firstResponse = $this->postJson(
@@ -536,11 +454,9 @@ describe(
                 $this->assertDatabaseHas(
                     'paypal_webhook_events',
                     [
-                        'event_id' =>
-                            $eventId,
+                        'event_id' => $eventId,
 
-                        'processing_status' =>
-                            'processed',
+                        'processing_status' => 'processed',
                     ],
                 );
 
@@ -555,18 +471,14 @@ describe(
             'trata una captura revertida como un pago reembolsado',
             function (): void {
                 /** @var TestCase $this */
-
                 fakeValidPayPalRefundWebhook();
 
                 $payment = createCompletedPayPalRefundPayment(
-                    providerOrderId:
-                        'PAYPAL-ORDER-REVERSED',
+                    providerOrderId: 'PAYPAL-ORDER-REVERSED',
 
-                    providerCaptureId:
-                        'PAYPAL-CAPTURE-REVERSED',
+                    providerCaptureId: 'PAYPAL-CAPTURE-REVERSED',
 
-                    amount:
-                        '10.00',
+                    amount: '10.00',
                 );
 
                 $eventId =
@@ -575,14 +487,11 @@ describe(
                 $response = $this->postJson(
                     '/api/v1/payments/paypal/webhook',
                     paypalCaptureReversedPayload(
-                        eventId:
-                            $eventId,
+                        eventId: $eventId,
 
-                        captureId:
-                            'PAYPAL-CAPTURE-REVERSED',
+                        captureId: 'PAYPAL-CAPTURE-REVERSED',
 
-                        providerOrderId:
-                            'PAYPAL-ORDER-REVERSED',
+                        providerOrderId: 'PAYPAL-ORDER-REVERSED',
                     ),
                     paypalRefundWebhookHeaders(),
                 );
@@ -629,20 +538,15 @@ describe(
                 $this->assertDatabaseHas(
                     'paypal_webhook_events',
                     [
-                        'event_id' =>
-                            $eventId,
+                        'event_id' => $eventId,
 
-                        'event_type' =>
-                            'PAYMENT.CAPTURE.REVERSED',
+                        'event_type' => 'PAYMENT.CAPTURE.REVERSED',
 
-                        'provider_order_id' =>
-                            'PAYPAL-ORDER-REVERSED',
+                        'provider_order_id' => 'PAYPAL-ORDER-REVERSED',
 
-                        'provider_capture_id' =>
-                            'PAYPAL-CAPTURE-REVERSED',
+                        'provider_capture_id' => 'PAYPAL-CAPTURE-REVERSED',
 
-                        'processing_status' =>
-                            'processed',
+                        'processing_status' => 'processed',
                     ],
                 );
             },
@@ -652,7 +556,6 @@ describe(
             'ignora de forma segura un reembolso que no tiene un pago local relacionado',
             function (): void {
                 /** @var TestCase $this */
-
                 fakeValidPayPalRefundWebhook();
 
                 $eventId =
@@ -661,20 +564,15 @@ describe(
                 $response = $this->postJson(
                     '/api/v1/payments/paypal/webhook',
                     paypalRefundCompletedPayload(
-                        eventId:
-                            $eventId,
+                        eventId: $eventId,
 
-                        refundId:
-                            'PAYPAL-REFUND-UNKNOWN',
+                        refundId: 'PAYPAL-REFUND-UNKNOWN',
 
-                        captureId:
-                            'PAYPAL-CAPTURE-UNKNOWN',
+                        captureId: 'PAYPAL-CAPTURE-UNKNOWN',
 
-                        providerOrderId:
-                            'PAYPAL-ORDER-UNKNOWN',
+                        providerOrderId: 'PAYPAL-ORDER-UNKNOWN',
 
-                        amount:
-                            '10.00',
+                        amount: '10.00',
                     ),
                     paypalRefundWebhookHeaders(),
                 );
@@ -698,23 +596,17 @@ describe(
                 $this->assertDatabaseHas(
                     'paypal_webhook_events',
                     [
-                        'event_id' =>
-                            $eventId,
+                        'event_id' => $eventId,
 
-                        'event_type' =>
-                            'PAYMENT.CAPTURE.REFUNDED',
+                        'event_type' => 'PAYMENT.CAPTURE.REFUNDED',
 
-                        'provider_order_id' =>
-                            'PAYPAL-ORDER-UNKNOWN',
+                        'provider_order_id' => 'PAYPAL-ORDER-UNKNOWN',
 
-                        'provider_capture_id' =>
-                            'PAYPAL-CAPTURE-UNKNOWN',
+                        'provider_capture_id' => 'PAYPAL-CAPTURE-UNKNOWN',
 
-                        'verification_status' =>
-                            'SUCCESS',
+                        'verification_status' => 'SUCCESS',
 
-                        'processing_status' =>
-                            'ignored',
+                        'processing_status' => 'ignored',
                     ],
                 );
 

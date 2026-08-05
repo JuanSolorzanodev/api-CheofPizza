@@ -94,7 +94,7 @@ final class Payment extends Model
 
     protected static function booted(): void
     {
-        static::creating(function (Payment $payment): void {
+        self::creating(function (Payment $payment): void {
             if (blank($payment->uuid)) {
                 $payment->uuid = (string) Str::uuid();
             }
@@ -311,7 +311,7 @@ final class Payment extends Model
     /**
      * Marca que PayPal está esperando la aprobación del comprador.
      *
-     * @param array<string, mixed>|null $providerMetadata
+     * @param  array<string, mixed>|null  $providerMetadata
      */
     public function markAsPending(
         ?string $providerStatus = null,
@@ -326,14 +326,12 @@ final class Payment extends Model
         $this->forceFill([
             'status' => PaymentStatus::PENDING,
 
-            'provider_status' =>
-                $providerStatus
+            'provider_status' => $providerStatus
                 ?? $this->provider_status,
 
-            'provider_metadata' =>
-                $this->mergeProviderMetadata(
-                    $providerMetadata
-                ),
+            'provider_metadata' => $this->mergeProviderMetadata(
+                $providerMetadata
+            ),
 
             'failure_code' => null,
             'failure_message' => null,
@@ -344,7 +342,7 @@ final class Payment extends Model
     /**
      * Marca que el comprador aprobó la orden PayPal.
      *
-     * @param array<string, mixed>|null $providerMetadata
+     * @param  array<string, mixed>|null  $providerMetadata
      */
     public function markAsApproved(
         ?string $providerStatus = null,
@@ -380,17 +378,14 @@ final class Payment extends Model
         $this->forceFill([
             'status' => PaymentStatus::APPROVED,
 
-            'provider_status' =>
-                $providerStatus
+            'provider_status' => $providerStatus
                 ?? $this->provider_status,
 
-            'provider_metadata' =>
-                $this->mergeProviderMetadata(
-                    $providerMetadata
-                ),
+            'provider_metadata' => $this->mergeProviderMetadata(
+                $providerMetadata
+            ),
 
-            'approved_at' =>
-                $this->approved_at ?? now(),
+            'approved_at' => $this->approved_at ?? now(),
 
             'failure_code' => null,
             'failure_message' => null,
@@ -404,7 +399,7 @@ final class Payment extends Model
      * Este método es idempotente cuando recibe nuevamente
      * el mismo capture ID.
      *
-     * @param array<string, mixed>|null $providerMetadata
+     * @param  array<string, mixed>|null  $providerMetadata
      */
     public function markAsCompleted(
         string $captureId,
@@ -444,14 +439,12 @@ final class Payment extends Model
         $this->forceFill([
             'provider_capture_id' => $captureId,
 
-            'provider_status' =>
-                $providerStatus
+            'provider_status' => $providerStatus
                 ?? $this->provider_status,
 
-            'provider_metadata' =>
-                $this->mergeProviderMetadata(
-                    $providerMetadata
-                ),
+            'provider_metadata' => $this->mergeProviderMetadata(
+                $providerMetadata
+            ),
 
             'status' => PaymentStatus::COMPLETED,
 
@@ -460,11 +453,9 @@ final class Payment extends Model
              * previamente hayamos persistido APPROVED, mantenemos una
              * trazabilidad temporal razonable.
              */
-            'approved_at' =>
-                $this->approved_at ?? now(),
+            'approved_at' => $this->approved_at ?? now(),
 
-            'paid_at' =>
-                $this->paid_at ?? now(),
+            'paid_at' => $this->paid_at ?? now(),
 
             'failure_code' => null,
             'failure_message' => null,
@@ -476,7 +467,7 @@ final class Payment extends Model
     /**
      * Marca una operación como rechazada por el proveedor.
      *
-     * @param array<string, mixed>|null $providerMetadata
+     * @param  array<string, mixed>|null  $providerMetadata
      */
     public function markAsDenied(
         ?string $code,
@@ -493,28 +484,25 @@ final class Payment extends Model
         $this->forceFill([
             'status' => PaymentStatus::DENIED,
 
-            'provider_status' =>
-                $providerStatus
+            'provider_status' => $providerStatus
                 ?? $this->provider_status,
 
-            'provider_metadata' =>
-                $this->mergeProviderMetadata(
-                    $providerMetadata
-                ),
+            'provider_metadata' => $this->mergeProviderMetadata(
+                $providerMetadata
+            ),
 
             'failure_code' => $code,
 
             'failure_message' => $message,
 
-            'failed_at' =>
-                $this->failed_at ?? now(),
+            'failed_at' => $this->failed_at ?? now(),
         ])->save();
     }
 
     /**
      * Marca un fallo técnico o inesperado.
      *
-     * @param array<string, mixed>|null $providerMetadata
+     * @param  array<string, mixed>|null  $providerMetadata
      */
     public function markAsFailed(
         ?string $code,
@@ -535,28 +523,25 @@ final class Payment extends Model
         $this->forceFill([
             'status' => PaymentStatus::FAILED,
 
-            'provider_status' =>
-                $providerStatus
+            'provider_status' => $providerStatus
                 ?? $this->provider_status,
 
-            'provider_metadata' =>
-                $this->mergeProviderMetadata(
-                    $providerMetadata
-                ),
+            'provider_metadata' => $this->mergeProviderMetadata(
+                $providerMetadata
+            ),
 
             'failure_code' => $code,
 
             'failure_message' => $message,
 
-            'failed_at' =>
-                $this->failed_at ?? now(),
+            'failed_at' => $this->failed_at ?? now(),
         ])->save();
     }
 
     /**
      * Marca la operación como cancelada antes de la captura.
      *
-     * @param array<string, mixed>|null $providerMetadata
+     * @param  array<string, mixed>|null  $providerMetadata
      */
     public function markAsCancelled(
         ?string $providerStatus = null,
@@ -574,24 +559,21 @@ final class Payment extends Model
         $this->forceFill([
             'status' => PaymentStatus::CANCELLED,
 
-            'provider_status' =>
-                $providerStatus
+            'provider_status' => $providerStatus
                 ?? $this->provider_status,
 
-            'provider_metadata' =>
-                $this->mergeProviderMetadata(
-                    $providerMetadata
-                ),
+            'provider_metadata' => $this->mergeProviderMetadata(
+                $providerMetadata
+            ),
 
-            'cancelled_at' =>
-                $this->cancelled_at ?? now(),
+            'cancelled_at' => $this->cancelled_at ?? now(),
         ])->save();
     }
 
     /**
      * Marca que el importe fue reembolsado completamente.
      *
-     * @param array<string, mixed>|null $providerMetadata
+     * @param  array<string, mixed>|null  $providerMetadata
      */
     public function markAsRefunded(
         ?string $providerStatus = null,
@@ -620,24 +602,21 @@ final class Payment extends Model
         $this->forceFill([
             'status' => PaymentStatus::REFUNDED,
 
-            'provider_status' =>
-                $providerStatus
+            'provider_status' => $providerStatus
                 ?? $this->provider_status,
 
-            'provider_metadata' =>
-                $this->mergeProviderMetadata(
-                    $providerMetadata
-                ),
+            'provider_metadata' => $this->mergeProviderMetadata(
+                $providerMetadata
+            ),
 
-            'refunded_at' =>
-                $this->refunded_at ?? now(),
+            'refunded_at' => $this->refunded_at ?? now(),
         ])->save();
     }
 
     /**
      * Marca que solo una parte de la captura fue reembolsada.
      *
-     * @param array<string, mixed>|null $providerMetadata
+     * @param  array<string, mixed>|null  $providerMetadata
      */
     public function markAsPartiallyRefunded(
         ?string $providerStatus = null,
@@ -662,20 +641,16 @@ final class Payment extends Model
         }
 
         $this->forceFill([
-            'status' =>
-                PaymentStatus::PARTIALLY_REFUNDED,
+            'status' => PaymentStatus::PARTIALLY_REFUNDED,
 
-            'provider_status' =>
-                $providerStatus
+            'provider_status' => $providerStatus
                 ?? $this->provider_status,
 
-            'provider_metadata' =>
-                $this->mergeProviderMetadata(
-                    $providerMetadata
-                ),
+            'provider_metadata' => $this->mergeProviderMetadata(
+                $providerMetadata
+            ),
 
-            'refunded_at' =>
-                $this->refunded_at ?? now(),
+            'refunded_at' => $this->refunded_at ?? now(),
         ])->save();
     }
 
@@ -689,8 +664,7 @@ final class Payment extends Model
      * Conserva los metadatos anteriores y agrega únicamente
      * los nuevos datos normalizados del proveedor.
      *
-     * @param array<string, mixed>|null $metadata
-     *
+     * @param  array<string, mixed>|null  $metadata
      * @return array<string, mixed>|null
      */
     private function mergeProviderMetadata(

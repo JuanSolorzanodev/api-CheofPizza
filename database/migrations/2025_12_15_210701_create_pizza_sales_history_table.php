@@ -15,11 +15,11 @@ return new class extends Migration
             $table->id();
             $table->date('date');                       // fecha :contentReference[oaicite:32]{index=32}
             $table->foreignId('pizza_id')
-            ->constrained('pizzas')
-            ->restrictOnDelete();
+                ->constrained('pizzas')
+                ->restrictOnDelete();
             $table->foreignId('size_id')
-            ->constrained('sizes')
-            ->restrictOnDelete();
+                ->constrained('sizes')
+                ->restrictOnDelete();
             $table->integer('quantity');
             $table->timestamps();
         });

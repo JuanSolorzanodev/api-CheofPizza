@@ -15,7 +15,7 @@ final class TrainingDatasetRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if (!$this->exists('include_empty_days')) {
+        if (! $this->exists('include_empty_days')) {
             return;
         }
 
@@ -69,26 +69,19 @@ final class TrainingDatasetRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'date_from.date_format' =>
-                'La fecha inicial debe tener el formato YYYY-MM-DD.',
+            'date_from.date_format' => 'La fecha inicial debe tener el formato YYYY-MM-DD.',
 
-            'date_to.date_format' =>
-                'La fecha final debe tener el formato YYYY-MM-DD.',
+            'date_to.date_format' => 'La fecha final debe tener el formato YYYY-MM-DD.',
 
-            'date_to.after_or_equal' =>
-                'La fecha final no puede ser anterior a la fecha inicial.',
+            'date_to.after_or_equal' => 'La fecha final no puede ser anterior a la fecha inicial.',
 
-            'limit.integer' =>
-                'El límite debe ser un número entero.',
+            'limit.integer' => 'El límite debe ser un número entero.',
 
-            'limit.min' =>
-                'El límite debe ser al menos 1.',
+            'limit.min' => 'El límite debe ser al menos 1.',
 
-            'limit.max' =>
-                'El límite no puede superar 1000 registros.',
+            'limit.max' => 'El límite no puede superar 1000 registros.',
 
-            'include_empty_days.boolean' =>
-                'El indicador de días vacíos debe ser verdadero o falso.',
+            'include_empty_days.boolean' => 'El indicador de días vacíos debe ser verdadero o falso.',
         ];
     }
 }

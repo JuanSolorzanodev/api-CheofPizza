@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +12,7 @@ class PersonalizationAction extends Model
 
     protected $fillable = [
         'action_name',
-        'description'
+        'description',
     ];
 
     public function cartItemPersonalizations(): HasMany

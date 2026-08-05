@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('ml_daily_features', function (Blueprint $table) {
             $table->id();
-            $table->date('date');                       // 
+            $table->date('date');                       //
             $table->integer('total_pizzas_sold');
             $table->integer('small_sales');
             $table->integer('medium_sales');

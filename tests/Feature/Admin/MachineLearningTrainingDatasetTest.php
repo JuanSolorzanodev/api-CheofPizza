@@ -17,59 +17,41 @@ function createTrainingDatasetFeature(
     int $orders,
 ): MlDailyFeature {
     return MlDailyFeature::query()->create([
-        'date' =>
-            $date,
+        'date' => $date,
 
-        'total_pizzas_sold' =>
-            $pizzas,
+        'total_pizzas_sold' => $pizzas,
 
-        'mini_sales' =>
-            0,
+        'mini_sales' => 0,
 
-        'small_sales' =>
-            0,
+        'small_sales' => 0,
 
-        'medium_sales' =>
-            $pizzas,
+        'medium_sales' => $pizzas,
 
-        'family_sales' =>
-            0,
+        'family_sales' => 0,
 
-        'giant_sales' =>
-            0,
+        'giant_sales' => 0,
 
-        'basic_sales' =>
-            0,
+        'basic_sales' => 0,
 
-        'special_sales' =>
-            $pizzas,
+        'special_sales' => $pizzas,
 
-        'promotion_sales' =>
-            0,
+        'promotion_sales' => 0,
 
-        'regular_sales' =>
-            $pizzas,
+        'regular_sales' => $pizzas,
 
-        'delivered_orders' =>
-            $orders,
+        'delivered_orders' => $orders,
 
-        'cancelled_orders' =>
-            0,
+        'cancelled_orders' => 0,
 
-        'net_sales' =>
-            $pizzas * 10,
+        'net_sales' => $pizzas * 10,
 
-        'pickup_orders' =>
-            $orders,
+        'pickup_orders' => $orders,
 
-        'delivery_orders' =>
-            0,
+        'delivery_orders' => 0,
 
-        'consolidated_at' =>
-            now(),
+        'consolidated_at' => now(),
 
-        'source' =>
-            'laravel_sales',
+        'source' => 'laravel_sales',
     ]);
 }
 
@@ -113,25 +95,19 @@ it(
         );
 
         createTrainingDatasetFeature(
-            date:
-                '2026-08-01',
+            date: '2026-08-01',
 
-            pizzas:
-                3,
+            pizzas: 3,
 
-            orders:
-                2,
+            orders: 2,
         );
 
         createTrainingDatasetFeature(
-            date:
-                '2026-08-02',
+            date: '2026-08-02',
 
-            pizzas:
-                5,
+            pizzas: 5,
 
-            orders:
-                3,
+            orders: 3,
         );
 
         $response =
@@ -224,8 +200,8 @@ it(
 
         getJson(
             '/api/v1/admin/machine-learning/dataset'
-            . '?date_from=2026-08-02'
-            . '&date_to=2026-08-03',
+            .'?date_from=2026-08-02'
+            .'&date_to=2026-08-03',
         )
             ->assertOk()
             ->assertJsonPath(
@@ -269,7 +245,7 @@ it(
 
         getJson(
             '/api/v1/admin/machine-learning/dataset'
-            . '?include_empty_days=false',
+            .'?include_empty_days=false',
         )
             ->assertOk()
             ->assertJsonPath(
@@ -297,8 +273,8 @@ it(
 
         getJson(
             '/api/v1/admin/machine-learning/dataset'
-            . '?date_from=2026-08-10'
-            . '&date_to=2026-08-01',
+            .'?date_from=2026-08-10'
+            .'&date_to=2026-08-01',
         )
             ->assertUnprocessable()
             ->assertJsonValidationErrors([

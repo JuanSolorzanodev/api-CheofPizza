@@ -12,12 +12,12 @@ class PromotionDetailResource extends JsonResource
         return [
             'required_quantity' => (int) $this->required_quantity,
             'category' => $this->whenLoaded('category', fn () => [
-                'id'   => $this->category?->id,
+                'id' => $this->category?->id,
                 'name' => $this->category?->category_name,
             ]),
             'size' => $this->whenLoaded('size', fn () => [
-                'id'      => $this->size?->id,
-                'name'    => $this->size?->size_name,
+                'id' => $this->size?->id,
+                'name' => $this->size?->size_name,
                 'portion' => (int) ($this->size?->portion ?? 0),
             ]),
         ];

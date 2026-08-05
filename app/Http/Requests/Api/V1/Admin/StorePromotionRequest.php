@@ -234,7 +234,7 @@ final class StorePromotionRequest extends FormRequest
     }
 
     /**
-     * @param array<int, mixed> $details
+     * @param  array<int, mixed>  $details
      */
     private function validateFixedCombo(
         Validator $validator,
@@ -265,8 +265,7 @@ final class StorePromotionRequest extends FormRequest
             ->pluck('size_id')
             ->filter()
             ->map(
-                static fn (mixed $id): int =>
-                    (int) $id
+                static fn (mixed $id): int => (int) $id
             )
             ->unique();
 
@@ -279,18 +278,16 @@ final class StorePromotionRequest extends FormRequest
 
         $duplicates = collect($details)
             ->groupBy(
-                static fn (array $detail): string =>
-                    (int) (
-                        $detail['category_id'] ?? 0
-                    )
+                static fn (array $detail): string => (int) (
+                    $detail['category_id'] ?? 0
+                )
                     .'|'.
                     (int) (
                         $detail['size_id'] ?? 0
                     )
             )
             ->filter(
-                static fn ($rows): bool =>
-                    $rows->count() > 1
+                static fn ($rows): bool => $rows->count() > 1
             );
 
         if ($duplicates->isNotEmpty()) {
@@ -318,7 +315,7 @@ final class StorePromotionRequest extends FormRequest
     }
 
     /**
-     * @param array<int, mixed> $sizePrices
+     * @param  array<int, mixed>  $sizePrices
      */
     private function validateSizePrices(
         Validator $validator,
@@ -364,20 +361,15 @@ final class StorePromotionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.unique' =>
-                'Ya existe una promoción con este nombre.',
+            'name.unique' => 'Ya existe una promoción con este nombre.',
 
-            'slug.unique' =>
-                'Ya existe una promoción con este slug.',
+            'slug.unique' => 'Ya existe una promoción con este slug.',
 
-            'slug.regex' =>
-                'El slug solo puede contener letras minúsculas, números y guiones.',
+            'slug.regex' => 'El slug solo puede contener letras minúsculas, números y guiones.',
 
-            'ends_at.after' =>
-                'La fecha de finalización debe ser posterior al inicio.',
+            'ends_at.after' => 'La fecha de finalización debe ser posterior al inicio.',
 
-            'size_prices.*.size_id.distinct' =>
-                'No puedes repetir tamaños.',
+            'size_prices.*.size_id.distinct' => 'No puedes repetir tamaños.',
         ];
     }
 }

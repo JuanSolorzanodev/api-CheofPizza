@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BankAccount extends Model
 {
-     protected $fillable = [
+    protected $fillable = [
         'active',
         'priority',
         'bank_name',
@@ -18,7 +18,7 @@ class BankAccount extends Model
         'instructions',
     ];
 
-        protected $casts = [
+    protected $casts = [
         'active' => 'boolean',
         'priority' => 'integer',
     ];

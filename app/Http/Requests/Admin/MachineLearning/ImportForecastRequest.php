@@ -238,14 +238,11 @@ final class ImportForecastRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'models.total_units.required' =>
-                'El JSON no contiene el modelo total_units.',
+            'models.total_units.required' => 'El JSON no contiene el modelo total_units.',
 
-            'predictions.required' =>
-                'El JSON no contiene predicciones.',
+            'predictions.required' => 'El JSON no contiene predicciones.',
 
-            'predictions.*.date.distinct' =>
-                'El JSON contiene fechas de predicción duplicadas.',
+            'predictions.*.date.distinct' => 'El JSON contiene fechas de predicción duplicadas.',
         ];
     }
 
@@ -257,7 +254,7 @@ final class ImportForecastRequest extends FormRequest
             []
         );
 
-        if (!is_array($predictions)) {
+        if (! is_array($predictions)) {
             return;
         }
 
@@ -280,12 +277,12 @@ final class ImportForecastRequest extends FormRequest
             []
         );
 
-        if (!is_array($predictions)) {
+        if (! is_array($predictions)) {
             return;
         }
 
         foreach ($predictions as $index => $prediction) {
-            if (!is_array($prediction)) {
+            if (! is_array($prediction)) {
                 continue;
             }
 
@@ -298,7 +295,7 @@ final class ImportForecastRequest extends FormRequest
             ];
 
             foreach ($requiredKeys as $key) {
-                if (!array_key_exists($key, $prediction)) {
+                if (! array_key_exists($key, $prediction)) {
                     continue 2;
                 }
             }
@@ -334,8 +331,8 @@ final class ImportForecastRequest extends FormRequest
         );
 
         if (
-            !is_string($trainedUntilValue)
-            || !is_array($predictions)
+            ! is_string($trainedUntilValue)
+            || ! is_array($predictions)
         ) {
             return;
         }
@@ -350,9 +347,9 @@ final class ImportForecastRequest extends FormRequest
 
         foreach ($predictions as $index => $prediction) {
             if (
-                !is_array($prediction)
-                || !isset($prediction['date'])
-                || !is_string($prediction['date'])
+                ! is_array($prediction)
+                || ! isset($prediction['date'])
+                || ! is_string($prediction['date'])
             ) {
                 continue;
             }

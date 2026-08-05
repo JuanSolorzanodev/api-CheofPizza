@@ -20,19 +20,16 @@ final class MachineLearningComparisonController
 
         return ApiResponse::success(
             data: $service->compare(
-                dateFrom:
-                    (string) $validated[
+                dateFrom: (string) $validated[
                         'date_from'
                     ],
 
-                dateTo:
-                    (string) $validated[
+                dateTo: (string) $validated[
                         'date_to'
                     ],
             ),
 
-            message:
-                'Comparación predictiva recuperada correctamente.',
+            message: 'Comparación predictiva recuperada correctamente.',
         );
     }
 }

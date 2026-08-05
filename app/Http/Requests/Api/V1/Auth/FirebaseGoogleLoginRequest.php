@@ -105,17 +105,13 @@ final class FirebaseGoogleLoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'id_token.required' =>
-                'No se recibió la credencial de Google.',
+            'id_token.required' => 'No se recibió la credencial de Google.',
 
-            'phone.regex' =>
-                'Ingresa un número celular ecuatoriano válido.',
+            'phone.regex' => 'Ingresa un número celular ecuatoriano válido.',
 
-            'first_name.regex' =>
-                'Los nombres contienen caracteres no permitidos.',
+            'first_name.regex' => 'Los nombres contienen caracteres no permitidos.',
 
-            'last_name.regex' =>
-                'Los apellidos contienen caracteres no permitidos.',
+            'last_name.regex' => 'Los apellidos contienen caracteres no permitidos.',
         ];
     }
 }

@@ -19,20 +19,15 @@ use Tests\TestCase;
 function paypalStatusWebhookHeaders(): array
 {
     return [
-        'PAYPAL-AUTH-ALGO' =>
-            'SHA256withRSA',
+        'PAYPAL-AUTH-ALGO' => 'SHA256withRSA',
 
-        'PAYPAL-CERT-URL' =>
-            'https://api-m.sandbox.paypal.com/v1/notifications/certs/CERT-STATUS-TEST',
+        'PAYPAL-CERT-URL' => 'https://api-m.sandbox.paypal.com/v1/notifications/certs/CERT-STATUS-TEST',
 
-        'PAYPAL-TRANSMISSION-ID' =>
-            'TRANSMISSION-STATUS-TEST',
+        'PAYPAL-TRANSMISSION-ID' => 'TRANSMISSION-STATUS-TEST',
 
-        'PAYPAL-TRANSMISSION-SIG' =>
-            'SIGNATURE-STATUS-TEST',
+        'PAYPAL-TRANSMISSION-SIG' => 'SIGNATURE-STATUS-TEST',
 
-        'PAYPAL-TRANSMISSION-TIME' =>
-            '2026-07-16T20:00:00Z',
+        'PAYPAL-TRANSMISSION-TIME' => '2026-07-16T20:00:00Z',
     ];
 }
 
@@ -45,8 +40,7 @@ function fakeValidStatusWebhookVerification(): void
 
     config([
         'paypal.mode' => 'sandbox',
-        'paypal.webhook_id' =>
-            'WH-STATUS-TEST-123',
+        'paypal.webhook_id' => 'WH-STATUS-TEST-123',
     ]);
 
     $baseUrl = rtrim(
@@ -67,14 +61,11 @@ function fakeValidStatusWebhookVerification(): void
                     === "{$baseUrl}/v1/oauth2/token"
             ) {
                 return Http::response([
-                    'access_token' =>
-                        'ACCESS-TOKEN-STATUS-TEST',
+                    'access_token' => 'ACCESS-TOKEN-STATUS-TEST',
 
-                    'token_type' =>
-                        'Bearer',
+                    'token_type' => 'Bearer',
 
-                    'expires_in' =>
-                        32400,
+                    'expires_in' => 32400,
                 ], 200);
             }
 
@@ -84,17 +75,14 @@ function fakeValidStatusWebhookVerification(): void
                     === "{$baseUrl}/v1/notifications/verify-webhook-signature"
             ) {
                 return Http::response([
-                    'verification_status' =>
-                        'SUCCESS',
+                    'verification_status' => 'SUCCESS',
                 ], 200);
             }
 
             return Http::response([
-                'name' =>
-                    'UNEXPECTED_REQUEST',
+                'name' => 'UNEXPECTED_REQUEST',
 
-                'message' =>
-                    "Petición no configurada: {$request->method()} {$request->url()}",
+                'message' => "Petición no configurada: {$request->method()} {$request->url()}",
             ], 500);
         },
     );
@@ -122,8 +110,7 @@ function createWebhookStatusPayment(): array
 
     $cart = Cart::query()->create([
         'user_id' => $user->id,
-        'cart_status_id' =>
-            $activeCartStatus->id,
+        'cart_status_id' => $activeCartStatus->id,
 
         'session_id' => null,
         'total' => '5.00',
@@ -133,34 +120,26 @@ function createWebhookStatusPayment(): array
         'user_id' => $user->id,
         'cart_id' => $cart->id,
 
-        'provider' =>
-            PaymentProvider::PAYPAL,
+        'provider' => PaymentProvider::PAYPAL,
 
-        'provider_order_id' =>
-            'PAYPAL-ORDER-STATUS-TEST',
+        'provider_order_id' => 'PAYPAL-ORDER-STATUS-TEST',
 
-        'provider_status' =>
-            'CREATED',
+        'provider_status' => 'CREATED',
 
-        'amount' =>
-            '5.00',
+        'amount' => '5.00',
 
-        'currency' =>
-            'USD',
+        'currency' => 'USD',
 
-        'status' =>
-            PaymentStatus::PENDING,
+        'status' => PaymentStatus::PENDING,
 
         'checkout_context' => [
-            'delivery_type' =>
-                'pickup',
+            'delivery_type' => 'pickup',
         ],
 
-        'cart_fingerprint' =>
-            hash(
-                'sha256',
-                'status-test-cart'
-            ),
+        'cart_fingerprint' => hash(
+            'sha256',
+            'status-test-cart'
+        ),
     ]);
 
     return [
@@ -182,29 +161,23 @@ function paypalCaptureStatusPayload(
     ?string $reason = null,
 ): array {
     $resource = [
-        'id' =>
-            $captureId,
+        'id' => $captureId,
 
-        'status' =>
-            $providerStatus,
+        'status' => $providerStatus,
 
         'amount' => [
-            'currency_code' =>
-                'USD',
+            'currency_code' => 'USD',
 
-            'value' =>
-                '5.00',
+            'value' => '5.00',
         ],
 
         'supplementary_data' => [
             'related_ids' => [
-                'order_id' =>
-                    $paypalOrderId,
+                'order_id' => $paypalOrderId,
             ],
         ],
 
-        'update_time' =>
-            '2026-07-16T20:00:00Z',
+        'update_time' => '2026-07-16T20:00:00Z',
     ];
 
     if ($reason !== null) {
@@ -214,26 +187,19 @@ function paypalCaptureStatusPayload(
     }
 
     return [
-        'id' =>
-            $eventId,
+        'id' => $eventId,
 
-        'event_version' =>
-            '1.0',
+        'event_version' => '1.0',
 
-        'create_time' =>
-            '2026-07-16T20:00:00.000Z',
+        'create_time' => '2026-07-16T20:00:00.000Z',
 
-        'resource_type' =>
-            'capture',
+        'resource_type' => 'capture',
 
-        'event_type' =>
-            $eventType,
+        'event_type' => $eventType,
 
-        'resource' =>
-            $resource,
+        'resource' => $resource,
 
-        'links' =>
-            [],
+        'links' => [],
     ];
 }
 
@@ -244,7 +210,6 @@ describe(
             'mantiene el pago pendiente cuando PayPal informa PAYMENT.CAPTURE.PENDING',
             function (): void {
                 /** @var TestCase $this */
-
                 [
                     'payment' => $payment,
                 ] = createWebhookStatusPayment();
@@ -261,14 +226,10 @@ describe(
                     '/api/v1/payments/paypal/webhook',
                     paypalCaptureStatusPayload(
                         eventId: $eventId,
-                        eventType:
-                            'PAYMENT.CAPTURE.PENDING',
-                        captureId:
-                            $captureId,
-                        providerStatus:
-                            'PENDING',
-                        paypalOrderId:
-                            $payment->provider_order_id,
+                        eventType: 'PAYMENT.CAPTURE.PENDING',
+                        captureId: $captureId,
+                        providerStatus: 'PENDING',
+                        paypalOrderId: $payment->provider_order_id,
                     ),
                     paypalStatusWebhookHeaders(),
                 );
@@ -304,20 +265,15 @@ describe(
                 $this->assertDatabaseHas(
                     'paypal_webhook_events',
                     [
-                        'event_id' =>
-                            $eventId,
+                        'event_id' => $eventId,
 
-                        'event_type' =>
-                            'PAYMENT.CAPTURE.PENDING',
+                        'event_type' => 'PAYMENT.CAPTURE.PENDING',
 
-                        'provider_order_id' =>
-                            $payment->provider_order_id,
+                        'provider_order_id' => $payment->provider_order_id,
 
-                        'provider_capture_id' =>
-                            $captureId,
+                        'provider_capture_id' => $captureId,
 
-                        'processing_status' =>
-                            'processed',
+                        'processing_status' => 'processed',
                     ],
                 );
             },
@@ -327,7 +283,6 @@ describe(
             'marca el pago como rechazado cuando PayPal informa PAYMENT.CAPTURE.DENIED',
             function (): void {
                 /** @var TestCase $this */
-
                 [
                     'payment' => $payment,
                 ] = createWebhookStatusPayment();
@@ -347,16 +302,11 @@ describe(
                     '/api/v1/payments/paypal/webhook',
                     paypalCaptureStatusPayload(
                         eventId: $eventId,
-                        eventType:
-                            'PAYMENT.CAPTURE.DENIED',
-                        captureId:
-                            $captureId,
-                        providerStatus:
-                            'DECLINED',
-                        paypalOrderId:
-                            $payment->provider_order_id,
-                        reason:
-                            $reason,
+                        eventType: 'PAYMENT.CAPTURE.DENIED',
+                        captureId: $captureId,
+                        providerStatus: 'DECLINED',
+                        paypalOrderId: $payment->provider_order_id,
+                        reason: $reason,
                     ),
                     paypalStatusWebhookHeaders(),
                 );
@@ -402,20 +352,15 @@ describe(
                 $this->assertDatabaseHas(
                     'paypal_webhook_events',
                     [
-                        'event_id' =>
-                            $eventId,
+                        'event_id' => $eventId,
 
-                        'event_type' =>
-                            'PAYMENT.CAPTURE.DENIED',
+                        'event_type' => 'PAYMENT.CAPTURE.DENIED',
 
-                        'provider_order_id' =>
-                            $payment->provider_order_id,
+                        'provider_order_id' => $payment->provider_order_id,
 
-                        'provider_capture_id' =>
-                            $captureId,
+                        'provider_capture_id' => $captureId,
 
-                        'processing_status' =>
-                            'processed',
+                        'processing_status' => 'processed',
                     ],
                 );
             },
@@ -425,7 +370,6 @@ describe(
             'no degrada un pago completado cuando llega posteriormente un evento pendiente',
             function (): void {
                 /** @var TestCase $this */
-
                 [
                     'payment' => $payment,
                 ] = createWebhookStatusPayment();
@@ -447,14 +391,10 @@ describe(
                     '/api/v1/payments/paypal/webhook',
                     paypalCaptureStatusPayload(
                         eventId: $eventId,
-                        eventType:
-                            'PAYMENT.CAPTURE.PENDING',
-                        captureId:
-                            $captureId,
-                        providerStatus:
-                            'PENDING',
-                        paypalOrderId:
-                            $payment->provider_order_id,
+                        eventType: 'PAYMENT.CAPTURE.PENDING',
+                        captureId: $captureId,
+                        providerStatus: 'PENDING',
+                        paypalOrderId: $payment->provider_order_id,
                     ),
                     paypalStatusWebhookHeaders(),
                 );
@@ -483,11 +423,9 @@ describe(
                 $this->assertDatabaseHas(
                     'paypal_webhook_events',
                     [
-                        'event_id' =>
-                            $eventId,
+                        'event_id' => $eventId,
 
-                        'processing_status' =>
-                            'processed',
+                        'processing_status' => 'processed',
                     ],
                 );
             },

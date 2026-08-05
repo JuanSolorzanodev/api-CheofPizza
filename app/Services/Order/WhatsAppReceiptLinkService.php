@@ -14,11 +14,15 @@ class WhatsAppReceiptLinkService
             ->orderBy('id')
             ->first();
 
-        if (!$setting) return null;
+        if (! $setting) {
+            return null;
+        }
 
         $phone = (string) $setting->phone;
         $digits = preg_replace('/\D+/', '', $phone);
-        if (!$digits) return null;
+        if (! $digits) {
+            return null;
+        }
 
         $deliveryType = (string) ($order->deliveryType?->delivery_type_name ?? '');
         $address = (string) ($order->address ?? '');

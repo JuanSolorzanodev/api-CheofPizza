@@ -17,8 +17,8 @@ use App\Models\Size;
 use App\Models\User;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /**
@@ -57,8 +57,7 @@ function createCompletedWebhookFixture(): array
             'name' => 'card',
         ],
         [
-            'description' =>
-                'Tarjeta mediante PayPal',
+            'description' => 'Tarjeta mediante PayPal',
 
             'active' => true,
         ],
@@ -66,15 +65,13 @@ function createCompletedWebhookFixture(): array
 
     $category = Category::query()->create([
         'category_name' => 'Sencillas',
-        'description' =>
-            'Categoría de prueba para webhook PayPal',
+        'description' => 'Categoría de prueba para webhook PayPal',
     ]);
 
     $pizza = Pizza::query()->create([
         'category_id' => $category->id,
         'pizza_name' => 'Americana',
-        'description' =>
-            'Pizza utilizada en la prueba del webhook',
+        'description' => 'Pizza utilizada en la prueba del webhook',
 
         'image_url' => null,
         'is_visible' => true,
@@ -123,20 +120,15 @@ function createCompletedWebhookFixture(): array
 function completedWebhookHeaders(): array
 {
     return [
-        'PAYPAL-AUTH-ALGO' =>
-            'SHA256withRSA',
+        'PAYPAL-AUTH-ALGO' => 'SHA256withRSA',
 
-        'PAYPAL-CERT-URL' =>
-            'https://api-m.sandbox.paypal.com/v1/notifications/certs/CERT-COMPLETED-TEST',
+        'PAYPAL-CERT-URL' => 'https://api-m.sandbox.paypal.com/v1/notifications/certs/CERT-COMPLETED-TEST',
 
-        'PAYPAL-TRANSMISSION-ID' =>
-            'TRANSMISSION-COMPLETED-TEST',
+        'PAYPAL-TRANSMISSION-ID' => 'TRANSMISSION-COMPLETED-TEST',
 
-        'PAYPAL-TRANSMISSION-SIG' =>
-            'SIGNATURE-COMPLETED-TEST',
+        'PAYPAL-TRANSMISSION-SIG' => 'SIGNATURE-COMPLETED-TEST',
 
-        'PAYPAL-TRANSMISSION-TIME' =>
-            '2026-07-16T19:00:00Z',
+        'PAYPAL-TRANSMISSION-TIME' => '2026-07-16T19:00:00Z',
     ];
 }
 
@@ -147,7 +139,6 @@ describe(
             'finaliza el pedido y no lo duplica cuando PayPal reenvía el evento',
             function (): void {
                 /** @var TestCase $this */
-
                 [
                     'user' => $user,
                     'cart' => $cart,
@@ -157,8 +148,7 @@ describe(
 
                 config([
                     'paypal.mode' => 'sandbox',
-                    'paypal.webhook_id' =>
-                        'WH-COMPLETED-TEST-123',
+                    'paypal.webhook_id' => 'WH-COMPLETED-TEST-123',
                 ]);
 
                 $baseUrl = rtrim(
@@ -198,14 +188,11 @@ describe(
                                 === "{$baseUrl}/v1/oauth2/token"
                         ) {
                             return Http::response([
-                                'access_token' =>
-                                    'ACCESS-TOKEN-COMPLETED-WEBHOOK',
+                                'access_token' => 'ACCESS-TOKEN-COMPLETED-WEBHOOK',
 
-                                'token_type' =>
-                                    'Bearer',
+                                'token_type' => 'Bearer',
 
-                                'expires_in' =>
-                                    32400,
+                                'expires_in' => 32400,
                             ], 200);
                         }
 
@@ -218,22 +205,17 @@ describe(
                                 === "{$baseUrl}/v2/checkout/orders"
                         ) {
                             return Http::response([
-                                'id' =>
-                                    $paypalOrderId,
+                                'id' => $paypalOrderId,
 
-                                'status' =>
-                                    'CREATED',
+                                'status' => 'CREATED',
 
                                 'links' => [
                                     [
-                                        'href' =>
-                                            "https://www.sandbox.paypal.com/checkoutnow?token={$paypalOrderId}",
+                                        'href' => "https://www.sandbox.paypal.com/checkoutnow?token={$paypalOrderId}",
 
-                                        'rel' =>
-                                            'approve',
+                                        'rel' => 'approve',
 
-                                        'method' =>
-                                            'GET',
+                                        'method' => 'GET',
                                     ],
                                 ],
                             ], 201);
@@ -248,8 +230,7 @@ describe(
                                 === "{$baseUrl}/v1/notifications/verify-webhook-signature"
                         ) {
                             return Http::response([
-                                'verification_status' =>
-                                    'SUCCESS',
+                                'verification_status' => 'SUCCESS',
                             ], 200);
                         }
 
@@ -265,73 +246,56 @@ describe(
                                 === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}"
                         ) {
                             return Http::response([
-                                'id' =>
-                                    $paypalOrderId,
+                                'id' => $paypalOrderId,
 
-                                'intent' =>
-                                    'CAPTURE',
+                                'intent' => 'CAPTURE',
 
-                                'status' =>
-                                    'COMPLETED',
+                                'status' => 'COMPLETED',
 
                                 'purchase_units' => [
                                     [
-                                        'reference_id' =>
-                                            $paymentUuid,
+                                        'reference_id' => $paymentUuid,
 
-                                        'custom_id' =>
-                                            $paymentUuid,
+                                        'custom_id' => $paymentUuid,
 
                                         'amount' => [
-                                            'currency_code' =>
-                                                'USD',
+                                            'currency_code' => 'USD',
 
-                                            'value' =>
-                                                '5.00',
+                                            'value' => '5.00',
                                         ],
 
                                         'payments' => [
                                             'captures' => [
                                                 [
-                                                    'id' =>
-                                                        $paypalCaptureId,
+                                                    'id' => $paypalCaptureId,
 
-                                                    'status' =>
-                                                        'COMPLETED',
+                                                    'status' => 'COMPLETED',
 
                                                     'amount' => [
-                                                        'currency_code' =>
-                                                            'USD',
+                                                        'currency_code' => 'USD',
 
-                                                        'value' =>
-                                                            '5.00',
+                                                        'value' => '5.00',
                                                     ],
 
-                                                    'final_capture' =>
-                                                        true,
+                                                    'final_capture' => true,
 
-                                                    'create_time' =>
-                                                        '2026-07-16T18:59:59Z',
+                                                    'create_time' => '2026-07-16T18:59:59Z',
 
-                                                    'update_time' =>
-                                                        '2026-07-16T19:00:00Z',
+                                                    'update_time' => '2026-07-16T19:00:00Z',
                                                 ],
                                             ],
                                         ],
                                     ],
                                 ],
 
-                                'update_time' =>
-                                    '2026-07-16T19:00:00Z',
+                                'update_time' => '2026-07-16T19:00:00Z',
                             ], 200);
                         }
 
                         return Http::response([
-                            'name' =>
-                                'UNEXPECTED_REQUEST',
+                            'name' => 'UNEXPECTED_REQUEST',
 
-                            'message' =>
-                                "Petición HTTP no configurada: {$request->method()} {$request->url()}",
+                            'message' => "Petición HTTP no configurada: {$request->method()} {$request->url()}",
                         ], 500);
                     },
                 );
@@ -347,21 +311,16 @@ describe(
                 )->postJson(
                     '/api/v1/payments/paypal/orders',
                     [
-                        'delivery_type' =>
-                            'pickup',
+                        'delivery_type' => 'pickup',
 
-                        'address' =>
-                            null,
+                        'address' => null,
 
-                        'delivery_location' =>
-                            null,
+                        'delivery_location' => null,
 
-                        'notes' =>
-                            'Pedido finalizado mediante webhook',
+                        'notes' => 'Pedido finalizado mediante webhook',
                     ],
                     [
-                        'Idempotency-Key' =>
-                            $idempotencyKey,
+                        'Idempotency-Key' => $idempotencyKey,
                     ],
                 );
 
@@ -394,54 +353,40 @@ describe(
                     'WH-EVENT-CAPTURE-COMPLETED-123';
 
                 $webhookPayload = [
-                    'id' =>
-                        $eventId,
+                    'id' => $eventId,
 
-                    'event_version' =>
-                        '1.0',
+                    'event_version' => '1.0',
 
-                    'create_time' =>
-                        '2026-07-16T19:00:00.000Z',
+                    'create_time' => '2026-07-16T19:00:00.000Z',
 
-                    'resource_type' =>
-                        'capture',
+                    'resource_type' => 'capture',
 
-                    'event_type' =>
-                        'PAYMENT.CAPTURE.COMPLETED',
+                    'event_type' => 'PAYMENT.CAPTURE.COMPLETED',
 
-                    'summary' =>
-                        'Payment completed for USD 5.00.',
+                    'summary' => 'Payment completed for USD 5.00.',
 
                     'resource' => [
-                        'id' =>
-                            $paypalCaptureId,
+                        'id' => $paypalCaptureId,
 
-                        'status' =>
-                            'COMPLETED',
+                        'status' => 'COMPLETED',
 
                         'amount' => [
-                            'currency_code' =>
-                                'USD',
+                            'currency_code' => 'USD',
 
-                            'value' =>
-                                '5.00',
+                            'value' => '5.00',
                         ],
 
-                        'final_capture' =>
-                            true,
+                        'final_capture' => true,
 
                         'supplementary_data' => [
                             'related_ids' => [
-                                'order_id' =>
-                                    $paypalOrderId,
+                                'order_id' => $paypalOrderId,
                             ],
                         ],
 
-                        'create_time' =>
-                            '2026-07-16T18:59:59Z',
+                        'create_time' => '2026-07-16T18:59:59Z',
 
-                        'update_time' =>
-                            '2026-07-16T19:00:00Z',
+                        'update_time' => '2026-07-16T19:00:00Z',
                     ],
 
                     'links' => [],
@@ -531,50 +476,37 @@ describe(
                 $this->assertDatabaseHas(
                     'paypal_webhook_events',
                     [
-                        'event_id' =>
-                            $eventId,
+                        'event_id' => $eventId,
 
-                        'event_type' =>
-                            'PAYMENT.CAPTURE.COMPLETED',
+                        'event_type' => 'PAYMENT.CAPTURE.COMPLETED',
 
-                        'provider_order_id' =>
-                            $paypalOrderId,
+                        'provider_order_id' => $paypalOrderId,
 
-                        'provider_capture_id' =>
-                            $paypalCaptureId,
+                        'provider_capture_id' => $paypalCaptureId,
 
-                        'verification_status' =>
-                            'SUCCESS',
+                        'verification_status' => 'SUCCESS',
 
-                        'processing_status' =>
-                            'processed',
+                        'processing_status' => 'processed',
 
-                        'failure_message' =>
-                            null,
+                        'failure_message' => null,
                     ],
                 );
 
                 $this->assertDatabaseHas(
                     'payments',
                     [
-                        'id' =>
-                            $payment->id,
+                        'id' => $payment->id,
 
-                        'order_id' =>
-                            $order->id,
+                        'order_id' => $order->id,
 
-                        'provider_order_id' =>
-                            $paypalOrderId,
+                        'provider_order_id' => $paypalOrderId,
 
-                        'provider_capture_id' =>
-                            $paypalCaptureId,
+                        'provider_capture_id' => $paypalCaptureId,
 
-                        'provider_status' =>
-                            'COMPLETED',
+                        'provider_status' => 'COMPLETED',
 
-                        'status' =>
-                            PaymentStatus::COMPLETED
-                                ->value,
+                        'status' => PaymentStatus::COMPLETED
+                            ->value,
                     ],
                 );
 
@@ -641,12 +573,11 @@ describe(
                     ): bool {
                         [$request] = $record;
 
-                        return (
+                        return
                             $request->method()
                                 === 'POST'
                             && $request->url()
-                                === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}/capture"
-                        );
+                                === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}/capture";
                     },
                 );
 
@@ -665,12 +596,11 @@ describe(
                     ) use ($baseUrl): bool {
                         [$request] = $record;
 
-                        return (
+                        return
                             $request->method()
                                 === 'POST'
                             && $request->url()
-                                === "{$baseUrl}/v1/notifications/verify-webhook-signature"
-                        );
+                                === "{$baseUrl}/v1/notifications/verify-webhook-signature";
                     },
                 );
 

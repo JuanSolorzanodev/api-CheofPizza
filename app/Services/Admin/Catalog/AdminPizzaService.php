@@ -37,8 +37,7 @@ final class AdminPizzaService
             ->orderBy('pizza_name')
             ->get()
             ->each(
-                fn (Pizza $pizza): Pizza =>
-                    $this->appendUsageState($pizza)
+                fn (Pizza $pizza): Pizza => $this->appendUsageState($pizza)
             );
     }
 
@@ -67,33 +66,28 @@ final class AdminPizzaService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(array $data): Pizza
     {
         return DB::transaction(
             function () use ($data): Pizza {
                 $pizza = Pizza::query()->create([
-                    'category_id' =>
-                        (int) $data['category_id'],
+                    'category_id' => (int) $data['category_id'],
 
-                    'pizza_name' =>
-                        trim(
-                            (string) $data['name']
-                        ),
+                    'pizza_name' => trim(
+                        (string) $data['name']
+                    ),
 
-                    'description' =>
-                        $this->nullableText(
-                            $data['description'] ?? null
-                        ),
+                    'description' => $this->nullableText(
+                        $data['description'] ?? null
+                    ),
 
-                    'image_url' =>
-                        $this->nullableText(
-                            $data['image_url'] ?? null
-                        ),
+                    'image_url' => $this->nullableText(
+                        $data['image_url'] ?? null
+                    ),
 
-                    'is_visible' =>
-                        (bool) $data['is_visible'],
+                    'is_visible' => (bool) $data['is_visible'],
                 ]);
 
                 $pizza->ingredients()->sync(
@@ -108,7 +102,7 @@ final class AdminPizzaService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function update(
         Pizza $pizza,
@@ -120,26 +114,21 @@ final class AdminPizzaService
                 $data
             ): Pizza {
                 $pizza->forceFill([
-                    'category_id' =>
-                        (int) $data['category_id'],
+                    'category_id' => (int) $data['category_id'],
 
-                    'pizza_name' =>
-                        trim(
-                            (string) $data['name']
-                        ),
+                    'pizza_name' => trim(
+                        (string) $data['name']
+                    ),
 
-                    'description' =>
-                        $this->nullableText(
-                            $data['description'] ?? null
-                        ),
+                    'description' => $this->nullableText(
+                        $data['description'] ?? null
+                    ),
 
-                    'image_url' =>
-                        $this->nullableText(
-                            $data['image_url'] ?? null
-                        ),
+                    'image_url' => $this->nullableText(
+                        $data['image_url'] ?? null
+                    ),
 
-                    'is_visible' =>
-                        (bool) $data['is_visible'],
+                    'is_visible' => (bool) $data['is_visible'],
                 ])->save();
 
                 $pizza->ingredients()->sync(
@@ -184,8 +173,7 @@ final class AdminPizzaService
             $usage['sales_history'] > 0
         ) {
             throw ValidationException::withMessages([
-                'pizza' =>
-                    'No puedes eliminar esta pizza porque tiene pedidos o información histórica. Ocúltala del catálogo en lugar de eliminarla.',
+                'pizza' => 'No puedes eliminar esta pizza porque tiene pedidos o información histórica. Ocúltala del catálogo en lugar de eliminarla.',
             ]);
         }
 
@@ -195,8 +183,7 @@ final class AdminPizzaService
             $usage['cart_promotions'] > 0
         ) {
             throw ValidationException::withMessages([
-                'pizza' =>
-                    'No puedes eliminar esta pizza porque está siendo utilizada en carritos activos. Ocúltala temporalmente.',
+                'pizza' => 'No puedes eliminar esta pizza porque está siendo utilizada en carritos activos. Ocúltala temporalmente.',
             ]);
         }
 
@@ -226,61 +213,54 @@ final class AdminPizzaService
         int $pizzaId
     ): array {
         return [
-            'cart_items' =>
-                DB::table('cart_items')
-                    ->where(
-                        'pizza_id',
-                        $pizzaId
-                    )
-                    ->count(),
+            'cart_items' => DB::table('cart_items')
+                ->where(
+                    'pizza_id',
+                    $pizzaId
+                )
+                ->count(),
 
-            'cart_items_second' =>
-                DB::table('cart_items')
-                    ->where(
-                        'pizza_id_second',
-                        $pizzaId
-                    )
-                    ->count(),
+            'cart_items_second' => DB::table('cart_items')
+                ->where(
+                    'pizza_id_second',
+                    $pizzaId
+                )
+                ->count(),
 
-            'cart_promotions' =>
-                DB::table('cart_promotion_items')
-                    ->where(
-                        'pizza_id',
-                        $pizzaId
-                    )
-                    ->count(),
+            'cart_promotions' => DB::table('cart_promotion_items')
+                ->where(
+                    'pizza_id',
+                    $pizzaId
+                )
+                ->count(),
 
-            'order_items' =>
-                DB::table('order_items')
-                    ->where(
-                        'pizza_id',
-                        $pizzaId
-                    )
-                    ->count(),
+            'order_items' => DB::table('order_items')
+                ->where(
+                    'pizza_id',
+                    $pizzaId
+                )
+                ->count(),
 
-            'order_items_second' =>
-                DB::table('order_items')
-                    ->where(
-                        'pizza_id_second',
-                        $pizzaId
-                    )
-                    ->count(),
+            'order_items_second' => DB::table('order_items')
+                ->where(
+                    'pizza_id_second',
+                    $pizzaId
+                )
+                ->count(),
 
-            'order_promotions' =>
-                DB::table('order_promotion_items')
-                    ->where(
-                        'pizza_id',
-                        $pizzaId
-                    )
-                    ->count(),
+            'order_promotions' => DB::table('order_promotion_items')
+                ->where(
+                    'pizza_id',
+                    $pizzaId
+                )
+                ->count(),
 
-            'sales_history' =>
-                DB::table('pizza_sales_history')
-                    ->where(
-                        'pizza_id',
-                        $pizzaId
-                    )
-                    ->count(),
+            'sales_history' => DB::table('pizza_sales_history')
+                ->where(
+                    'pizza_id',
+                    $pizzaId
+                )
+                ->count(),
         ];
     }
 
@@ -351,12 +331,10 @@ final class AdminPizzaService
 
         return collect($value)
             ->map(
-                static fn ($id): int =>
-                    (int) $id
+                static fn ($id): int => (int) $id
             )
             ->filter(
-                static fn (int $id): bool =>
-                    $id > 0
+                static fn (int $id): bool => $id > 0
             )
             ->unique()
             ->values()

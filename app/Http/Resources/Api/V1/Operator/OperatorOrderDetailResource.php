@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Resources\Api\V1\Operator;
 
 use App\Enums\OrderStatusName;
-use App\Services\Order\OrderStatusTransitionService;
-use App\Services\Order\WhatsAppDeliveryDispatchLinkService;
-use App\Services\Order\WhatsAppCustomerConfirmationLinkService;
 use App\Http\Resources\Api\V1\PaymentReceiptResource;
+use App\Services\Order\OrderStatusTransitionService;
+use App\Services\Order\WhatsAppCustomerConfirmationLinkService;
+use App\Services\Order\WhatsAppDeliveryDispatchLinkService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -69,11 +69,9 @@ final class OperatorOrderDetailResource extends JsonResource
 
             'status' => $statusName,
 
-            'allowed_transitions' =>
-            $allowedTransitions,
+            'allowed_transitions' => $allowedTransitions,
 
-            'delivery_type' =>
-            $deliveryType,
+            'delivery_type' => $deliveryType,
 
             'payment_method' => (string) (
                 $order->paymentMethod?->name
@@ -91,7 +89,7 @@ final class OperatorOrderDetailResource extends JsonResource
                         $order->user?->first_name
                         ?? ''
                     )
-                        . ' ' .
+                        .' '.
                         (string) (
                             $order->user?->last_name
                             ?? ''
@@ -134,21 +132,18 @@ final class OperatorOrderDetailResource extends JsonResource
                 ),
             ],
 
-            'customer_confirmation_whatsapp_url' =>
-            app(
+            'customer_confirmation_whatsapp_url' => app(
                 WhatsAppCustomerConfirmationLinkService::class,
             )->build($order),
 
-            'delivery_whatsapp_url' =>
-            $deliveryType ===
+            'delivery_whatsapp_url' => $deliveryType ===
                 OrderStatusTransitionService::DELIVERY_TYPE_DELIVERY
                 ? app(
                     WhatsAppDeliveryDispatchLinkService::class,
                 )->build($order)
                 : null,
 
-            'payment_receipt' =>
-            $order->relationLoaded(
+            'payment_receipt' => $order->relationLoaded(
                 'latestPaymentReceipt',
             )
                 ? (
@@ -166,8 +161,7 @@ final class OperatorOrderDetailResource extends JsonResource
                 ),
             ],
 
-            'status_changes' =>
-            $this->statusChanges(
+            'status_changes' => $this->statusChanges(
                 $order,
             ),
         ];
@@ -180,7 +174,7 @@ final class OperatorOrderDetailResource extends JsonResource
         mixed $order,
     ): array {
         if (
-            !$order->relationLoaded(
+            ! $order->relationLoaded(
                 'orderItems',
             )
         ) {
@@ -194,38 +188,32 @@ final class OperatorOrderDetailResource extends JsonResource
                     mixed $item,
                 ): array {
                     $base = [
-                        'id' =>
-                        (int) $item->id,
+                        'id' => (int) $item->id,
 
-                        'quantity' =>
-                        (int) (
+                        'quantity' => (int) (
                             $item->quantity
                             ?? 1
                         ),
 
-                        'size_name' =>
-                        (string) (
+                        'size_name' => (string) (
                             $item->size_name
                             ?? ''
                         ),
 
-                        'category_name' =>
-                        (string) (
+                        'category_name' => (string) (
                             $item->category_name
                             ?? ''
                         ),
 
-                        'type' =>
-                        'pizza',
+                        'type' => 'pizza',
 
-                        'personalizations' =>
-                        $this->personalizations(
+                        'personalizations' => $this->personalizations(
                             $item,
                         ),
                     ];
 
                     if (
-                        !empty($item->promotion_id)
+                        ! empty($item->promotion_id)
                     ) {
                         return $this
                             ->promotionItem(
@@ -256,8 +244,7 @@ final class OperatorOrderDetailResource extends JsonResource
     }
 
     /**
-     * @param array<string, mixed> $base
-     *
+     * @param  array<string, mixed>  $base
      * @return array<string, mixed>
      */
     private function promotionItem(
@@ -268,35 +255,34 @@ final class OperatorOrderDetailResource extends JsonResource
             'orderPromotionItems',
         )
             ? $item
-            ->orderPromotionItems
-            ->map(
-                function (
-                    mixed $promotionItem,
-                ): array {
-                    return [
-                        'pizza_id' => (int) (
-                            $promotionItem
-                            ->pizza_id
-                            ?? 0
-                        ),
-
-                        'pizza_name' => (string) (
-                            $promotionItem
-                            ->pizza_name
-                            ?? ''
-                        ),
-
-                        'ingredients' =>
-                        $this
-                            ->extractPizzaIngredients(
+                ->orderPromotionItems
+                ->map(
+                    function (
+                        mixed $promotionItem,
+                    ): array {
+                        return [
+                            'pizza_id' => (int) (
                                 $promotionItem
-                                    ->pizza,
+                                    ->pizza_id
+                                ?? 0
                             ),
-                    ];
-                },
-            )
-            ->values()
-            ->all()
+
+                            'pizza_name' => (string) (
+                                $promotionItem
+                                    ->pizza_name
+                                ?? ''
+                            ),
+
+                            'ingredients' => $this
+                                ->extractPizzaIngredients(
+                                    $promotionItem
+                                        ->pizza,
+                                ),
+                        ];
+                    },
+                )
+                ->values()
+                ->all()
             : [];
 
         return array_merge(
@@ -322,8 +308,7 @@ final class OperatorOrderDetailResource extends JsonResource
     }
 
     /**
-     * @param array<string, mixed> $base
-     *
+     * @param  array<string, mixed>  $base
      * @return array<string, mixed>
      */
     private function halfAndHalfItem(
@@ -333,47 +318,40 @@ final class OperatorOrderDetailResource extends JsonResource
         return array_merge(
             $base,
             [
-                'type' =>
-                'half_and_half',
+                'type' => 'half_and_half',
 
                 'half' => [
                     'A' => [
-                        'pizza_id' =>
-                        (int) (
+                        'pizza_id' => (int) (
                             $item->pizza_id
                             ?? 0
                         ),
 
-                        'pizza_name' =>
-                        (string) (
+                        'pizza_name' => (string) (
                             $item->pizza_name
                             ?? ''
                         ),
 
-                        'ingredients' =>
-                        $this
+                        'ingredients' => $this
                             ->extractPizzaIngredients(
                                 $item->pizza,
                             ),
                     ],
 
                     'B' => [
-                        'pizza_id' =>
-                        (int) (
+                        'pizza_id' => (int) (
                             $item
-                            ->pizza_id_second
+                                ->pizza_id_second
                             ?? 0
                         ),
 
-                        'pizza_name' =>
-                        (string) (
+                        'pizza_name' => (string) (
                             $item
-                            ->pizza_name_second
+                                ->pizza_name_second
                             ?? ''
                         ),
 
-                        'ingredients' =>
-                        $this
+                        'ingredients' => $this
                             ->extractPizzaIngredients(
                                 $item
                                     ->pizzaSecond,
@@ -385,8 +363,7 @@ final class OperatorOrderDetailResource extends JsonResource
     }
 
     /**
-     * @param array<string, mixed> $base
-     *
+     * @param  array<string, mixed>  $base
      * @return array<string, mixed>
      */
     private function pizzaItem(
@@ -409,8 +386,7 @@ final class OperatorOrderDetailResource extends JsonResource
                         ?? ''
                     ),
 
-                    'ingredients' =>
-                    $this
+                    'ingredients' => $this
                         ->extractPizzaIngredients(
                             $item->pizza,
                         ),
@@ -434,17 +410,17 @@ final class OperatorOrderDetailResource extends JsonResource
                 'ingredients',
             )
             && $pizza->ingredients
-            ?->isNotEmpty()
+                ?->isNotEmpty()
         ) {
             return $pizza
                 ->ingredients
                 ->map(
-                    static fn(
+                    static fn (
                         mixed $ingredient,
                     ): string => trim(
                         (string) (
                             $ingredient
-                            ->ingredient_name
+                                ->ingredient_name
                             ?? ''
                         ),
                     ),
@@ -459,18 +435,18 @@ final class OperatorOrderDetailResource extends JsonResource
                 'pizzaIngredients',
             )
             && $pizza->pizzaIngredients
-            ?->isNotEmpty()
+                ?->isNotEmpty()
         ) {
             return $pizza
                 ->pizzaIngredients
                 ->map(
-                    static fn(
+                    static fn (
                         mixed $pizzaIngredient,
                     ): string => trim(
                         (string) (
                             $pizzaIngredient
-                            ->ingredient
-                            ?->ingredient_name
+                                ->ingredient
+                                ?->ingredient_name
                             ?? ''
                         ),
                     ),
@@ -498,7 +474,7 @@ final class OperatorOrderDetailResource extends JsonResource
             ),
         )
             ->map(
-                static fn(
+                static fn (
                     string $ingredient,
                 ): string => trim(
                     $ingredient,
@@ -516,7 +492,7 @@ final class OperatorOrderDetailResource extends JsonResource
         mixed $item,
     ): array {
         if (
-            !$item->relationLoaded(
+            ! $item->relationLoaded(
                 'orderItemPersonalizations',
             )
         ) {
@@ -530,39 +506,34 @@ final class OperatorOrderDetailResource extends JsonResource
                     mixed $personalization,
                 ): array {
                     return [
-                        'ingredient_id' =>
-                        (int) (
+                        'ingredient_id' => (int) (
                             $personalization
-                            ->ingredient_id
+                                ->ingredient_id
                             ?? 0
                         ),
 
-                        'ingredient_name' =>
-                        (string) (
+                        'ingredient_name' => (string) (
                             $personalization
-                            ->ingredient_name
+                                ->ingredient_name
                             ?? ''
                         ),
 
-                        'action' =>
-                        (string) (
+                        'action' => (string) (
                             $personalization
-                            ->personalizationAction
-                            ?->action_name
+                                ->personalizationAction
+                                ?->action_name
                             ?? ''
                         ),
 
-                        'applies_to' =>
-                        (string) (
+                        'applies_to' => (string) (
                             $personalization
-                            ->applies_to
+                                ->applies_to
                             ?? 'ALL'
                         ),
 
-                        'extra_price' =>
-                        (float) (
+                        'extra_price' => (float) (
                             $personalization
-                            ->extra_price
+                                ->extra_price
                             ?? 0
                         ),
                     ];
@@ -579,7 +550,7 @@ final class OperatorOrderDetailResource extends JsonResource
         mixed $order,
     ): array {
         if (
-            !$order->relationLoaded(
+            ! $order->relationLoaded(
                 'statusChanges',
             )
         ) {
@@ -595,36 +566,35 @@ final class OperatorOrderDetailResource extends JsonResource
                     $changedBy = trim(
                         (string) (
                             $change
-                            ->changedBy
-                            ?->first_name
-                            ?? ''
-                        )
-                            . ' ' .
-                            (string) (
-                                $change
                                 ->changedBy
-                                ?->last_name
+                                ?->first_name
                                 ?? ''
-                            ),
+                        )
+                                .' '.
+                                (string) (
+                                    $change
+                                        ->changedBy
+                                        ?->last_name
+                                    ?? ''
+                                ),
                     );
 
                     return [
                         'from' => (string) (
                             $change
-                            ->fromStatus
-                            ?->status_name
+                                ->fromStatus
+                                ?->status_name
                             ?? ''
                         ),
 
                         'to' => (string) (
                             $change
-                            ->toStatus
-                            ?->status_name
+                                ->toStatus
+                                ?->status_name
                             ?? ''
                         ),
 
-                        'changed_at' =>
-                        $change->changed_at
+                        'changed_at' => $change->changed_at
                             ?->toIso8601String(),
 
                         'note' => (string) (

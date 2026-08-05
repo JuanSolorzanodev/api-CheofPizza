@@ -17,20 +17,20 @@ class OrderStatusChanged implements ShouldBroadcast, ShouldDispatchAfterCommit
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public string $connection = 'database';
+
     public string $queue = 'broadcasts';
 
     public function __construct(
         public Order $order,
         public string $fromStatus,
         public string $toStatus
-    ) {
-    }
+    ) {}
 
     public function broadcastOn(): array
     {
         return [
             new PrivateChannel('operator.orders'),
-            new PrivateChannel('operator.orders.' . $this->order->id),
+            new PrivateChannel('operator.orders.'.$this->order->id),
         ];
     }
 

@@ -13,9 +13,13 @@ final class MlTrainingRun extends Model
     use HasFactory;
 
     public const STATUS_PROCESSING = 'processing';
+
     public const STATUS_BUILT = 'built';
+
     public const STATUS_ACTIVATED = 'activated';
+
     public const STATUS_ROLLED_BACK = 'rolled_back';
+
     public const STATUS_FAILED = 'failed';
 
     protected $fillable = [

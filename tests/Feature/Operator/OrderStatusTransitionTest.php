@@ -448,8 +448,7 @@ final class OrderStatusTransitionTest extends TestCase
                 "/api/v1/operator/orders/{$order->id}/status",
                 [
                     'to_status' => 'confirmed',
-                    'note' =>
-                        'Pedido confirmado por cocina.',
+                    'note' => 'Pedido confirmado por cocina.',
                 ],
             );
 
@@ -470,20 +469,15 @@ final class OrderStatusTransitionTest extends TestCase
         $this->assertDatabaseHas(
             'order_status_changes',
             [
-                'order_id' =>
-                    $order->id,
+                'order_id' => $order->id,
 
-                'from_order_status_id' =>
-                    $this->statuses['pending']->id,
+                'from_order_status_id' => $this->statuses['pending']->id,
 
-                'to_order_status_id' =>
-                    $this->statuses['confirmed']->id,
+                'to_order_status_id' => $this->statuses['confirmed']->id,
 
-                'changed_by_user_id' =>
-                    $this->operator->id,
+                'changed_by_user_id' => $this->operator->id,
 
-                'note' =>
-                    'Pedido confirmado por cocina.',
+                'note' => 'Pedido confirmado por cocina.',
             ],
         );
 
@@ -577,7 +571,7 @@ final class OrderStatusTransitionTest extends TestCase
     }
 
     /**
-     * @param list<string> $expectedAllowedTransitions
+     * @param  list<string>  $expectedAllowedTransitions
      */
     private function changeStatus(
         Order $order,
@@ -592,11 +586,9 @@ final class OrderStatusTransitionTest extends TestCase
             ->patchJson(
                 "/api/v1/operator/orders/{$order->id}/status",
                 [
-                    'to_status' =>
-                        $destination,
+                    'to_status' => $destination,
 
-                    'note' =>
-                        "Cambio a {$destination}.",
+                    'note' => "Cambio a {$destination}.",
                 ],
             );
 
@@ -650,37 +642,29 @@ final class OrderStatusTransitionTest extends TestCase
                 ->firstOrFail();
 
         return Order::query()->create([
-            'order_number' =>
-                'TEST-'.strtoupper(
-                    fake()
-                        ->unique()
-                        ->bothify(
-                            '########-????',
-                        ),
-                ),
+            'order_number' => 'TEST-'.strtoupper(
+                fake()
+                    ->unique()
+                    ->bothify(
+                        '########-????',
+                    ),
+            ),
 
-            'user_id' =>
-                $customer->id,
+            'user_id' => $customer->id,
 
-            'ordered_at' =>
-                now(),
+            'ordered_at' => now(),
 
-            'total' =>
-                15.50,
+            'total' => 15.50,
 
-            'delivery_type_id' =>
-                $deliveryTypeModel->id,
+            'delivery_type_id' => $deliveryTypeModel->id,
 
-            'address' =>
-                $deliveryType === 'delivery'
+            'address' => $deliveryType === 'delivery'
                     ? 'Dirección de prueba'
                     : null,
 
-            'payment_method_id' =>
-                $paymentMethod->id,
+            'payment_method_id' => $paymentMethod->id,
 
-            'order_status_id' =>
-                $this->statuses[$status]->id,
+            'order_status_id' => $this->statuses[$status]->id,
         ]);
     }
 

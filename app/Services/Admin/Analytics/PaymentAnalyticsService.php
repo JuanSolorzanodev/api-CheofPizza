@@ -55,42 +55,30 @@ final class PaymentAnalyticsService
         );
 
         return [
-            'period' =>
-                $range->toArray(),
+            'period' => $range->toArray(),
 
             'summary' => [
-                'collected_total' =>
-                    (float) $collectedTotal,
+                'collected_total' => (float) $collectedTotal,
 
-                'cash_amount' =>
-                    $cash['amount'],
+                'cash_amount' => $cash['amount'],
 
-                'transfer_amount' =>
-                    $transfer['amount'],
+                'transfer_amount' => $transfer['amount'],
 
-                'paypal_amount' =>
-                    $paypal['amount'],
+                'paypal_amount' => $paypal['amount'],
 
-                'cash_orders' =>
-                    $cash['orders'],
+                'cash_orders' => $cash['orders'],
 
-                'transfer_orders' =>
-                    $transfer['orders'],
+                'transfer_orders' => $transfer['orders'],
 
-                'paypal_payments' =>
-                    $paypal['payments'],
+                'paypal_payments' => $paypal['payments'],
 
-                'pending_amount' =>
-                    $pending['amount'],
+                'pending_amount' => $pending['amount'],
 
-                'pending_transactions' =>
-                    $pending['transactions'],
+                'pending_transactions' => $pending['transactions'],
 
-                'refunded_payments' =>
-                    $refunds['refunded_payments'],
+                'refunded_payments' => $refunds['refunded_payments'],
 
-                'partially_refunded_payments' =>
-                    $refunds[
+                'partially_refunded_payments' => $refunds[
                         'partially_refunded_payments'
                     ],
             ],
@@ -101,11 +89,9 @@ final class PaymentAnalyticsService
                 $paypal,
             ],
 
-            'pending' =>
-                $pending,
+            'pending' => $pending,
 
-            'refunds' =>
-                $refunds,
+            'refunds' => $refunds,
         ];
     }
 
@@ -175,26 +161,22 @@ final class PaymentAnalyticsService
             ->first();
 
         return [
-            'method' =>
-                'cash',
+            'method' => 'cash',
 
-            'label' =>
-                'Efectivo',
+            'label' => 'Efectivo',
 
-            'amount' =>
-                round(
-                    (float) (
-                        $row->collected_amount
-                        ?? 0
-                    ),
-                    2,
-                ),
-
-            'orders' =>
-                (int) (
-                    $row->orders_count
+            'amount' => round(
+                (float) (
+                    $row->collected_amount
                     ?? 0
                 ),
+                2,
+            ),
+
+            'orders' => (int) (
+                $row->orders_count
+                ?? 0
+            ),
         ];
     }
 
@@ -274,26 +256,22 @@ final class PaymentAnalyticsService
             ->first();
 
         return [
-            'method' =>
-                'transfer',
+            'method' => 'transfer',
 
-            'label' =>
-                'Transferencia',
+            'label' => 'Transferencia',
 
-            'amount' =>
-                round(
-                    (float) (
-                        $row->collected_amount
-                        ?? 0
-                    ),
-                    2,
-                ),
-
-            'orders' =>
-                (int) (
-                    $row->orders_count
+            'amount' => round(
+                (float) (
+                    $row->collected_amount
                     ?? 0
                 ),
+                2,
+            ),
+
+            'orders' => (int) (
+                $row->orders_count
+                ?? 0
+            ),
         ];
     }
 
@@ -339,26 +317,22 @@ final class PaymentAnalyticsService
             ->first();
 
         return [
-            'method' =>
-                'paypal',
+            'method' => 'paypal',
 
-            'label' =>
-                'PayPal',
+            'label' => 'PayPal',
 
-            'amount' =>
-                round(
-                    (float) (
-                        $row->collected_amount
-                        ?? 0
-                    ),
-                    2,
-                ),
-
-            'payments' =>
-                (int) (
-                    $row->payments_count
+            'amount' => round(
+                (float) (
+                    $row->collected_amount
                     ?? 0
                 ),
+                2,
+            ),
+
+            'payments' => (int) (
+                $row->payments_count
+                ?? 0
+            ),
         ];
     }
 
@@ -495,27 +469,21 @@ final class PaymentAnalyticsService
         );
 
         return [
-            'amount' =>
-                (float) $totalAmount,
+            'amount' => (float) $totalAmount,
 
-            'transactions' =>
-                $transferCount
+            'transactions' => $transferCount
                 + $paypalCount,
 
             'transfer' => [
-                'amount' =>
-                    (float) $transferAmount,
+                'amount' => (float) $transferAmount,
 
-                'transactions' =>
-                    $transferCount,
+                'transactions' => $transferCount,
             ],
 
             'paypal' => [
-                'amount' =>
-                    (float) $paypalAmount,
+                'amount' => (float) $paypalAmount,
 
-                'transactions' =>
-                    $paypalCount,
+                'transactions' => $paypalCount,
             ],
         ];
     }
@@ -565,24 +533,21 @@ final class PaymentAnalyticsService
             );
 
         return [
-            'refunded_payments' =>
-                (int) (
-                    $rows[
-                        PaymentStatus::REFUNDED->value
-                    ]
-                    ?? 0
-                ),
+            'refunded_payments' => (int) (
+                $rows[
+                    PaymentStatus::REFUNDED->value
+                ]
+                ?? 0
+            ),
 
-            'partially_refunded_payments' =>
-                (int) (
-                    $rows[
-                        PaymentStatus::PARTIALLY_REFUNDED->value
-                    ]
-                    ?? 0
-                ),
+            'partially_refunded_payments' => (int) (
+                $rows[
+                    PaymentStatus::PARTIALLY_REFUNDED->value
+                ]
+                ?? 0
+            ),
 
-            'refundable_amount_available' =>
-                false,
+            'refundable_amount_available' => false,
         ];
     }
 }

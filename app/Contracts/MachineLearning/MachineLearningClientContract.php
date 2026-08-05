@@ -25,7 +25,7 @@ interface MachineLearningClientContract
     ): array;
 
     /**
-     * @param array<string, mixed> $dataset
+     * @param  array<string, mixed>  $dataset
      * @return array<string, mixed>
      */
     public function validateTrainingDataset(
@@ -33,7 +33,7 @@ interface MachineLearningClientContract
     ): array;
 
     /**
-     * @param array<string, mixed> $dataset
+     * @param  array<string, mixed>  $dataset
      * @return array<string, mixed>
      */
     public function previewTraining(
@@ -41,7 +41,7 @@ interface MachineLearningClientContract
     ): array;
 
     /**
-     * @param array<string, mixed> $dataset
+     * @param  array<string, mixed>  $dataset
      * @return array<string, mixed>
      */
     public function buildTrainingArtifact(

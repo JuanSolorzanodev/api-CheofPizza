@@ -40,26 +40,21 @@ final class GenerateForecastRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'start_date.required' =>
-                'La fecha inicial es obligatoria.',
+            'start_date.required' => 'La fecha inicial es obligatoria.',
 
-            'start_date.date_format' =>
-                'La fecha inicial debe tener el formato YYYY-MM-DD.',
+            'start_date.date_format' => 'La fecha inicial debe tener el formato YYYY-MM-DD.',
 
-            'days.integer' =>
-                'La cantidad de días debe ser un número entero.',
+            'days.integer' => 'La cantidad de días debe ser un número entero.',
 
-            'days.min' =>
-                'El pronóstico debe incluir al menos un día.',
+            'days.min' => 'El pronóstico debe incluir al menos un día.',
 
-            'days.max' =>
-                'El pronóstico no puede superar los 31 días.',
+            'days.max' => 'El pronóstico no puede superar los 31 días.',
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        if (!$this->has('days')) {
+        if (! $this->has('days')) {
             $this->merge([
                 'days' => 7,
             ]);

@@ -14,18 +14,18 @@ return new class extends Migration
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')             // empresa_id :contentReference[oaicite:40]{index=40}
-            ->constrained('companies')
-            ->restrictOnDelete();
+                ->constrained('companies')
+                ->restrictOnDelete();
 
             $table->foreignId('customer_id')            // cliente_id
-            ->constrained('customers')
-            ->restrictOnDelete();
+                ->constrained('customers')
+                ->restrictOnDelete();
 
             $table->string('voucher_type', 2)->default('01'); // tipo_comprobante
             $table->integer('establishment_code');            // codigo_establecimiento
             $table->integer('emission_point_code');           // codigo_punto_emision
             $table->string('sequential', 20);                 // secuencial
-            $table->date('issued_on');  
+            $table->date('issued_on');
             $table->timestamps();
         });
     }

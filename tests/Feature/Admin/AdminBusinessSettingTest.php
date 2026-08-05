@@ -24,8 +24,7 @@ function businessSettingsPayload(
 
         'store' => [
             'accepts_orders' => true,
-            'closed_message' =>
-                'En este momento no estamos recibiendo pedidos.',
+            'closed_message' => 'En este momento no estamos recibiendo pedidos.',
             'estimated_minutes' => 35,
             'currency' => 'USD',
             'timezone' => 'America/Guayaquil',
@@ -47,8 +46,7 @@ function businessSettingsPayload(
         'whatsapp' => [
             'active' => true,
             'phone' => '593999999999',
-            'receipt_template' =>
-                'Hola, adjunto el comprobante de mi pedido.',
+            'receipt_template' => 'Hola, adjunto el comprobante de mi pedido.',
         ],
     ];
 
@@ -63,7 +61,6 @@ describe('Configuración administrativa del negocio', function (): void {
         'requiere autenticación',
         function (): void {
             /** @var TestCase $this */
-
             $this
                 ->getJson('/api/v1/admin/settings')
                 ->assertUnauthorized();
@@ -81,7 +78,6 @@ describe('Configuración administrativa del negocio', function (): void {
         'impide el acceso a clientes',
         function (): void {
             /** @var TestCase $this */
-
             $customer = User::factory()
                 ->customer()
                 ->create();
@@ -97,7 +93,6 @@ describe('Configuración administrativa del negocio', function (): void {
         'permite al administrador consultar la configuración',
         function (): void {
             /** @var TestCase $this */
-
             $admin = User::factory()
                 ->admin()
                 ->create();
@@ -144,7 +139,6 @@ describe('Configuración administrativa del negocio', function (): void {
         'actualiza y persiste toda la configuración',
         function (): void {
             /** @var TestCase $this */
-
             $admin = User::factory()
                 ->admin()
                 ->create();
@@ -183,29 +177,21 @@ describe('Configuración administrativa del negocio', function (): void {
             $this->assertDatabaseHas(
                 'business_settings',
                 [
-                    'business_name' =>
-                        "CHEO' PIZZA",
+                    'business_name' => "CHEO' PIZZA",
 
-                    'phone' =>
-                        '0999999999',
+                    'phone' => '0999999999',
 
-                    'accepts_orders' =>
-                        true,
+                    'accepts_orders' => true,
 
-                    'delivery_fee' =>
-                        '1.50',
+                    'delivery_fee' => '1.50',
 
-                    'minimum_order' =>
-                        '5.00',
+                    'minimum_order' => '5.00',
 
-                    'paypal_enabled' =>
-                        true,
+                    'paypal_enabled' => true,
 
-                    'transfer_enabled' =>
-                        true,
+                    'transfer_enabled' => true,
 
-                    'cash_enabled' =>
-                        true,
+                    'cash_enabled' => true,
                 ],
             );
 
@@ -214,8 +200,7 @@ describe('Configuración administrativa del negocio', function (): void {
                 [
                     'active' => true,
                     'phone' => '593999999999',
-                    'receipt_template' =>
-                        'Hola, adjunto el comprobante de mi pedido.',
+                    'receipt_template' => 'Hola, adjunto el comprobante de mi pedido.',
                 ],
             );
 
@@ -233,7 +218,6 @@ describe('Configuración administrativa del negocio', function (): void {
         'normaliza textos y correo antes de guardar',
         function (): void {
             /** @var TestCase $this */
-
             $admin = User::factory()
                 ->admin()
                 ->create();
@@ -266,17 +250,13 @@ describe('Configuración administrativa del negocio', function (): void {
             $this->assertDatabaseHas(
                 'business_settings',
                 [
-                    'business_name' =>
-                        "CHEO' PIZZA",
+                    'business_name' => "CHEO' PIZZA",
 
-                    'phone' =>
-                        '0999999999',
+                    'phone' => '0999999999',
 
-                    'email' =>
-                        'contacto@cheofpizza.com',
+                    'email' => 'contacto@cheofpizza.com',
 
-                    'address' =>
-                        'Ecuador',
+                    'address' => 'Ecuador',
                 ],
             );
         },
@@ -286,7 +266,6 @@ describe('Configuración administrativa del negocio', function (): void {
         'exige retiro o entrega a domicilio',
         function (): void {
             /** @var TestCase $this */
-
             $admin = User::factory()
                 ->admin()
                 ->create();
@@ -315,7 +294,6 @@ describe('Configuración administrativa del negocio', function (): void {
         'exige al menos un método de pago',
         function (): void {
             /** @var TestCase $this */
-
             $admin = User::factory()
                 ->admin()
                 ->create();
@@ -345,7 +323,6 @@ describe('Configuración administrativa del negocio', function (): void {
         'exige mensaje cuando la tienda está cerrada',
         function (): void {
             /** @var TestCase $this */
-
             $admin = User::factory()
                 ->admin()
                 ->create();
@@ -374,7 +351,6 @@ describe('Configuración administrativa del negocio', function (): void {
         'expone públicamente solo la configuración segura',
         function (): void {
             /** @var TestCase $this */
-
             $admin = User::factory()
                 ->admin()
                 ->create();

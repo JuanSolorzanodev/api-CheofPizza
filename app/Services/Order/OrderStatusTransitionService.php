@@ -10,6 +10,7 @@ use Illuminate\Validation\ValidationException;
 final class OrderStatusTransitionService
 {
     public const DELIVERY_TYPE_PICKUP = 'pickup';
+
     public const DELIVERY_TYPE_DELIVERY = 'delivery';
 
     /**
@@ -122,7 +123,7 @@ final class OrderStatusTransitionService
         );
 
         if (
-            !in_array(
+            ! in_array(
                 $destinationStatus,
                 $allowedTransitions,
                 true,

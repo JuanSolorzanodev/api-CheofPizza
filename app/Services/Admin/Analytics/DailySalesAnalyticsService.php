@@ -51,14 +51,11 @@ final class DailySalesAnalyticsService
         );
 
         return [
-            'period' =>
-                $range->toArray(),
+            'period' => $range->toArray(),
 
-            'totals' =>
-                $this->calculateTotals($days),
+            'totals' => $this->calculateTotals($days),
 
-            'days' =>
-                $days,
+            'days' => $days,
         ];
     }
 
@@ -333,12 +330,11 @@ final class DailySalesAnalyticsService
     /**
      * Construye una fila por cada día calendario del periodo.
      *
-     * @param Collection<string, object> $deliveredOrders
-     * @param Collection<string, object> $cancelledOrders
-     * @param Collection<string, object> $standalonePizzas
-     * @param Collection<string, object> $promotionPizzas
-     * @param Collection<string, object> $promotions
-     *
+     * @param  Collection<string, object>  $deliveredOrders
+     * @param  Collection<string, object>  $cancelledOrders
+     * @param  Collection<string, object>  $standalonePizzas
+     * @param  Collection<string, object>  $promotionPizzas
+     * @param  Collection<string, object>  $promotions
      * @return list<array{
      *     date: string,
      *     gross_sales: float,
@@ -451,35 +447,25 @@ final class DailySalesAnalyticsService
                     : 0.0;
 
             $result[] = [
-                'date' =>
-                    $dateKey,
+                'date' => $dateKey,
 
-                'gross_sales' =>
-                    (float) $grossSales,
+                'gross_sales' => (float) $grossSales,
 
-                'refunds' =>
-                    (float) $refunds,
+                'refunds' => (float) $refunds,
 
-                'net_sales' =>
-                    (float) $netSales,
+                'net_sales' => (float) $netSales,
 
-                'delivered_orders' =>
-                    $deliveredCount,
+                'delivered_orders' => $deliveredCount,
 
-                'cancelled_orders' =>
-                    $cancelledCount,
+                'cancelled_orders' => $cancelledCount,
 
-                'pizzas_sold' =>
-                    $pizzasSold,
+                'pizzas_sold' => $pizzasSold,
 
-                'promotions_sold' =>
-                    $promotionsSold,
+                'promotions_sold' => $promotionsSold,
 
-                'average_ticket' =>
-                    (float) $averageTicket,
+                'average_ticket' => (float) $averageTicket,
 
-                'cancellation_rate' =>
-                    $cancellationRate,
+                'cancellation_rate' => $cancellationRate,
             ];
 
             $date = $date->addDay();
@@ -489,8 +475,7 @@ final class DailySalesAnalyticsService
     }
 
     /**
-     * @param list<array<string, int|float>> $days
-     *
+     * @param  list<array<string, int|float>>  $days
      * @return array{
      *     gross_sales: float,
      *     refunds: float,
@@ -572,32 +557,23 @@ final class DailySalesAnalyticsService
                 : 0.0;
 
         return [
-            'gross_sales' =>
-                (float) $grossSales,
+            'gross_sales' => (float) $grossSales,
 
-            'refunds' =>
-                (float) $refunds,
+            'refunds' => (float) $refunds,
 
-            'net_sales' =>
-                (float) $netSales,
+            'net_sales' => (float) $netSales,
 
-            'delivered_orders' =>
-                $deliveredOrders,
+            'delivered_orders' => $deliveredOrders,
 
-            'cancelled_orders' =>
-                $cancelledOrders,
+            'cancelled_orders' => $cancelledOrders,
 
-            'pizzas_sold' =>
-                $pizzasSold,
+            'pizzas_sold' => $pizzasSold,
 
-            'promotions_sold' =>
-                $promotionsSold,
+            'promotions_sold' => $promotionsSold,
 
-            'average_ticket' =>
-                (float) $averageTicket,
+            'average_ticket' => (float) $averageTicket,
 
-            'cancellation_rate' =>
-                $cancellationRate,
+            'cancellation_rate' => $cancellationRate,
         ];
     }
 }

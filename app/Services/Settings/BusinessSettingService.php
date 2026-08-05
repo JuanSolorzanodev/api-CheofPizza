@@ -28,8 +28,7 @@ final class BusinessSettingService
         return Cache::remember(
             self::CACHE_KEY,
             now()->addMinutes(10),
-            fn (): BusinessSetting =>
-                $this->findOrCreate(),
+            fn (): BusinessSetting => $this->findOrCreate(),
         );
     }
 
@@ -46,13 +45,12 @@ final class BusinessSettingService
             ->create([
                 'active' => false,
                 'phone' => null,
-                'receipt_template' =>
-                    'Hola, adjunto el comprobante de mi pedido.',
+                'receipt_template' => 'Hola, adjunto el comprobante de mi pedido.',
             ]);
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function update(
         array $payload,
@@ -79,53 +77,37 @@ final class BusinessSettingService
                 $whatsapp = $payload['whatsapp'];
 
                 $setting->fill([
-                    'business_name' =>
-                        $business['name'],
+                    'business_name' => $business['name'],
 
-                    'phone' =>
-                        $business['phone'],
+                    'phone' => $business['phone'],
 
-                    'email' =>
-                        $business['email'],
+                    'email' => $business['email'],
 
-                    'address' =>
-                        $business['address'],
+                    'address' => $business['address'],
 
-                    'accepts_orders' =>
-                        $store['accepts_orders'],
+                    'accepts_orders' => $store['accepts_orders'],
 
-                    'closed_message' =>
-                        $store['closed_message'],
+                    'closed_message' => $store['closed_message'],
 
-                    'estimated_minutes' =>
-                        $store['estimated_minutes'],
+                    'estimated_minutes' => $store['estimated_minutes'],
 
-                    'currency' =>
-                        $store['currency'],
+                    'currency' => $store['currency'],
 
-                    'timezone' =>
-                        $store['timezone'],
+                    'timezone' => $store['timezone'],
 
-                    'pickup_enabled' =>
-                        $delivery['pickup_enabled'],
+                    'pickup_enabled' => $delivery['pickup_enabled'],
 
-                    'delivery_enabled' =>
-                        $delivery['delivery_enabled'],
+                    'delivery_enabled' => $delivery['delivery_enabled'],
 
-                    'delivery_fee' =>
-                        $delivery['delivery_fee'],
+                    'delivery_fee' => $delivery['delivery_fee'],
 
-                    'minimum_order' =>
-                        $delivery['minimum_order'],
+                    'minimum_order' => $delivery['minimum_order'],
 
-                    'paypal_enabled' =>
-                        $payments['paypal_enabled'],
+                    'paypal_enabled' => $payments['paypal_enabled'],
 
-                    'transfer_enabled' =>
-                        $payments['transfer_enabled'],
+                    'transfer_enabled' => $payments['transfer_enabled'],
 
-                    'cash_enabled' =>
-                        $payments['cash_enabled'],
+                    'cash_enabled' => $payments['cash_enabled'],
                 ])->save();
 
                 $whatsappSetting =
@@ -135,18 +117,15 @@ final class BusinessSettingService
 
                 if ($whatsappSetting === null) {
                     $whatsappSetting =
-                        new WhatsAppSetting();
+                        new WhatsAppSetting;
                 }
 
                 $whatsappSetting->fill([
-                    'active' =>
-                        $whatsapp['active'],
+                    'active' => $whatsapp['active'],
 
-                    'phone' =>
-                        $whatsapp['phone'],
+                    'phone' => $whatsapp['phone'],
 
-                    'receipt_template' =>
-                        $whatsapp['receipt_template'],
+                    'receipt_template' => $whatsapp['receipt_template'],
                 ])->save();
 
                 return $setting->refresh();

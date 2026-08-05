@@ -19,12 +19,10 @@ final class OperatorOrderService
 {
     public function __construct(
         private readonly OrderStatusTransitionService $transitionService,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $filters
-     *
+     * @param  array<string, mixed>  $filters
      * @return LengthAwarePaginator<int, Order>
      */
     public function paginate(
@@ -275,8 +273,8 @@ final class OperatorOrderService
     }
 
     /**
-     * @param Builder<Order> $query
-     * @param array<string, mixed> $filters
+     * @param  Builder<Order>  $query
+     * @param  array<string, mixed>  $filters
      */
     private function applyFilters(
         Builder $query,
@@ -354,7 +352,7 @@ final class OperatorOrderService
             );
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate(
                 'ordered_at',
                 '>=',
@@ -362,7 +360,7 @@ final class OperatorOrderService
             );
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate(
                 'ordered_at',
                 '<=',

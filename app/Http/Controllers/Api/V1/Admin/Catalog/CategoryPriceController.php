@@ -16,13 +16,11 @@ final class CategoryPriceController
         AdminCatalogService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                AdminCategoryPriceResource::collection(
-                    $service->categoryPrices()
-                ),
+            data: AdminCategoryPriceResource::collection(
+                $service->categoryPrices()
+            ),
 
-            message:
-                'Precios por categoría recuperados correctamente.'
+            message: 'Precios por categoría recuperados correctamente.'
         );
     }
 
@@ -41,13 +39,11 @@ final class CategoryPriceController
             );
 
         return ApiResponse::success(
-            data:
-                AdminCategoryPriceResource::collection(
-                    $updatedPrices
-                ),
+            data: AdminCategoryPriceResource::collection(
+                $updatedPrices
+            ),
 
-            message:
-                'Precios actualizados correctamente.'
+            message: 'Precios actualizados correctamente.'
         );
     }
 }

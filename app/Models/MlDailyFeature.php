@@ -43,56 +43,39 @@ final class MlDailyFeature extends Model
     protected function casts(): array
     {
         return [
-            'date' =>
-                'immutable_date',
+            'date' => 'immutable_date',
 
-            'total_pizzas_sold' =>
-                'integer',
+            'total_pizzas_sold' => 'integer',
 
-            'mini_sales' =>
-                'integer',
+            'mini_sales' => 'integer',
 
-            'small_sales' =>
-                'integer',
+            'small_sales' => 'integer',
 
-            'medium_sales' =>
-                'integer',
+            'medium_sales' => 'integer',
 
-            'family_sales' =>
-                'integer',
+            'family_sales' => 'integer',
 
-            'giant_sales' =>
-                'integer',
+            'giant_sales' => 'integer',
 
-            'basic_sales' =>
-                'integer',
+            'basic_sales' => 'integer',
 
-            'special_sales' =>
-                'integer',
+            'special_sales' => 'integer',
 
-            'promotion_sales' =>
-                'integer',
+            'promotion_sales' => 'integer',
 
-            'regular_sales' =>
-                'integer',
+            'regular_sales' => 'integer',
 
-            'delivered_orders' =>
-                'integer',
+            'delivered_orders' => 'integer',
 
-            'cancelled_orders' =>
-                'integer',
+            'cancelled_orders' => 'integer',
 
-            'net_sales' =>
-                'decimal:2',
+            'net_sales' => 'decimal:2',
 
-            'pickup_orders' =>
-                'integer',
+            'pickup_orders' => 'integer',
 
-            'delivery_orders' =>
-                'integer',
+            'delivery_orders' => 'integer',
 
-            'consolidated_at' =>
-                'immutable_datetime',
+            'consolidated_at' => 'immutable_datetime',
         ];
     }
 }

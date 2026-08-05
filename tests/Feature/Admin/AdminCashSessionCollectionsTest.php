@@ -25,7 +25,6 @@ it(
     'calculates collections for all successful payment methods during the cash session',
     function (): void {
         /** @var TestCase $this */
-
         CarbonImmutable::setTestNow(
             '2026-08-03 17:00:00'
         );
@@ -41,15 +40,13 @@ it(
         $deliveredStatus =
             OrderStatus::query()
                 ->firstOrCreate([
-                    'status_name' =>
-                        'delivered',
+                    'status_name' => 'delivered',
                 ]);
 
         $pickup =
             DeliveryType::query()
                 ->firstOrCreate([
-                    'delivery_type_name' =>
-                        'pickup',
+                    'delivery_type_name' => 'pickup',
                 ]);
 
         $cashMethod =
@@ -57,11 +54,9 @@ it(
                 ->firstOrCreate(
                     ['name' => 'cash'],
                     [
-                        'description' =>
-                            'Efectivo',
+                        'description' => 'Efectivo',
 
-                        'active' =>
-                            true,
+                        'active' => true,
                     ],
                 );
 
@@ -70,11 +65,9 @@ it(
                 ->firstOrCreate(
                     ['name' => 'transfer'],
                     [
-                        'description' =>
-                            'Transferencia',
+                        'description' => 'Transferencia',
 
-                        'active' =>
-                            true,
+                        'active' => true,
                     ],
                 );
 
@@ -83,31 +76,24 @@ it(
                 ->firstOrCreate(
                     ['name' => 'card'],
                     [
-                        'description' =>
-                            'PayPal',
+                        'description' => 'PayPal',
 
-                        'active' =>
-                            true,
+                        'active' => true,
                     ],
                 );
 
         $session =
             CashSession::query()
                 ->create([
-                    'uuid' =>
-                        (string) Str::uuid(),
+                    'uuid' => (string) Str::uuid(),
 
-                    'opened_by' =>
-                        $admin->id,
+                    'opened_by' => $admin->id,
 
-                    'status' =>
-                        CashSessionStatus::Open,
+                    'status' => CashSessionStatus::Open,
 
-                    'opening_amount' =>
-                        '20.00',
+                    'opening_amount' => '20.00',
 
-                    'opened_at' =>
-                        now(),
+                    'opened_at' => now(),
                 ]);
 
         /*
@@ -119,50 +105,36 @@ it(
         $cashOrder =
             Order::query()
                 ->create([
-                    'order_number' =>
-                        'CH-COLLECTION-CASH',
+                    'order_number' => 'CH-COLLECTION-CASH',
 
-                    'user_id' =>
-                        $customer->id,
+                    'user_id' => $customer->id,
 
-                    'ordered_at' =>
-                        '2026-08-03 17:10:00',
+                    'ordered_at' => '2026-08-03 17:10:00',
 
-                    'subtotal' =>
-                        '30.00',
+                    'subtotal' => '30.00',
 
-                    'delivery_fee' =>
-                        '0.00',
+                    'delivery_fee' => '0.00',
 
-                    'total' =>
-                        '30.00',
+                    'total' => '30.00',
 
-                    'delivery_type_id' =>
-                        $pickup->id,
+                    'delivery_type_id' => $pickup->id,
 
-                    'payment_method_id' =>
-                        $cashMethod->id,
+                    'payment_method_id' => $cashMethod->id,
 
-                    'order_status_id' =>
-                        $deliveredStatus->id,
+                    'order_status_id' => $deliveredStatus->id,
                 ]);
 
         OrderStatusChange::query()
             ->create([
-                'order_id' =>
-                    $cashOrder->id,
+                'order_id' => $cashOrder->id,
 
-                'from_order_status_id' =>
-                    null,
+                'from_order_status_id' => null,
 
-                'to_order_status_id' =>
-                    $deliveredStatus->id,
+                'to_order_status_id' => $deliveredStatus->id,
 
-                'changed_by_user_id' =>
-                    $admin->id,
+                'changed_by_user_id' => $admin->id,
 
-                'changed_at' =>
-                    '2026-08-03 18:00:00',
+                'changed_at' => '2026-08-03 18:00:00',
             ]);
 
         /*
@@ -174,71 +146,50 @@ it(
         $transferOrder =
             Order::query()
                 ->create([
-                    'order_number' =>
-                        'CH-COLLECTION-TRANSFER',
+                    'order_number' => 'CH-COLLECTION-TRANSFER',
 
-                    'user_id' =>
-                        $customer->id,
+                    'user_id' => $customer->id,
 
-                    'ordered_at' =>
-                        '2026-08-03 17:20:00',
+                    'ordered_at' => '2026-08-03 17:20:00',
 
-                    'subtotal' =>
-                        '40.00',
+                    'subtotal' => '40.00',
 
-                    'delivery_fee' =>
-                        '0.00',
+                    'delivery_fee' => '0.00',
 
-                    'total' =>
-                        '40.00',
+                    'total' => '40.00',
 
-                    'delivery_type_id' =>
-                        $pickup->id,
+                    'delivery_type_id' => $pickup->id,
 
-                    'payment_method_id' =>
-                        $transferMethod->id,
+                    'payment_method_id' => $transferMethod->id,
 
-                    'order_status_id' =>
-                        $deliveredStatus->id,
+                    'order_status_id' => $deliveredStatus->id,
                 ]);
 
         PaymentReceipt::query()
             ->create([
-                'uuid' =>
-                    (string) Str::uuid(),
+                'uuid' => (string) Str::uuid(),
 
-                'order_id' =>
-                    $transferOrder->id,
+                'order_id' => $transferOrder->id,
 
-                'user_id' =>
-                    $customer->id,
+                'user_id' => $customer->id,
 
-                'disk' =>
-                    'payment_receipts',
+                'disk' => 'payment_receipts',
 
-                'file_path' =>
-                    'tests/transfer.jpg',
+                'file_path' => 'tests/transfer.jpg',
 
-                'original_name' =>
-                    'transfer.jpg',
+                'original_name' => 'transfer.jpg',
 
-                'mime_type' =>
-                    'image/jpeg',
+                'mime_type' => 'image/jpeg',
 
-                'file_size' =>
-                    1024,
+                'file_size' => 1024,
 
-                'status' =>
-                    PaymentReceiptStatus::Approved,
+                'status' => PaymentReceiptStatus::Approved,
 
-                'submitted_at' =>
-                    '2026-08-03 18:10:00',
+                'submitted_at' => '2026-08-03 18:10:00',
 
-                'reviewed_at' =>
-                    '2026-08-03 18:20:00',
+                'reviewed_at' => '2026-08-03 18:20:00',
 
-                'reviewed_by' =>
-                    $admin->id,
+                'reviewed_by' => $admin->id,
             ]);
 
         /*
@@ -250,71 +201,50 @@ it(
         $paypalOrder =
             Order::query()
                 ->create([
-                    'order_number' =>
-                        'CH-COLLECTION-PAYPAL',
+                    'order_number' => 'CH-COLLECTION-PAYPAL',
 
-                    'user_id' =>
-                        $customer->id,
+                    'user_id' => $customer->id,
 
-                    'ordered_at' =>
-                        '2026-08-03 17:30:00',
+                    'ordered_at' => '2026-08-03 17:30:00',
 
-                    'subtotal' =>
-                        '50.00',
+                    'subtotal' => '50.00',
 
-                    'delivery_fee' =>
-                        '0.00',
+                    'delivery_fee' => '0.00',
 
-                    'total' =>
-                        '50.00',
+                    'total' => '50.00',
 
-                    'delivery_type_id' =>
-                        $pickup->id,
+                    'delivery_type_id' => $pickup->id,
 
-                    'payment_method_id' =>
-                        $cardMethod->id,
+                    'payment_method_id' => $cardMethod->id,
 
-                    'order_status_id' =>
-                        $deliveredStatus->id,
+                    'order_status_id' => $deliveredStatus->id,
                 ]);
 
         Payment::query()
             ->create([
-                'uuid' =>
-                    (string) Str::uuid(),
+                'uuid' => (string) Str::uuid(),
 
-                'idempotency_key' =>
-                    (string) Str::uuid(),
+                'idempotency_key' => (string) Str::uuid(),
 
-                'user_id' =>
-                    $customer->id,
+                'user_id' => $customer->id,
 
-                'order_id' =>
-                    $paypalOrder->id,
+                'order_id' => $paypalOrder->id,
 
-                'provider' =>
-                    'paypal',
+                'provider' => 'paypal',
 
-                'provider_order_id' =>
-                    'PAYPAL-COLLECTION-ORDER',
+                'provider_order_id' => 'PAYPAL-COLLECTION-ORDER',
 
-                'provider_capture_id' =>
-                    'PAYPAL-COLLECTION-CAPTURE',
+                'provider_capture_id' => 'PAYPAL-COLLECTION-CAPTURE',
 
-                'provider_status' =>
-                    'COMPLETED',
+                'provider_status' => 'COMPLETED',
 
-                'amount' =>
-                    '50.00',
+                'amount' => '50.00',
 
-                'currency' =>
-                    'USD',
+                'currency' => 'USD',
 
-                'status' =>
-                    PaymentStatus::COMPLETED,
+                'status' => PaymentStatus::COMPLETED,
 
-                'paid_at' =>
-                    '2026-08-03 18:30:00',
+                'paid_at' => '2026-08-03 18:30:00',
             ]);
 
         CarbonImmutable::setTestNow(
@@ -380,7 +310,6 @@ it(
     'excludes pending and out of session electronic payments',
     function (): void {
         /** @var TestCase $this */
-
         CarbonImmutable::setTestNow(
             '2026-08-03 17:00:00'
         );
@@ -396,15 +325,13 @@ it(
         $pickup =
             DeliveryType::query()
                 ->firstOrCreate([
-                    'delivery_type_name' =>
-                        'pickup',
+                    'delivery_type_name' => 'pickup',
                 ]);
 
         $status =
             OrderStatus::query()
                 ->firstOrCreate([
-                    'status_name' =>
-                        'delivered',
+                    'status_name' => 'delivered',
                 ]);
 
         $transferMethod =
@@ -412,11 +339,9 @@ it(
                 ->firstOrCreate(
                     ['name' => 'transfer'],
                     [
-                        'description' =>
-                            'Transferencia',
+                        'description' => 'Transferencia',
 
-                        'active' =>
-                            true,
+                        'active' => true,
                     ],
                 );
 
@@ -425,164 +350,117 @@ it(
                 ->firstOrCreate(
                     ['name' => 'card'],
                     [
-                        'description' =>
-                            'PayPal',
+                        'description' => 'PayPal',
 
-                        'active' =>
-                            true,
+                        'active' => true,
                     ],
                 );
 
         $session =
             CashSession::query()
                 ->create([
-                    'uuid' =>
-                        (string) Str::uuid(),
+                    'uuid' => (string) Str::uuid(),
 
-                    'opened_by' =>
-                        $admin->id,
+                    'opened_by' => $admin->id,
 
-                    'status' =>
-                        CashSessionStatus::Open,
+                    'status' => CashSessionStatus::Open,
 
-                    'opening_amount' =>
-                        '10.00',
+                    'opening_amount' => '10.00',
 
-                    'opened_at' =>
-                        now(),
+                    'opened_at' => now(),
                 ]);
 
         $pendingTransfer =
             Order::query()
                 ->create([
-                    'order_number' =>
-                        'CH-PENDING-TRANSFER',
+                    'order_number' => 'CH-PENDING-TRANSFER',
 
-                    'user_id' =>
-                        $customer->id,
+                    'user_id' => $customer->id,
 
-                    'ordered_at' =>
-                        '2026-08-03 17:10:00',
+                    'ordered_at' => '2026-08-03 17:10:00',
 
-                    'subtotal' =>
-                        '25.00',
+                    'subtotal' => '25.00',
 
-                    'delivery_fee' =>
-                        '0.00',
+                    'delivery_fee' => '0.00',
 
-                    'total' =>
-                        '25.00',
+                    'total' => '25.00',
 
-                    'delivery_type_id' =>
-                        $pickup->id,
+                    'delivery_type_id' => $pickup->id,
 
-                    'payment_method_id' =>
-                        $transferMethod->id,
+                    'payment_method_id' => $transferMethod->id,
 
-                    'order_status_id' =>
-                        $status->id,
+                    'order_status_id' => $status->id,
                 ]);
 
         PaymentReceipt::query()
             ->create([
-                'uuid' =>
-                    (string) Str::uuid(),
+                'uuid' => (string) Str::uuid(),
 
-                'order_id' =>
-                    $pendingTransfer->id,
+                'order_id' => $pendingTransfer->id,
 
-                'user_id' =>
-                    $customer->id,
+                'user_id' => $customer->id,
 
-                'disk' =>
-                    'payment_receipts',
+                'disk' => 'payment_receipts',
 
-                'file_path' =>
-                    'tests/pending.jpg',
+                'file_path' => 'tests/pending.jpg',
 
-                'original_name' =>
-                    'pending.jpg',
+                'original_name' => 'pending.jpg',
 
-                'mime_type' =>
-                    'image/jpeg',
+                'mime_type' => 'image/jpeg',
 
-                'file_size' =>
-                    512,
+                'file_size' => 512,
 
-                'status' =>
-                    PaymentReceiptStatus::Pending,
+                'status' => PaymentReceiptStatus::Pending,
 
-                'submitted_at' =>
-                    '2026-08-03 18:00:00',
+                'submitted_at' => '2026-08-03 18:00:00',
             ]);
 
         Payment::query()
             ->create([
-                'uuid' =>
-                    (string) Str::uuid(),
+                'uuid' => (string) Str::uuid(),
 
-                'idempotency_key' =>
-                    (string) Str::uuid(),
+                'idempotency_key' => (string) Str::uuid(),
 
-                'user_id' =>
-                    $customer->id,
+                'user_id' => $customer->id,
 
-                'provider' =>
-                    'paypal',
+                'provider' => 'paypal',
 
-                'provider_order_id' =>
-                    'PAYPAL-PENDING',
+                'provider_order_id' => 'PAYPAL-PENDING',
 
-                'provider_status' =>
-                    'APPROVED',
+                'provider_status' => 'APPROVED',
 
-                'amount' =>
-                    '35.00',
+                'amount' => '35.00',
 
-                'currency' =>
-                    'USD',
+                'currency' => 'USD',
 
-                'status' =>
-                    PaymentStatus::APPROVED,
+                'status' => PaymentStatus::APPROVED,
 
-                'approved_at' =>
-                    '2026-08-03 18:20:00',
+                'approved_at' => '2026-08-03 18:20:00',
             ]);
 
         Payment::query()
             ->create([
-                'uuid' =>
-                    (string) Str::uuid(),
+                'uuid' => (string) Str::uuid(),
 
-                'idempotency_key' =>
-                    (string) Str::uuid(),
+                'idempotency_key' => (string) Str::uuid(),
 
-                'user_id' =>
-                    $customer->id,
+                'user_id' => $customer->id,
 
-                'provider' =>
-                    'paypal',
+                'provider' => 'paypal',
 
-                'provider_order_id' =>
-                    'PAYPAL-OUTSIDE',
+                'provider_order_id' => 'PAYPAL-OUTSIDE',
 
-                'provider_capture_id' =>
-                    'CAPTURE-OUTSIDE',
+                'provider_capture_id' => 'CAPTURE-OUTSIDE',
 
-                'provider_status' =>
-                    'COMPLETED',
+                'provider_status' => 'COMPLETED',
 
-                'amount' =>
-                    '60.00',
+                'amount' => '60.00',
 
-                'currency' =>
-                    'USD',
+                'currency' => 'USD',
 
-                'status' =>
-                    PaymentStatus::COMPLETED,
+                'status' => PaymentStatus::COMPLETED,
 
-                'paid_at' =>
-                    '2026-08-03 16:30:00',
+                'paid_at' => '2026-08-03 16:30:00',
             ]);
 
         CarbonImmutable::setTestNow(

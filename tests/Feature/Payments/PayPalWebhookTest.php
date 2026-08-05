@@ -18,17 +18,13 @@ function paypalWebhookTestHeaders(): array
     return [
         'PAYPAL-AUTH-ALGO' => 'SHA256withRSA',
 
-        'PAYPAL-CERT-URL' =>
-            'https://api-m.sandbox.paypal.com/v1/notifications/certs/CERT-TEST',
+        'PAYPAL-CERT-URL' => 'https://api-m.sandbox.paypal.com/v1/notifications/certs/CERT-TEST',
 
-        'PAYPAL-TRANSMISSION-ID' =>
-            'TRANSMISSION-ID-TEST',
+        'PAYPAL-TRANSMISSION-ID' => 'TRANSMISSION-ID-TEST',
 
-        'PAYPAL-TRANSMISSION-SIG' =>
-            'TRANSMISSION-SIGNATURE-TEST',
+        'PAYPAL-TRANSMISSION-SIG' => 'TRANSMISSION-SIGNATURE-TEST',
 
-        'PAYPAL-TRANSMISSION-TIME' =>
-            '2026-07-16T18:30:00Z',
+        'PAYPAL-TRANSMISSION-TIME' => '2026-07-16T18:30:00Z',
     ];
 }
 
@@ -69,14 +65,11 @@ function fakePayPalWebhookVerification(
                     === "{$baseUrl}/v1/oauth2/token"
             ) {
                 return Http::response([
-                    'access_token' =>
-                        'ACCESS-TOKEN-WEBHOOK-TEST',
+                    'access_token' => 'ACCESS-TOKEN-WEBHOOK-TEST',
 
-                    'token_type' =>
-                        'Bearer',
+                    'token_type' => 'Bearer',
 
-                    'expires_in' =>
-                        32400,
+                    'expires_in' => 32400,
                 ], 200);
             }
 
@@ -86,16 +79,14 @@ function fakePayPalWebhookVerification(
                     === "{$baseUrl}/v1/notifications/verify-webhook-signature"
             ) {
                 return Http::response([
-                    'verification_status' =>
-                        $verificationStatus,
+                    'verification_status' => $verificationStatus,
                 ], 200);
             }
 
             return Http::response([
                 'name' => 'UNEXPECTED_REQUEST',
 
-                'message' =>
-                    "Petición no configurada: {$request->method()} {$request->url()}",
+                'message' => "Petición no configurada: {$request->method()} {$request->url()}",
             ], 500);
         },
     );
@@ -118,24 +109,18 @@ function unknownPayPalWebhookPayload(
 
         'event_version' => '1.0',
 
-        'create_time' =>
-            '2026-07-16T18:30:00.000Z',
+        'create_time' => '2026-07-16T18:30:00.000Z',
 
-        'resource_type' =>
-            'checkout-order',
+        'resource_type' => 'checkout-order',
 
-        'event_type' =>
-            'CHECKOUT.ORDER.APPROVED',
+        'event_type' => 'CHECKOUT.ORDER.APPROVED',
 
-        'summary' =>
-            'A checkout order was approved.',
+        'summary' => 'A checkout order was approved.',
 
         'resource' => [
-            'id' =>
-                'PAYPAL-ORDER-WEBHOOK-TEST',
+            'id' => 'PAYPAL-ORDER-WEBHOOK-TEST',
 
-            'status' =>
-                'APPROVED',
+            'status' => 'APPROVED',
         ],
 
         'links' => [],
@@ -147,14 +132,12 @@ describe('Webhooks PayPal', function (): void {
         'rechaza un webhook cuya firma no fue confirmada por PayPal',
         function (): void {
             /** @var TestCase $this */
-
             fakePayPalWebhookVerification(
                 verificationStatus: 'FAILURE',
             );
 
             $payload = unknownPayPalWebhookPayload(
-                eventId:
-                    'WH-EVENT-INVALID-SIGNATURE',
+                eventId: 'WH-EVENT-INVALID-SIGNATURE',
             );
 
             $response = $this->postJson(
@@ -185,8 +168,7 @@ describe('Webhooks PayPal', function (): void {
             $this->assertDatabaseMissing(
                 'paypal_webhook_events',
                 [
-                    'event_id' =>
-                        'WH-EVENT-INVALID-SIGNATURE',
+                    'event_id' => 'WH-EVENT-INVALID-SIGNATURE',
                 ],
             );
 
@@ -257,7 +239,6 @@ describe('Webhooks PayPal', function (): void {
         'registra una sola vez un webhook válido aunque PayPal lo reenvíe',
         function (): void {
             /** @var TestCase $this */
-
             fakePayPalWebhookVerification(
                 verificationStatus: 'SUCCESS',
             );
@@ -331,20 +312,15 @@ describe('Webhooks PayPal', function (): void {
             $this->assertDatabaseHas(
                 'paypal_webhook_events',
                 [
-                    'event_id' =>
-                        $eventId,
+                    'event_id' => $eventId,
 
-                    'event_type' =>
-                        'CHECKOUT.ORDER.APPROVED',
+                    'event_type' => 'CHECKOUT.ORDER.APPROVED',
 
-                    'resource_type' =>
-                        'checkout-order',
+                    'resource_type' => 'checkout-order',
 
-                    'verification_status' =>
-                        'SUCCESS',
+                    'verification_status' => 'SUCCESS',
 
-                    'processing_status' =>
-                        'ignored',
+                    'processing_status' => 'ignored',
                 ],
             );
 
@@ -406,11 +382,10 @@ describe('Webhooks PayPal', function (): void {
                 ) use ($baseUrl): bool {
                     [$request] = $record;
 
-                    return (
+                    return
                         $request->method() === 'POST'
                         && $request->url()
-                            === "{$baseUrl}/v1/notifications/verify-webhook-signature"
-                    );
+                            === "{$baseUrl}/v1/notifications/verify-webhook-signature";
                 },
             );
 
@@ -432,8 +407,7 @@ describe('Webhooks PayPal', function (): void {
             Http::preventStrayRequests();
 
             config([
-                'paypal.webhook_id' =>
-                    'WH-TEST-123456',
+                'paypal.webhook_id' => 'WH-TEST-123456',
             ]);
 
             $eventId =
@@ -464,8 +438,7 @@ describe('Webhooks PayPal', function (): void {
             $this->assertDatabaseMissing(
                 'paypal_webhook_events',
                 [
-                    'event_id' =>
-                        $eventId,
+                    'event_id' => $eventId,
                 ],
             );
 

@@ -32,7 +32,7 @@ final class PayPalClient
         );
 
         if (
-            !is_string($baseUrl)
+            ! is_string($baseUrl)
             || trim($baseUrl) === ''
         ) {
             throw new RuntimeException(
@@ -67,16 +67,14 @@ final class PayPalClient
                 )
                 ->post(
                     $this->baseUrl()
-                        . '/v1/oauth2/token',
+                        .'/v1/oauth2/token',
                     [
-                        'grant_type' =>
-                            'client_credentials',
+                        'grant_type' => 'client_credentials',
                     ]
                 );
         } catch (ConnectionException $exception) {
             throw new PayPalApiException(
-                message:
-                    'No fue posible conectar con PayPal.',
+                message: 'No fue posible conectar con PayPal.',
                 previous: $exception,
             );
         }
@@ -84,8 +82,7 @@ final class PayPalClient
         if ($response->failed()) {
             throw $this->createApiException(
                 response: $response,
-                fallbackMessage:
-                    'PayPal rechazó la autenticación OAuth.',
+                fallbackMessage: 'PayPal rechazó la autenticación OAuth.',
             );
         }
 
@@ -123,7 +120,7 @@ final class PayPalClient
             $payload['expires_in'] ?? null;
 
         if (
-            !is_string($accessToken)
+            ! is_string($accessToken)
             || trim($accessToken) === ''
         ) {
             throw new PayPalApiException(
@@ -150,8 +147,7 @@ final class PayPalClient
     /**
      * Ejecuta una petición POST con payload JSON.
      *
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      *
      * @throws PayPalApiException
@@ -165,11 +161,9 @@ final class PayPalClient
             $response = $this
                 ->authenticatedRequest()
                 ->withHeaders([
-                    'PayPal-Request-Id' =>
-                        $requestId,
+                    'PayPal-Request-Id' => $requestId,
 
-                    'Prefer' =>
-                        'return=representation',
+                    'Prefer' => 'return=representation',
                 ])
                 ->post(
                     $this->url($uri),
@@ -177,16 +171,14 @@ final class PayPalClient
                 );
         } catch (ConnectionException $exception) {
             throw new PayPalApiException(
-                message:
-                    'No fue posible conectar con PayPal.',
+                message: 'No fue posible conectar con PayPal.',
                 previous: $exception,
             );
         }
 
         return $this->resolveResponse(
             response: $response,
-            fallbackMessage:
-                'PayPal rechazó la operación.',
+            fallbackMessage: 'PayPal rechazó la operación.',
         );
     }
 
@@ -208,11 +200,9 @@ final class PayPalClient
             $response = $this
                 ->authenticatedRequest()
                 ->withHeaders([
-                    'PayPal-Request-Id' =>
-                        $requestId,
+                    'PayPal-Request-Id' => $requestId,
 
-                    'Prefer' =>
-                        'return=representation',
+                    'Prefer' => 'return=representation',
                 ])
                 ->withBody(
                     '{}',
@@ -223,16 +213,14 @@ final class PayPalClient
                 );
         } catch (ConnectionException $exception) {
             throw new PayPalApiException(
-                message:
-                    'No fue posible conectar con PayPal.',
+                message: 'No fue posible conectar con PayPal.',
                 previous: $exception,
             );
         }
 
         return $this->resolveResponse(
             response: $response,
-            fallbackMessage:
-                'PayPal rechazó la operación.',
+            fallbackMessage: 'PayPal rechazó la operación.',
         );
     }
 
@@ -254,16 +242,14 @@ final class PayPalClient
                 );
         } catch (ConnectionException $exception) {
             throw new PayPalApiException(
-                message:
-                    'No fue posible conectar con PayPal.',
+                message: 'No fue posible conectar con PayPal.',
                 previous: $exception,
             );
         }
 
         return $this->resolveResponse(
             response: $response,
-            fallbackMessage:
-                'No fue posible consultar PayPal.',
+            fallbackMessage: 'No fue posible consultar PayPal.',
         );
     }
 
@@ -280,8 +266,7 @@ final class PayPalClient
      *     transmission_sig: ?string,
      *     transmission_time: ?string
      * } $headers
-     *
-     * @param array<string, mixed> $webhookEvent
+     * @param  array<string, mixed>  $webhookEvent
      *
      * @throws PayPalApiException
      * @throws RuntimeException
@@ -331,26 +316,19 @@ final class PayPalClient
             );
 
         $payload = [
-            'auth_algo' =>
-                $authAlgo,
+            'auth_algo' => $authAlgo,
 
-            'cert_url' =>
-                $certUrl,
+            'cert_url' => $certUrl,
 
-            'transmission_id' =>
-                $transmissionId,
+            'transmission_id' => $transmissionId,
 
-            'transmission_sig' =>
-                $transmissionSignature,
+            'transmission_sig' => $transmissionSignature,
 
-            'transmission_time' =>
-                $transmissionTime,
+            'transmission_time' => $transmissionTime,
 
-            'webhook_id' =>
-                $webhookId,
+            'webhook_id' => $webhookId,
 
-            'webhook_event' =>
-                $webhookEvent,
+            'webhook_event' => $webhookEvent,
         ];
 
         try {
@@ -364,16 +342,14 @@ final class PayPalClient
                 );
         } catch (ConnectionException $exception) {
             throw new PayPalApiException(
-                message:
-                    'No fue posible verificar el webhook con PayPal.',
+                message: 'No fue posible verificar el webhook con PayPal.',
                 previous: $exception,
             );
         }
 
         $data = $this->resolveResponse(
             response: $response,
-            fallbackMessage:
-                'PayPal rechazó la verificación del webhook.',
+            fallbackMessage: 'PayPal rechazó la verificación del webhook.',
         );
 
         $verificationStatus = strtoupper(
@@ -417,8 +393,8 @@ final class PayPalClient
         string $uri
     ): string {
         return $this->baseUrl()
-            . '/'
-            . ltrim($uri, '/');
+            .'/'
+            .ltrim($uri, '/');
     }
 
     /**
@@ -437,8 +413,7 @@ final class PayPalClient
 
             throw $this->createApiException(
                 response: $response,
-                fallbackMessage:
-                    $fallbackMessage,
+                fallbackMessage: $fallbackMessage,
             );
         }
 
@@ -456,7 +431,7 @@ final class PayPalClient
         );
 
         if (
-            !is_string($clientId)
+            ! is_string($clientId)
             || trim($clientId) === ''
         ) {
             throw new RuntimeException(
@@ -474,7 +449,7 @@ final class PayPalClient
         );
 
         if (
-            !is_string($clientSecret)
+            ! is_string($clientSecret)
             || trim($clientSecret) === ''
         ) {
             throw new RuntimeException(
@@ -508,7 +483,7 @@ final class PayPalClient
     }
 
     /**
-     * @param array<string, mixed> $headers
+     * @param  array<string, mixed>  $headers
      */
     private function requiredHeader(
         array $headers,
@@ -517,7 +492,7 @@ final class PayPalClient
         $value = $headers[$key] ?? null;
 
         if (
-            !is_string($value)
+            ! is_string($value)
             || trim($value) === ''
         ) {
             throw new RuntimeException(
@@ -547,7 +522,7 @@ final class PayPalClient
         );
 
         if (
-            !is_string($debugId)
+            ! is_string($debugId)
             || trim($debugId) === ''
         ) {
             $debugId = isset(
@@ -586,17 +561,13 @@ final class PayPalClient
         return new PayPalApiException(
             message: $message,
 
-            statusCode:
-                $response->status(),
+            statusCode: $response->status(),
 
-            debugId:
-                $debugId,
+            debugId: $debugId,
 
-            paypalErrorName:
-                $name,
+            paypalErrorName: $name,
 
-            details:
-                $details,
+            details: $details,
         );
     }
 }

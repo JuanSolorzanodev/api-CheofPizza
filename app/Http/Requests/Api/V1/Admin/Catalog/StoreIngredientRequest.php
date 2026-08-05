@@ -52,11 +52,10 @@ final class StoreIngredientRequest extends FormRequest
                     'ingredients',
                     'ingredient_name'
                 )->where(
-                    static fn ($query) =>
-                        $query->where(
-                            'ingredient_type_id',
-                            $typeId
-                        )
+                    static fn ($query) => $query->where(
+                        'ingredient_type_id',
+                        $typeId
+                    )
                 ),
             ],
         ];
@@ -65,19 +64,16 @@ final class StoreIngredientRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'ingredient_type_id' =>
-                'tipo de ingrediente',
+            'ingredient_type_id' => 'tipo de ingrediente',
 
-            'name' =>
-                'nombre del ingrediente',
+            'name' => 'nombre del ingrediente',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'name.unique' =>
-                'Ya existe un ingrediente con este nombre dentro del tipo seleccionado.',
+            'name.unique' => 'Ya existe un ingrediente con este nombre dentro del tipo seleccionado.',
         ];
     }
 }

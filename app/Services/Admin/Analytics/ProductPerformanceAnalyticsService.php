@@ -39,24 +39,19 @@ final class ProductPerformanceAnalyticsService
         $sizes = $this->sizePerformance($range);
 
         return [
-            'period' =>
-                $range->toArray(),
+            'period' => $range->toArray(),
 
-            'summary' =>
-                $this->buildSummary(
-                    pizzas: $pizzas,
-                    promotions: $promotions,
-                    sizes: $sizes,
-                ),
+            'summary' => $this->buildSummary(
+                pizzas: $pizzas,
+                promotions: $promotions,
+                sizes: $sizes,
+            ),
 
-            'pizzas' =>
-                $pizzas,
+            'pizzas' => $pizzas,
 
-            'promotions' =>
-                $promotions,
+            'promotions' => $promotions,
 
-            'sizes' =>
-                $sizes,
+            'sizes' => $sizes,
         ];
     }
 
@@ -230,31 +225,25 @@ final class ProductPerformanceAnalyticsService
                     object $row
                 ): array {
                     return [
-                        'pizza_id' =>
-                            $row->pizza_id !== null
+                        'pizza_id' => $row->pizza_id !== null
                                 ? (int) $row->pizza_id
                                 : null,
 
-                        'pizza_name' =>
-                            (string) $row->pizza_name,
+                        'pizza_name' => (string) $row->pizza_name,
 
-                        'equivalent_units' =>
-                            round(
-                                (float) $row->equivalent_units,
-                                2,
-                            ),
+                        'equivalent_units' => round(
+                            (float) $row->equivalent_units,
+                            2,
+                        ),
 
-                        'complete_units' =>
-                            (int) $row->complete_units,
+                        'complete_units' => (int) $row->complete_units,
 
-                        'half_units' =>
-                            round(
-                                (float) $row->half_units,
-                                2,
-                            ),
+                        'half_units' => round(
+                            (float) $row->half_units,
+                            2,
+                        ),
 
-                        'promotion_units' =>
-                            (int) $row->promotion_units,
+                        'promotion_units' => (int) $row->promotion_units,
                     ];
                 },
             )
@@ -317,22 +306,18 @@ final class ProductPerformanceAnalyticsService
                     object $row
                 ): array {
                     return [
-                        'promotion_id' =>
-                            $row->promotion_id !== null
+                        'promotion_id' => $row->promotion_id !== null
                                 ? (int) $row->promotion_id
                                 : null,
 
-                        'promotion_name' =>
-                            (string) $row->promotion_name,
+                        'promotion_name' => (string) $row->promotion_name,
 
-                        'packages_sold' =>
-                            (int) $row->packages_sold,
+                        'packages_sold' => (int) $row->packages_sold,
 
-                        'gross_sales' =>
-                            round(
-                                (float) $row->gross_sales,
-                                2,
-                            ),
+                        'gross_sales' => round(
+                            (float) $row->gross_sales,
+                            2,
+                        ),
                     ];
                 },
             )
@@ -438,16 +423,13 @@ final class ProductPerformanceAnalyticsService
                     object $row
                 ): array {
                     return [
-                        'size_id' =>
-                            $row->size_id !== null
+                        'size_id' => $row->size_id !== null
                                 ? (int) $row->size_id
                                 : null,
 
-                        'size_name' =>
-                            (string) $row->size_name,
+                        'size_name' => (string) $row->size_name,
 
-                        'pizza_units' =>
-                            (int) $row->pizza_units,
+                        'pizza_units' => (int) $row->pizza_units,
                     ];
                 },
             )
@@ -489,10 +471,9 @@ final class ProductPerformanceAnalyticsService
     }
 
     /**
-     * @param list<array<string, int|float|string|null>> $pizzas
-     * @param list<array<string, int|float|string|null>> $promotions
-     * @param list<array<string, int|float|string|null>> $sizes
-     *
+     * @param  list<array<string, int|float|string|null>>  $pizzas
+     * @param  list<array<string, int|float|string|null>>  $promotions
+     * @param  list<array<string, int|float|string|null>>  $sizes
      * @return array<string, mixed>
      */
     private function buildSummary(
@@ -505,8 +486,7 @@ final class ProductPerformanceAnalyticsService
             static fn (
                 float $carry,
                 array $pizza
-            ): float =>
-                $carry
+            ): float => $carry
                 + (float) $pizza['equivalent_units'],
             0.0,
         );
@@ -516,8 +496,7 @@ final class ProductPerformanceAnalyticsService
             static fn (
                 int $carry,
                 array $promotion
-            ): int =>
-                $carry
+            ): int => $carry
                 + (int) $promotion['packages_sold'],
             0,
         );
@@ -527,8 +506,7 @@ final class ProductPerformanceAnalyticsService
             static fn (
                 float $carry,
                 array $promotion
-            ): float =>
-                $carry
+            ): float => $carry
                 + (float) $promotion['gross_sales'],
             0.0,
         );
@@ -538,26 +516,19 @@ final class ProductPerformanceAnalyticsService
         $topSize = $sizes[0] ?? null;
 
         return [
-            'total_pizza_units' =>
-                round($totalPizzaUnits, 2),
+            'total_pizza_units' => round($totalPizzaUnits, 2),
 
-            'unique_pizzas_sold' =>
-                count($pizzas),
+            'unique_pizzas_sold' => count($pizzas),
 
-            'total_promotion_packages' =>
-                $totalPromotionPackages,
+            'total_promotion_packages' => $totalPromotionPackages,
 
-            'promotion_gross_sales' =>
-                round($promotionGrossSales, 2),
+            'promotion_gross_sales' => round($promotionGrossSales, 2),
 
-            'top_pizza' =>
-                $topPizza,
+            'top_pizza' => $topPizza,
 
-            'top_promotion' =>
-                $topPromotion,
+            'top_promotion' => $topPromotion,
 
-            'top_size' =>
-                $topSize,
+            'top_size' => $topSize,
         ];
     }
 }

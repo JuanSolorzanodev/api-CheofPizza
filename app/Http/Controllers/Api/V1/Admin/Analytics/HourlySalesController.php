@@ -23,8 +23,7 @@ final class HourlySalesController
 
         return ApiResponse::success(
             data: $service->get($range),
-            message:
-                'Ventas por hora recuperadas correctamente.',
+            message: 'Ventas por hora recuperadas correctamente.',
         );
     }
 }

@@ -70,20 +70,15 @@ final class MachineLearningComparisonRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'date_from.required' =>
-                'La fecha inicial es obligatoria.',
+            'date_from.required' => 'La fecha inicial es obligatoria.',
 
-            'date_from.date_format' =>
-                'La fecha inicial debe tener el formato YYYY-MM-DD.',
+            'date_from.date_format' => 'La fecha inicial debe tener el formato YYYY-MM-DD.',
 
-            'date_to.required' =>
-                'La fecha final es obligatoria.',
+            'date_to.required' => 'La fecha final es obligatoria.',
 
-            'date_to.date_format' =>
-                'La fecha final debe tener el formato YYYY-MM-DD.',
+            'date_to.date_format' => 'La fecha final debe tener el formato YYYY-MM-DD.',
 
-            'date_to.after_or_equal' =>
-                'La fecha final no puede ser anterior a la fecha inicial.',
+            'date_to.after_or_equal' => 'La fecha final no puede ser anterior a la fecha inicial.',
         ];
     }
 

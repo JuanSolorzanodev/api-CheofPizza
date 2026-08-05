@@ -13,18 +13,18 @@ return new class extends Migration
     {
         Schema::create('ingredient_size_prices', function (Blueprint $table) {
             $table->id();
-        // 🔗 FK a ingredients
-        $table->foreignId('ingredient_id')
-            ->constrained('ingredients')
-            ->cascadeOnDelete();
+            // 🔗 FK a ingredients
+            $table->foreignId('ingredient_id')
+                ->constrained('ingredients')
+                ->cascadeOnDelete();
 
-        // 🔗 FK a sizes
-        $table->foreignId('size_id')
-            ->constrained('sizes')
-            ->cascadeOnDelete();
+            // 🔗 FK a sizes
+            $table->foreignId('size_id')
+                ->constrained('sizes')
+                ->cascadeOnDelete();
 
-        $table->decimal('extra_price', 10, 2)->default(0);
-        $table->timestamps();
+            $table->decimal('extra_price', 10, 2)->default(0);
+            $table->timestamps();
         });
     }
 

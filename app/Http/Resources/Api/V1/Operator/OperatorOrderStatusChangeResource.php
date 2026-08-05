@@ -18,7 +18,7 @@ class OperatorOrderStatusChangeResource extends JsonResource
             'note' => $this->note,
             'changed_by' => $user ? [
                 'id' => $user->id,
-                'name' => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
+                'name' => trim(($user->first_name ?? '').' '.($user->last_name ?? '')),
                 'email' => $user->email,
             ] : null,
         ];

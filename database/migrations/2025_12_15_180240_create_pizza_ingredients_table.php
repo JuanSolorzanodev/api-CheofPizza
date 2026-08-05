@@ -13,17 +13,17 @@ return new class extends Migration
     {
         Schema::create('pizza_ingredients', function (Blueprint $table) {
             $table->id();
-        // 🔗 FK a pizzas
-        $table->foreignId('pizza_id')
-            ->constrained('pizzas')
-            ->cascadeOnDelete();
+            // 🔗 FK a pizzas
+            $table->foreignId('pizza_id')
+                ->constrained('pizzas')
+                ->cascadeOnDelete();
 
-        // 🔗 FK a ingredients
-        $table->foreignId('ingredient_id')
-            ->constrained('ingredients')
-            ->cascadeOnDelete();
+            // 🔗 FK a ingredients
+            $table->foreignId('ingredient_id')
+                ->constrained('ingredients')
+                ->cascadeOnDelete();
 
-        $table->timestamps();
+            $table->timestamps();
         });
     }
 

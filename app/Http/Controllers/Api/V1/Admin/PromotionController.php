@@ -19,13 +19,11 @@ final class PromotionController
         AdminPromotionService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                AdminPromotionResource::collection(
-                    $service->promotions()
-                ),
+            data: AdminPromotionResource::collection(
+                $service->promotions()
+            ),
 
-            message:
-                'Promociones recuperadas correctamente.'
+            message: 'Promociones recuperadas correctamente.'
         );
     }
 
@@ -34,15 +32,13 @@ final class PromotionController
         AdminPromotionService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new AdminPromotionResource(
-                    $service->create(
-                        $request->validated()
-                    )
-                ),
+            data: new AdminPromotionResource(
+                $service->create(
+                    $request->validated()
+                )
+            ),
 
-            message:
-                'Promoción creada correctamente.',
+            message: 'Promoción creada correctamente.',
 
             status: 201
         );
@@ -53,15 +49,13 @@ final class PromotionController
         AdminPromotionService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new AdminPromotionResource(
-                    $service->promotion(
-                        $promotion
-                    )
-                ),
+            data: new AdminPromotionResource(
+                $service->promotion(
+                    $promotion
+                )
+            ),
 
-            message:
-                'Promoción recuperada correctamente.'
+            message: 'Promoción recuperada correctamente.'
         );
     }
 
@@ -71,16 +65,14 @@ final class PromotionController
         AdminPromotionService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new AdminPromotionResource(
-                    $service->update(
-                        $promotion,
-                        $request->validated()
-                    )
-                ),
+            data: new AdminPromotionResource(
+                $service->update(
+                    $promotion,
+                    $request->validated()
+                )
+            ),
 
-            message:
-                'Promoción actualizada correctamente.'
+            message: 'Promoción actualizada correctamente.'
         );
     }
 
@@ -98,13 +90,11 @@ final class PromotionController
             );
 
         return ApiResponse::success(
-            data:
-                new AdminPromotionResource(
-                    $promotion
-                ),
+            data: new AdminPromotionResource(
+                $promotion
+            ),
 
-            message:
-                $promotion->is_active
+            message: $promotion->is_active
                     ? 'Promoción activada correctamente.'
                     : 'Promoción desactivada correctamente.'
         );
@@ -118,8 +108,7 @@ final class PromotionController
 
         return ApiResponse::success(
             data: null,
-            message:
-                'Promoción eliminada correctamente.'
+            message: 'Promoción eliminada correctamente.'
         );
     }
 }

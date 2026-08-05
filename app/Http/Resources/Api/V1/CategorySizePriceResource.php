@@ -10,7 +10,7 @@ class CategorySizePriceResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'size'  => new SizeResource($this->whenLoaded('size')),
+            'size' => new SizeResource($this->whenLoaded('size')),
             'price' => (float) $this->price,
         ];
     }

@@ -18,13 +18,11 @@ final class IngredientController
         AdminIngredientService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                AdminIngredientResource::collection(
-                    $service->ingredients()
-                ),
+            data: AdminIngredientResource::collection(
+                $service->ingredients()
+            ),
 
-            message:
-                'Ingredientes recuperados correctamente.'
+            message: 'Ingredientes recuperados correctamente.'
         );
     }
 
@@ -33,15 +31,13 @@ final class IngredientController
         AdminIngredientService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new AdminIngredientResource(
-                    $service->createIngredient(
-                        $request->validated()
-                    )
-                ),
+            data: new AdminIngredientResource(
+                $service->createIngredient(
+                    $request->validated()
+                )
+            ),
 
-            message:
-                'Ingrediente creado correctamente.',
+            message: 'Ingrediente creado correctamente.',
 
             status: 201
         );
@@ -52,15 +48,13 @@ final class IngredientController
         AdminIngredientService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new AdminIngredientResource(
-                    $service->ingredient(
-                        $ingredient
-                    )
-                ),
+            data: new AdminIngredientResource(
+                $service->ingredient(
+                    $ingredient
+                )
+            ),
 
-            message:
-                'Ingrediente recuperado correctamente.'
+            message: 'Ingrediente recuperado correctamente.'
         );
     }
 
@@ -70,16 +64,14 @@ final class IngredientController
         AdminIngredientService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new AdminIngredientResource(
-                    $service->updateIngredient(
-                        $ingredient,
-                        $request->validated()
-                    )
-                ),
+            data: new AdminIngredientResource(
+                $service->updateIngredient(
+                    $ingredient,
+                    $request->validated()
+                )
+            ),
 
-            message:
-                'Ingrediente actualizado correctamente.'
+            message: 'Ingrediente actualizado correctamente.'
         );
     }
 
@@ -93,8 +85,7 @@ final class IngredientController
 
         return ApiResponse::success(
             data: null,
-            message:
-                'Ingrediente eliminado correctamente.'
+            message: 'Ingrediente eliminado correctamente.'
         );
     }
 }

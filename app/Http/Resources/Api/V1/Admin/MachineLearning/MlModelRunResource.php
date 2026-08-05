@@ -27,128 +27,96 @@ final class MlModelRunResource extends JsonResource
             'status' => $this->status,
 
             'model' => [
-                'algorithm' =>
-                    $this->algorithm,
+                'algorithm' => $this->algorithm,
 
-                'target' =>
-                    $this->target,
+                'target' => $this->target,
 
-                'version' =>
-                    $this->version,
+                'version' => $this->version,
 
-                'is_active' =>
-                    $this->is_active,
+                'is_active' => $this->is_active,
 
-                'activated_at' =>
-                    $this->activated_at
-                        ?->toIso8601String(),
+                'activated_at' => $this->activated_at
+                    ?->toIso8601String(),
             ],
 
             'training' => [
-                'from' =>
-                    $this->trained_from
-                        ?->toDateString(),
+                'from' => $this->trained_from
+                    ?->toDateString(),
 
-                'until' =>
-                    $this->trained_until
-                        ?->toDateString(),
+                'until' => $this->trained_until
+                    ?->toDateString(),
 
-                'records' =>
-                    $this->training_records,
+                'records' => $this->training_records,
             ],
 
             'forecast' => [
-                'days' =>
-                    $this->forecast_days,
+                'days' => $this->forecast_days,
 
-                'from' =>
-                    $this->forecast_from
-                        ?->toDateString(),
+                'from' => $this->forecast_from
+                    ?->toDateString(),
 
-                'until' =>
-                    $this->forecast_until
-                        ?->toDateString(),
+                'until' => $this->forecast_until
+                    ?->toDateString(),
 
-                'generated_at' =>
-                    $this->generated_at
-                        ?->toIso8601String(),
+                'generated_at' => $this->generated_at
+                    ?->toIso8601String(),
             ],
 
             'metrics' => [
-                'selection_score' =>
-                    $this->selection_score,
+                'selection_score' => $this->selection_score,
 
-                'mae' =>
-                    $this->mae,
+                'mae' => $this->mae,
 
-                'rmse' =>
-                    $this->rmse,
+                'rmse' => $this->rmse,
 
-                'smape' =>
-                    $this->smape,
+                'smape' => $this->smape,
 
-                'r2' =>
-                    $this->r2,
+                'r2' => $this->r2,
 
-                'cv_mae' =>
-                    $this->cv_mae,
+                'cv_mae' => $this->cv_mae,
 
-                'cv_rmse' =>
-                    $this->cv_rmse,
+                'cv_rmse' => $this->cv_rmse,
             ],
 
-            'all_models' =>
-                $this->models,
+            'all_models' => $this->models,
 
-            'summary' =>
-                $this->summary,
+            'summary' => $this->summary,
 
-            'recommendations' =>
-                $this->recommendations,
+            'recommendations' => $this->recommendations,
 
             'limitations' => [
-                'scope' =>
-                    'daily_demand_by_size',
+                'scope' => 'daily_demand_by_size',
 
-                'flavor_prediction_available' =>
-                    false,
+                'flavor_prediction_available' => false,
 
-                'hourly_prediction_available' =>
-                    false,
+                'hourly_prediction_available' => false,
 
-                'message' =>
-                    'Modelo inicial basado en fecha y tamaño. La precisión por sabor y horario mejorará con los pedidos digitales.',
+                'message' => 'Modelo inicial basado en fecha y tamaño. La precisión por sabor y horario mejorará con los pedidos digitales.',
             ],
 
-            'predictions' =>
-                MlDailyPredictionResource::collection(
-                    $this->whenLoaded(
-                        'predictions'
-                    )
-                ),
-
-            'created_by' =>
+            'predictions' => MlDailyPredictionResource::collection(
                 $this->whenLoaded(
-                    'creator',
-                    fn (): array => [
-                        'id' =>
-                            $this->creator->id,
+                    'predictions'
+                )
+            ),
 
-                        'name' =>
-                            trim(
-                                $this->creator->first_name
-                                . ' '
-                                . $this->creator->last_name
-                            ),
+            'created_by' => $this->whenLoaded(
+                'creator',
+                fn (): array => [
+                    'id' => $this->creator->id,
 
-                        'email' =>
-                            $this->creator->email,
-                    ]
-                ),
+                    'name' => trim(
+                        $this->creator->first_name
+                        .' '
+                        .$this->creator->last_name
+                    ),
 
-            'created_at' =>
-                $this->created_at
-                    ?->toIso8601String(),
+                    'email' => $this->creator->email,
+                ]
+            ),
+
+            'created_at' => $this->created_at
+                ?->toIso8601String(),
         ];
     }
 }

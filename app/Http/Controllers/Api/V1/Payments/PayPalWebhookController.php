@@ -64,7 +64,7 @@ final class PayPalWebhookController
              * En desarrollo y Railway se insertará en la tabla jobs.
              */
             if (
-                !in_array(
+                ! in_array(
                     $webhookEvent->processing_status,
                     [
                         'processed',

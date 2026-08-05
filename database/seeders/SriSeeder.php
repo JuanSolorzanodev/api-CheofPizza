@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\EmissionType;
@@ -17,7 +16,7 @@ class SriSeeder extends Seeder
      */
     public function run(): void
     {
-    
+
         // Environment types (SRI)
         $testEnv = EnvironmentType::updateOrCreate(
             ['code' => 1],

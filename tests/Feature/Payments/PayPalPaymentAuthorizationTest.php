@@ -11,7 +11,6 @@ describe('Autorización de pagos PayPal', function (): void {
         'rechaza la creación de una orden PayPal sin autenticación',
         function (): void {
             /** @var TestCase $this */
-
             $response = $this->postJson(
                 '/api/v1/payments/paypal/orders',
                 [
@@ -30,7 +29,6 @@ describe('Autorización de pagos PayPal', function (): void {
         'rechaza usuarios que no tienen el rol customer',
         function (): void {
             /** @var TestCase $this */
-
             $operator = User::factory()
                 ->operator()
                 ->create();

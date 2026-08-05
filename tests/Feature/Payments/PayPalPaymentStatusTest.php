@@ -34,90 +34,67 @@ function createPayPalStatusPayment(
         ]);
 
     $cart = Cart::query()->create([
-        'user_id' =>
-            $user->id,
+        'user_id' => $user->id,
 
-        'cart_status_id' =>
-            $activeCartStatus->id,
+        'cart_status_id' => $activeCartStatus->id,
 
-        'session_id' =>
-            null,
+        'session_id' => null,
 
-        'total' =>
-            $amount,
+        'total' => $amount,
     ]);
 
     $payment = Payment::query()->create([
-        'uuid' =>
-            (string) Str::uuid(),
+        'uuid' => (string) Str::uuid(),
 
-        'idempotency_key' =>
-            (string) Str::uuid(),
+        'idempotency_key' => (string) Str::uuid(),
 
-        'user_id' =>
-            $user->id,
+        'user_id' => $user->id,
 
-        'cart_id' =>
-            $cart->id,
+        'cart_id' => $cart->id,
 
-        'order_id' =>
-            null,
+        'order_id' => null,
 
-        'provider' =>
-            PaymentProvider::PAYPAL,
+        'provider' => PaymentProvider::PAYPAL,
 
-        'provider_order_id' =>
-            'PAYPAL-ORDER-STATUS-' . Str::upper(
-                Str::random(12)
-            ),
+        'provider_order_id' => 'PAYPAL-ORDER-STATUS-'.Str::upper(
+            Str::random(12)
+        ),
 
-        'provider_capture_id' =>
-            null,
+        'provider_capture_id' => null,
 
-        'provider_status' =>
-            $status === PaymentStatus::APPROVED
+        'provider_status' => $status === PaymentStatus::APPROVED
                 ? 'APPROVED'
                 : 'PAYER_ACTION_REQUIRED',
 
-        'amount' =>
-            $amount,
+        'amount' => $amount,
 
-        'currency' =>
-            'USD',
+        'currency' => 'USD',
 
-        'status' =>
-            $status,
+        'status' => $status,
 
         'checkout_context' => [
-            'delivery_type' =>
-                'pickup',
+        'delivery_type' => 'pickup',
 
-            'address' =>
-                null,
+        'address' => null,
 
-            'delivery_location' =>
-                null,
+        'delivery_location' => null,
         ],
 
-        'cart_fingerprint' =>
-            hash(
-                'sha256',
-                "paypal-status-{$user->id}-"
-                    . Str::random(20)
-            ),
+        'cart_fingerprint' => hash(
+            'sha256',
+            "paypal-status-{$user->id}-"
+                .Str::random(20)
+        ),
 
-        'approved_at' =>
-            $status === PaymentStatus::APPROVED
+        'approved_at' => $status === PaymentStatus::APPROVED
                 ? now()
                 : null,
     ]);
 
     return [
-        'cart' =>
-            $cart,
+        'cart' => $cart,
 
-        'payment' =>
-            $payment,
+        'payment' => $payment,
     ];
 }
 
@@ -130,61 +107,48 @@ function completePayPalStatusPayment(
 ): Order {
     $deliveryType = DeliveryType::query()
         ->firstOrCreate([
-            'delivery_type_name' =>
-                'pickup',
+            'delivery_type_name' => 'pickup',
         ]);
 
     $paymentMethod = PaymentMethod::query()
         ->firstOrCreate(
             [
-                'name' =>
-                    'card',
+                'name' => 'card',
             ],
             [
-                'description' =>
-                    'Tarjeta mediante PayPal',
+                'description' => 'Tarjeta mediante PayPal',
 
-                'active' =>
-                    true,
+                'active' => true,
             ],
         );
 
     $orderStatus = OrderStatus::query()
         ->firstOrCreate([
-            'status_name' =>
-                'pending',
+            'status_name' => 'pending',
         ]);
 
     $order = Order::query()->create([
-        'order_number' =>
-            'CH-STATUS-' . Str::upper(
-                Str::random(10)
-            ),
+        'order_number' => 'CH-STATUS-'.Str::upper(
+            Str::random(10)
+        ),
 
-        'user_id' =>
-            $user->id,
+        'user_id' => $user->id,
 
-        'ordered_at' =>
-            now(),
+        'ordered_at' => now(),
 
-        'total' =>
-            $payment->amount,
+        'total' => $payment->amount,
 
-        'delivery_type_id' =>
-            $deliveryType->id,
+        'delivery_type_id' => $deliveryType->id,
 
-        'address' =>
-            null,
+        'address' => null,
 
-        'payment_method_id' =>
-            $paymentMethod->id,
+        'payment_method_id' => $paymentMethod->id,
 
-        'order_status_id' =>
-            $orderStatus->id,
+        'order_status_id' => $orderStatus->id,
     ]);
 
     $captureId =
-        'PAYPAL-CAPTURE-STATUS-' . Str::upper(
+        'PAYPAL-CAPTURE-STATUS-'.Str::upper(
             Str::random(12)
         );
 
@@ -193,26 +157,21 @@ function completePayPalStatusPayment(
      * markAsCompleted() conserva las reglas de transición del dominio.
      */
     $payment->markAsCompleted(
-        captureId:
-            $captureId,
+        captureId: $captureId,
 
-        providerStatus:
-            'COMPLETED',
+        providerStatus: 'COMPLETED',
 
         providerMetadata: [
             'capture' => [
-                'id' =>
-                    $captureId,
+                'id' => $captureId,
 
-                'status' =>
-                    'COMPLETED',
+                'status' => 'COMPLETED',
             ],
         ],
     );
 
     $payment->forceFill([
-        'order_id' =>
-            $order->id,
+        'order_id' => $order->id,
     ])->save();
 
     return $order;
@@ -225,7 +184,6 @@ describe(
             'rechaza la consulta cuando el usuario no está autenticado',
             function (): void {
                 /** @var TestCase $this */
-
                 $paymentUuid =
                     (string) Str::uuid();
 
@@ -241,7 +199,6 @@ describe(
             'no permite consultar un pago perteneciente a otro usuario',
             function (): void {
                 /** @var TestCase $this */
-
                 $owner = User::factory()
                     ->customer()
                     ->create();
@@ -253,8 +210,7 @@ describe(
                 [
                     'payment' => $payment,
                 ] = createPayPalStatusPayment(
-                    user:
-                        $owner,
+                    user: $owner,
                 );
 
                 $response = $this
@@ -278,7 +234,6 @@ describe(
             'devuelve el estado pendiente del pago perteneciente al usuario',
             function (): void {
                 /** @var TestCase $this */
-
                 $user = User::factory()
                     ->customer()
                     ->create();
@@ -286,14 +241,11 @@ describe(
                 [
                     'payment' => $payment,
                 ] = createPayPalStatusPayment(
-                    user:
-                        $user,
+                    user: $user,
 
-                    status:
-                        PaymentStatus::PENDING,
+                    status: PaymentStatus::PENDING,
 
-                    amount:
-                        '5.00',
+                    amount: '5.00',
                 );
 
                 $response = $this
@@ -370,21 +322,16 @@ describe(
                 $this->assertDatabaseHas(
                     'payments',
                     [
-                        'id' =>
-                            $payment->id,
+                        'id' => $payment->id,
 
-                        'uuid' =>
-                            $payment->uuid,
+                        'uuid' => $payment->uuid,
 
-                        'user_id' =>
-                            $user->id,
+                        'user_id' => $user->id,
 
-                        'status' =>
-                            PaymentStatus::PENDING
-                                ->value,
+                        'status' => PaymentStatus::PENDING
+                            ->value,
 
-                        'order_id' =>
-                            null,
+                        'order_id' => null,
                     ],
                 );
             },
@@ -394,7 +341,6 @@ describe(
             'devuelve el pedido asociado cuando el pago ya fue completado',
             function (): void {
                 /** @var TestCase $this */
-
                 $user = User::factory()
                     ->customer()
                     ->create();
@@ -402,22 +348,17 @@ describe(
                 [
                     'payment' => $payment,
                 ] = createPayPalStatusPayment(
-                    user:
-                        $user,
+                    user: $user,
 
-                    status:
-                        PaymentStatus::APPROVED,
+                    status: PaymentStatus::APPROVED,
 
-                    amount:
-                        '12.50',
+                    amount: '12.50',
                 );
 
                 $order = completePayPalStatusPayment(
-                    payment:
-                        $payment,
+                    payment: $payment,
 
-                    user:
-                        $user,
+                    user: $user,
                 );
 
                 $payment->refresh();
@@ -511,42 +452,32 @@ describe(
                 $this->assertDatabaseHas(
                     'payments',
                     [
-                        'id' =>
-                            $payment->id,
+                        'id' => $payment->id,
 
-                        'user_id' =>
-                            $user->id,
+                        'user_id' => $user->id,
 
-                        'order_id' =>
-                            $order->id,
+                        'order_id' => $order->id,
 
-                        'provider_capture_id' =>
-                            $payment
-                                ->provider_capture_id,
+                        'provider_capture_id' => $payment
+                            ->provider_capture_id,
 
-                        'provider_status' =>
-                            'COMPLETED',
+                        'provider_status' => 'COMPLETED',
 
-                        'status' =>
-                            PaymentStatus::COMPLETED
-                                ->value,
+                        'status' => PaymentStatus::COMPLETED
+                            ->value,
                     ],
                 );
 
                 $this->assertDatabaseHas(
                     'orders',
                     [
-                        'id' =>
-                            $order->id,
+                        'id' => $order->id,
 
-                        'user_id' =>
-                            $user->id,
+                        'user_id' => $user->id,
 
-                        'order_number' =>
-                            $order->order_number,
+                        'order_number' => $order->order_number,
 
-                        'total' =>
-                            '12.50',
+                        'total' => '12.50',
                     ],
                 );
             },
@@ -556,7 +487,6 @@ describe(
             'rechaza un identificador que no tiene formato UUID',
             function (): void {
                 /** @var TestCase $this */
-
                 $user = User::factory()
                     ->customer()
                     ->create();

@@ -13,20 +13,20 @@ return new class extends Migration
     {
         Schema::create('promotion_details', function (Blueprint $table) {
             $table->id();
-        $table->foreignId('promotion_id')
-            ->constrained('promotions')
-            ->cascadeOnDelete();
+            $table->foreignId('promotion_id')
+                ->constrained('promotions')
+                ->cascadeOnDelete();
 
-        $table->foreignId('category_id')
-            ->constrained('categories')
-            ->cascadeOnDelete();
+            $table->foreignId('category_id')
+                ->constrained('categories')
+                ->cascadeOnDelete();
 
-        $table->foreignId('size_id')
-            ->constrained('sizes')
-            ->cascadeOnDelete();
+            $table->foreignId('size_id')
+                ->constrained('sizes')
+                ->cascadeOnDelete();
 
-        $table->integer('required_quantity');      
-        $table->timestamps();
+            $table->integer('required_quantity');
+            $table->timestamps();
         });
     }
 

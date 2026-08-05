@@ -63,8 +63,7 @@ final class MlTrainingDatasetService
         $activeDays = $rows->filter(
             static fn (
                 MlDailyFeature $feature
-            ): bool =>
-                $feature->delivered_orders > 0
+            ): bool => $feature->delivered_orders > 0
                 || $feature->total_pizzas_sold > 0,
         );
 
@@ -82,83 +81,65 @@ final class MlTrainingDatasetService
             ?->toDateString();
 
         return [
-            'schema_version' =>
-                '1.0',
+            'schema_version' => '1.0',
 
-            'generated_at' =>
-                now()->toIso8601String(),
+            'generated_at' => now()->toIso8601String(),
 
-            'timezone' =>
-                (string) config(
-                    'app.timezone',
-                    'America/Guayaquil',
-                ),
+            'timezone' => (string) config(
+                'app.timezone',
+                'America/Guayaquil',
+            ),
 
-            'maturity' =>
-                $this->maturity(
-                    collectedDays:
-                        $collectedDays,
+            'maturity' => $this->maturity(
+                collectedDays: $collectedDays,
 
-                    activeDays:
-                        $activeDaysCount,
+                activeDays: $activeDaysCount,
 
-                    firstDate:
-                        $firstDate,
+                firstDate: $firstDate,
 
-                    lastDate:
-                        $lastDate,
-                ),
+                lastDate: $lastDate,
+            ),
 
             'summary' => [
-                'records' =>
-                    $collectedDays,
+            'records' => $collectedDays,
 
-                'active_days' =>
-                    $activeDaysCount,
+            'active_days' => $activeDaysCount,
 
-                'empty_days' =>
-                    $collectedDays
-                    - $activeDaysCount,
+            'empty_days' => $collectedDays
+                - $activeDaysCount,
 
-                'total_delivered_orders' =>
-                    (int) $rows->sum(
-                        'delivered_orders',
-                    ),
+            'total_delivered_orders' => (int) $rows->sum(
+                'delivered_orders',
+            ),
 
-                'total_cancelled_orders' =>
-                    (int) $rows->sum(
-                        'cancelled_orders',
-                    ),
+            'total_cancelled_orders' => (int) $rows->sum(
+                'cancelled_orders',
+            ),
 
-                'total_pizzas_sold' =>
-                    (int) $rows->sum(
-                        'total_pizzas_sold',
-                    ),
+            'total_pizzas_sold' => (int) $rows->sum(
+                'total_pizzas_sold',
+            ),
 
-                'total_net_sales' =>
-                    round(
-                        (float) $rows->sum(
-                            static fn (
-                                MlDailyFeature $feature
-                            ): float =>
-                                (float) $feature
-                                    ->net_sales,
-                        ),
-                        2,
-                    ),
+            'total_net_sales' => round(
+                (float) $rows->sum(
+                    static fn (
+                        MlDailyFeature $feature
+                    ): float => (float) $feature
+                        ->net_sales,
+                ),
+                2,
+            ),
             ],
 
-            'records' =>
-                $rows
-                    ->map(
-                        fn (
-                            MlDailyFeature $feature
-                        ): array =>
-                            $this->serializeRecord(
-                                $feature,
-                            ),
-                    )
-                    ->all(),
+            'records' => $rows
+                ->map(
+                    fn (
+                        MlDailyFeature $feature
+                    ): array => $this->serializeRecord(
+                        $feature,
+                    ),
+                )
+                ->all(),
         ];
     }
 
@@ -175,46 +156,43 @@ final class MlTrainingDatasetService
                 $dateFrom !== null,
                 static fn (
                     Builder $query
-                ): Builder =>
-                    $query->whereDate(
-                        'date',
-                        '>=',
-                        $dateFrom,
-                    ),
+                ): Builder => $query->whereDate(
+                    'date',
+                    '>=',
+                    $dateFrom,
+                ),
             )
             ->when(
                 $dateTo !== null,
                 static fn (
                     Builder $query
-                ): Builder =>
-                    $query->whereDate(
-                        'date',
-                        '<=',
-                        $dateTo,
-                    ),
+                ): Builder => $query->whereDate(
+                    'date',
+                    '<=',
+                    $dateTo,
+                ),
             )
             ->when(
-                !$includeEmptyDays,
+                ! $includeEmptyDays,
                 static fn (
                     Builder $query
-                ): Builder =>
-                    $query->where(
-                        static function (
-                            Builder $nested
-                        ): void {
-                            $nested
-                                ->where(
-                                    'delivered_orders',
-                                    '>',
-                                    0,
-                                )
-                                ->orWhere(
-                                    'total_pizzas_sold',
-                                    '>',
-                                    0,
-                                );
-                        },
-                    ),
+                ): Builder => $query->where(
+                    static function (
+                        Builder $nested
+                    ): void {
+                        $nested
+                            ->where(
+                                'delivered_orders',
+                                '>',
+                                0,
+                            )
+                            ->orWhere(
+                                'total_pizzas_sold',
+                                '>',
+                                0,
+                            );
+                    },
+                ),
             );
     }
 
@@ -233,94 +211,73 @@ final class MlTrainingDatasetService
             /*
              * Datos temporales.
              */
-            'date' =>
-                $date->toDateString(),
+            'date' => $date->toDateString(),
 
-            'day_of_week' =>
-                $date->dayOfWeekIso,
+            'day_of_week' => $date->dayOfWeekIso,
 
-            'week_of_year' =>
-                $date->isoWeek(),
+            'week_of_year' => $date->isoWeek(),
 
-            'month' =>
-                $date->month,
+            'month' => $date->month,
 
-            'day_of_month' =>
-                $date->day,
+            'day_of_month' => $date->day,
 
-            'is_weekend' =>
-                $date->isWeekend()
+            'is_weekend' => $date->isWeekend()
                     ? 1
                     : 0,
 
             /*
              * Objetivos principales de predicción.
              */
-            'total_pizzas_sold' =>
-                $feature
-                    ->total_pizzas_sold,
+            'total_pizzas_sold' => $feature
+                ->total_pizzas_sold,
 
-            'mini_sales' =>
-                $feature
-                    ->mini_sales,
+            'mini_sales' => $feature
+                ->mini_sales,
 
-            'small_sales' =>
-                $feature
-                    ->small_sales,
+            'small_sales' => $feature
+                ->small_sales,
 
-            'medium_sales' =>
-                $feature
-                    ->medium_sales,
+            'medium_sales' => $feature
+                ->medium_sales,
 
-            'family_sales' =>
-                $feature
-                    ->family_sales,
+            'family_sales' => $feature
+                ->family_sales,
 
-            'giant_sales' =>
-                $feature
-                    ->giant_sales,
+            'giant_sales' => $feature
+                ->giant_sales,
 
             /*
              * Características comerciales y operativas.
              */
-            'basic_sales' =>
-                $feature
-                    ->basic_sales,
+            'basic_sales' => $feature
+                ->basic_sales,
 
-            'special_sales' =>
-                $feature
-                    ->special_sales,
+            'special_sales' => $feature
+                ->special_sales,
 
-            'promotion_sales' =>
-                $feature
-                    ->promotion_sales,
+            'promotion_sales' => $feature
+                ->promotion_sales,
 
-            'regular_sales' =>
-                $feature
-                    ->regular_sales,
+            'regular_sales' => $feature
+                ->regular_sales,
 
-            'delivered_orders' =>
-                $feature
-                    ->delivered_orders,
+            'delivered_orders' => $feature
+                ->delivered_orders,
 
-            'cancelled_orders' =>
-                $feature
-                    ->cancelled_orders,
+            'cancelled_orders' => $feature
+                ->cancelled_orders,
 
-            'pickup_orders' =>
-                $feature
-                    ->pickup_orders,
+            'pickup_orders' => $feature
+                ->pickup_orders,
 
-            'delivery_orders' =>
-                $feature
-                    ->delivery_orders,
+            'delivery_orders' => $feature
+                ->delivery_orders,
 
-            'net_sales' =>
-                round(
-                    (float) $feature
-                        ->net_sales,
-                    2,
-                ),
+            'net_sales' => round(
+                (float) $feature
+                    ->net_sales,
+                2,
+            ),
         ];
     }
 
@@ -382,44 +339,33 @@ final class MlTrainingDatasetService
             };
 
         return [
-            'status' =>
-                $status,
+            'status' => $status,
 
-            'label' =>
-                $label,
+            'label' => $label,
 
-            'confidence' =>
-                $confidence,
+            'confidence' => $confidence,
 
-            'collected_days' =>
-                $collectedDays,
+            'collected_days' => $collectedDays,
 
             /*
              * Para madurez usamos días con actividad real.
              * Un día vacío sigue siendo útil para la serie temporal,
              * pero no aporta el mismo volumen de evidencia.
              */
-            'active_days' =>
-                $activeDays,
+            'active_days' => $activeDays,
 
-            'first_date' =>
-                $firstDate,
+            'first_date' => $firstDate,
 
-            'last_date' =>
-                $lastDate,
+            'last_date' => $lastDate,
 
-            'minimum_training_days' =>
-                $minimumTrainingDays,
+            'minimum_training_days' => $minimumTrainingDays,
 
-            'recommended_training_days' =>
-                $recommendedTrainingDays,
+            'recommended_training_days' => $recommendedTrainingDays,
 
-            'can_train_experimental' =>
-                $activeDays
+            'can_train_experimental' => $activeDays
                 >= $minimumTrainingDays,
 
-            'can_train_operational' =>
-                $activeDays >= 90,
+            'can_train_operational' => $activeDays >= 90,
         ];
     }
 }

@@ -12,7 +12,7 @@ class BuilderController
     public function quote(BuilderQuoteRequest $request)
     {
         return response()->json([
-            'data' => $this->service->quote($request->validated())
+            'data' => $this->service->quote($request->validated()),
         ]);
     }
 }

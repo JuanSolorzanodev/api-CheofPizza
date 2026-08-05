@@ -16,13 +16,11 @@ final class CashSessionDetailController
         CashSessionDetailService $service,
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                $service->get(
-                    $cashSession
-                ),
+            data: $service->get(
+                $cashSession
+            ),
 
-            message:
-                'Detalle de caja recuperado correctamente.',
+            message: 'Detalle de caja recuperado correctamente.',
         );
     }
 }

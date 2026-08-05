@@ -59,11 +59,9 @@ return [
     ),
 
     'base_urls' => [
-        'sandbox' =>
-            'https://api-m.sandbox.paypal.com',
+        'sandbox' => 'https://api-m.sandbox.paypal.com',
 
-        'live' =>
-            'https://api-m.paypal.com',
+        'live' => 'https://api-m.paypal.com',
     ],
 
 ];

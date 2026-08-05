@@ -58,8 +58,7 @@ final class CheckoutRequest extends FormRequest
      */
     public function rules(): array
     {
-        $isDelivery = fn (): bool =>
-            $this->input('delivery_type') === 'delivery';
+        $isDelivery = fn (): bool => $this->input('delivery_type') === 'delivery';
 
         return [
             'delivery_type' => [
@@ -148,26 +147,19 @@ final class CheckoutRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'delivery_type.required' =>
-                'Debes seleccionar un tipo de entrega.',
+            'delivery_type.required' => 'Debes seleccionar un tipo de entrega.',
 
-            'delivery_type.in' =>
-                'El tipo de entrega seleccionado no es válido.',
+            'delivery_type.in' => 'El tipo de entrega seleccionado no es válido.',
 
-            'delivery_location.required' =>
-                'Debes seleccionar una ubicación de entrega.',
+            'delivery_location.required' => 'Debes seleccionar una ubicación de entrega.',
 
-            'delivery_location.lat.required' =>
-                'La latitud de entrega es obligatoria.',
+            'delivery_location.lat.required' => 'La latitud de entrega es obligatoria.',
 
-            'delivery_location.lng.required' =>
-                'La longitud de entrega es obligatoria.',
+            'delivery_location.lng.required' => 'La longitud de entrega es obligatoria.',
 
-            'payment_method.required' =>
-                'Debes seleccionar un método de pago.',
+            'payment_method.required' => 'Debes seleccionar un método de pago.',
 
-            'payment_method.in' =>
-                'Para pagos con tarjeta debes utilizar el flujo seguro de PayPal.',
+            'payment_method.in' => 'Para pagos con tarjeta debes utilizar el flujo seguro de PayPal.',
         ];
     }
 }

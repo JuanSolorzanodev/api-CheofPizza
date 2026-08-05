@@ -11,8 +11,8 @@ use JsonSerializable;
 final class ApiResponse
 {
     /**
-     * @param array<string, mixed> $meta
-     * @param array<string, string|array<int, string>> $errors
+     * @param  array<string, mixed>  $meta
+     * @param  array<string, string|array<int, string>>  $errors
      */
     public static function success(
         mixed $data = null,
@@ -34,7 +34,7 @@ final class ApiResponse
     }
 
     /**
-     * @param array<string, string|array<int, string>> $errors
+     * @param  array<string, string|array<int, string>>  $errors
      */
     public static function error(
         string $message,
@@ -71,7 +71,5 @@ final class ApiResponse
         return $data;
     }
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }

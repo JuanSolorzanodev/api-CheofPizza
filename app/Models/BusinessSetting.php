@@ -59,8 +59,7 @@ final class BusinessSetting extends Model
             'address' => null,
 
             'accepts_orders' => true,
-            'closed_message' =>
-                'En este momento la tienda no está recibiendo pedidos.',
+            'closed_message' => 'En este momento la tienda no está recibiendo pedidos.',
             'estimated_minutes' => 35,
             'currency' => 'USD',
             'timezone' => 'America/Guayaquil',

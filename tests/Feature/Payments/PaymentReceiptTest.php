@@ -14,7 +14,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-
 beforeEach(function (): void {
     Storage::fake(
         'payment_receipts',
@@ -48,11 +47,9 @@ function paymentReceiptUser(
         ->firstOrFail();
 
     return User::factory()->create([
-        'role_id' =>
-        (int) $role->id,
+        'role_id' => (int) $role->id,
 
-        'is_active' =>
-        true,
+        'is_active' => true,
     ]);
 }
 
@@ -86,55 +83,39 @@ function paymentReceiptOrder(
         ->firstOrFail();
 
     return Order::query()->create([
-        'order_number' =>
-        'CH-TEST-' . Str::upper(
+        'order_number' => 'CH-TEST-'.Str::upper(
             Str::random(10),
         ),
 
-        'user_id' =>
-        (int) $customer->id,
+        'user_id' => (int) $customer->id,
 
-        'ordered_at' =>
-        now(),
+        'ordered_at' => now(),
 
-        'subtotal' =>
-        10.00,
+        'subtotal' => 10.00,
 
-        'delivery_fee' =>
-        0.00,
+        'delivery_fee' => 0.00,
 
-        'total' =>
-        10.00,
+        'total' => 10.00,
 
-        'delivery_type_id' =>
-        (int) $deliveryType->id,
+        'delivery_type_id' => (int) $deliveryType->id,
 
-        'address' =>
-        null,
+        'address' => null,
 
-        'delivery_lat' =>
-        null,
+        'delivery_lat' => null,
 
-        'delivery_lng' =>
-        null,
+        'delivery_lng' => null,
 
-        'delivery_maps_url' =>
-        null,
+        'delivery_maps_url' => null,
 
-        'delivery_place_id' =>
-        null,
+        'delivery_place_id' => null,
 
-        'delivery_reference' =>
-        null,
+        'delivery_reference' => null,
 
-        'payment_method_id' =>
-        (int) $method->id,
+        'payment_method_id' => (int) $method->id,
 
-        'order_status_id' =>
-        (int) $orderStatus->id,
+        'order_status_id' => (int) $orderStatus->id,
 
-        'whatsapp_receipt_url' =>
-        null,
+        'whatsapp_receipt_url' => null,
     ]);
 }
 
@@ -145,7 +126,6 @@ describe(
             'requiere autenticación para subir un comprobante',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -158,14 +138,12 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'comprobante.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertUnauthorized();
@@ -181,7 +159,6 @@ describe(
             'permite al dueño subir un comprobante privado',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -198,14 +175,12 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'transferencia.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     );
 
@@ -268,7 +243,6 @@ describe(
             'impide subir un comprobante a un pedido ajeno',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $owner = paymentReceiptUser(
                     'customer',
                 );
@@ -289,14 +263,12 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'comprobante.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertNotFound();
@@ -312,7 +284,6 @@ describe(
             'solo acepta comprobantes para pedidos por transferencia',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -330,14 +301,12 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'comprobante.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertUnprocessable()
@@ -356,7 +325,6 @@ describe(
             'rechaza formatos no permitidos',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -373,16 +341,14 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            UploadedFile::fake()->create(
+                            'receipt' => UploadedFile::fake()->create(
                                 'archivo.exe',
                                 100,
                                 'application/x-msdownload',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertUnprocessable()
@@ -401,7 +367,6 @@ describe(
             'rechaza archivos mayores a cinco megabytes',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -418,16 +383,14 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            UploadedFile::fake()->create(
+                            'receipt' => UploadedFile::fake()->create(
                                 'comprobante.pdf',
                                 5121,
                                 'application/pdf',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertUnprocessable()
@@ -446,7 +409,6 @@ describe(
             'impide tener dos comprobantes pendientes',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -466,14 +428,12 @@ describe(
                     ->post(
                         $url,
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'primero.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -486,14 +446,12 @@ describe(
                     ->post(
                         $url,
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'segundo.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertUnprocessable()
@@ -512,7 +470,6 @@ describe(
             'permite al operador aprobar un comprobante',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -533,14 +490,12 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'comprobante.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -598,7 +553,6 @@ describe(
             'permite al administrador aprobar un comprobante',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -619,14 +573,12 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'comprobante-admin.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -666,7 +618,6 @@ describe(
             'impide que un cliente apruebe un comprobante',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -683,14 +634,12 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'comprobante.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -726,7 +675,6 @@ describe(
             'permite al operador rechazar con un motivo',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -747,14 +695,12 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'comprobante.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -777,8 +723,7 @@ describe(
                     ->patchJson(
                         "/api/v1/operator/payment-receipts/{$receipt->uuid}/reject",
                         [
-                            'reason' =>
-                            $reason,
+                            'reason' => $reason,
                         ],
                     )
                     ->assertOk()
@@ -821,7 +766,6 @@ describe(
             'exige un motivo válido para rechazar',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -842,14 +786,12 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'comprobante.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -869,8 +811,7 @@ describe(
                     ->patchJson(
                         "/api/v1/operator/payment-receipts/{$receipt->uuid}/reject",
                         [
-                            'reason' =>
-                            '',
+                            'reason' => '',
                         ],
                     )
                     ->assertUnprocessable()
@@ -892,7 +833,6 @@ describe(
             'permite volver a subir después de un rechazo',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -916,14 +856,12 @@ describe(
                     ->post(
                         $url,
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'primero.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -943,8 +881,7 @@ describe(
                     ->patchJson(
                         "/api/v1/operator/payment-receipts/{$firstReceipt->uuid}/reject",
                         [
-                            'reason' =>
-                            'El comprobante no es legible.',
+                            'reason' => 'El comprobante no es legible.',
                         ],
                     )
                     ->assertOk();
@@ -957,14 +894,12 @@ describe(
                     ->post(
                         $url,
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'segundo.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated()
@@ -1005,7 +940,6 @@ describe(
             'impide subir otro comprobante después de aprobarlo',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1029,14 +963,12 @@ describe(
                     ->post(
                         $url,
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'aprobable.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -1066,14 +998,12 @@ describe(
                     ->post(
                         $url,
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'otro.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertUnprocessable()
@@ -1092,7 +1022,6 @@ describe(
             'devuelve el comprobante más reciente del pedido',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1109,14 +1038,12 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'comprobante.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -1149,7 +1076,6 @@ describe(
             'devuelve el historial de comprobantes del pedido',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1173,14 +1099,12 @@ describe(
                     ->post(
                         $url,
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'primero.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -1200,8 +1124,7 @@ describe(
                     ->patchJson(
                         "/api/v1/operator/payment-receipts/{$firstReceipt->uuid}/reject",
                         [
-                            'reason' =>
-                            'La imagen no es legible.',
+                            'reason' => 'La imagen no es legible.',
                         ],
                     )
                     ->assertOk();
@@ -1214,14 +1137,12 @@ describe(
                     ->post(
                         $url,
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'segundo.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -1260,7 +1181,6 @@ describe(
             'impide consultar el historial de un pedido ajeno',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $owner = paymentReceiptUser(
                     'customer',
                 );
@@ -1289,7 +1209,6 @@ describe(
             'permite al dueño visualizar el archivo privado',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1306,14 +1225,12 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'comprobante.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -1333,8 +1250,7 @@ describe(
                     ->get(
                         "/api/v1/payment-receipts/{$receipt->uuid}/file",
                         [
-                            'Accept' =>
-                            'image/jpeg',
+                            'Accept' => 'image/jpeg',
                         ],
                     )
                     ->assertOk()
@@ -1353,7 +1269,6 @@ describe(
             'impide visualizar el archivo de otro cliente',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $owner = paymentReceiptUser(
                     'customer',
                 );
@@ -1374,14 +1289,12 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'comprobante.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -1401,8 +1314,7 @@ describe(
                     ->get(
                         "/api/v1/payment-receipts/{$receipt->uuid}/file",
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertForbidden();
@@ -1413,7 +1325,6 @@ describe(
             'lista los comprobantes pendientes para el operador',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1434,14 +1345,12 @@ describe(
                     ->post(
                         "/api/v1/my/orders/{$order->id}/payment-receipts",
                         [
-                            'receipt' =>
-                            fakePaymentReceiptImage(
+                            'receipt' => fakePaymentReceiptImage(
                                 'pendiente.jpg',
                             ),
                         ],
                         [
-                            'Accept' =>
-                            'application/json',
+                            'Accept' => 'application/json',
                         ],
                     )
                     ->assertCreated();
@@ -1474,7 +1383,6 @@ describe(
             'elimina archivos vencidos y conserva el registro histórico',
             function (): void {
                 /** @var \Tests\TestCase $this */
-
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1484,8 +1392,8 @@ describe(
                 );
 
                 $path =
-                    '2026/08/order-' .
-                    $order->id .
+                    '2026/08/order-'.
+                    $order->id.
                     '/expired-receipt.pdf';
 
                 Storage::disk(
@@ -1497,41 +1405,29 @@ describe(
 
                 $receipt = PaymentReceipt::query()
                     ->create([
-                        'uuid' =>
-                        (string) Str::uuid(),
+                        'uuid' => (string) Str::uuid(),
 
-                        'order_id' =>
-                        (int) $order->id,
+                        'order_id' => (int) $order->id,
 
-                        'user_id' =>
-                        (int) $customer->id,
+                        'user_id' => (int) $customer->id,
 
-                        'disk' =>
-                        'payment_receipts',
+                        'disk' => 'payment_receipts',
 
-                        'file_path' =>
-                        $path,
+                        'file_path' => $path,
 
-                        'original_name' =>
-                        'expired-receipt.pdf',
+                        'original_name' => 'expired-receipt.pdf',
 
-                        'mime_type' =>
-                        'application/pdf',
+                        'mime_type' => 'application/pdf',
 
-                        'file_size' =>
-                        19,
+                        'file_size' => 19,
 
-                        'status' =>
-                        PaymentReceiptStatus::Approved,
+                        'status' => PaymentReceiptStatus::Approved,
 
-                        'submitted_at' =>
-                        now()->subDays(100),
+                        'submitted_at' => now()->subDays(100),
 
-                        'reviewed_at' =>
-                        now()->subDays(100),
+                        'reviewed_at' => now()->subDays(100),
 
-                        'expires_at' =>
-                        now()->subDay(),
+                        'expires_at' => now()->subDay(),
                     ]);
 
                 $this->assertTrue(

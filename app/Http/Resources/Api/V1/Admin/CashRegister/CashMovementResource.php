@@ -20,27 +20,20 @@ final class CashMovementResource extends JsonResource
         Request $request
     ): array {
         return [
-            'uuid' =>
-                $this->uuid,
+            'uuid' => $this->uuid,
 
-            'type' =>
-                $this->type->value,
+            'type' => $this->type->value,
 
-            'amount' =>
-                (float) $this->amount,
+            'amount' => (float) $this->amount,
 
-            'reason' =>
-                $this->reason,
+            'reason' => $this->reason,
 
-            'occurred_at' =>
-                $this->occurred_at?->toISOString(),
+            'occurred_at' => $this->occurred_at?->toISOString(),
 
             'created_by' => [
-                'id' =>
-                    $this->createdBy?->id,
+                'id' => $this->createdBy?->id,
 
-                'name' =>
-                    $this->createdBy?->full_name,
+                'name' => $this->createdBy?->full_name,
             ],
         ];
     }

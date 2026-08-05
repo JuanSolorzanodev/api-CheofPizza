@@ -28,8 +28,7 @@ final class PayPalWebhookQueueTest extends TestCase
             'paypal.webhook_id' => 'WH-CONFIGURED-TEST',
             'paypal.client_id' => 'paypal-client-test',
             'paypal.client_secret' => 'paypal-secret-test',
-            'paypal.base_urls.sandbox' =>
-                'https://api-m.sandbox.paypal.com',
+            'paypal.base_urls.sandbox' => 'https://api-m.sandbox.paypal.com',
         ]);
     }
 
@@ -50,8 +49,7 @@ final class PayPalWebhookQueueTest extends TestCase
                 'status' => 'COMPLETED',
                 'supplementary_data' => [
                     'related_ids' => [
-                        'order_id' =>
-                            'PAYPAL-ORDER-QUEUE-001',
+                        'order_id' => 'PAYPAL-ORDER-QUEUE-001',
                     ],
                 ],
             ],
@@ -168,14 +166,11 @@ final class PayPalWebhookQueueTest extends TestCase
         $this->assertDatabaseHas(
             'paypal_webhook_events',
             [
-                'event_id' =>
-                    'WH-DUPLICATE-001',
+                'event_id' => 'WH-DUPLICATE-001',
 
-                'verification_status' =>
-                    'SUCCESS',
+                'verification_status' => 'SUCCESS',
 
-                'processing_status' =>
-                    'received',
+                'processing_status' => 'received',
             ],
         );
 
@@ -210,13 +205,10 @@ final class PayPalWebhookQueueTest extends TestCase
                 '/api/v1/payments/paypal/webhook',
                 [
                     'id' => 'WH-INVALID-001',
-                    'event_type' =>
-                        'PAYMENT.CAPTURE.COMPLETED',
-                    'resource_type' =>
-                        'capture',
+                    'event_type' => 'PAYMENT.CAPTURE.COMPLETED',
+                    'resource_type' => 'capture',
                     'resource' => [
-                        'id' =>
-                            'CAPTURE-INVALID-001',
+                        'id' => 'CAPTURE-INVALID-001',
                     ],
                 ],
             );
@@ -265,12 +257,9 @@ final class PayPalWebhookQueueTest extends TestCase
                         === "{$baseUrl}/v1/oauth2/token"
                 ) {
                     return Http::response([
-                        'access_token' =>
-                            'access-token-test',
-                        'token_type' =>
-                            'Bearer',
-                        'expires_in' =>
-                            3600,
+                        'access_token' => 'access-token-test',
+                        'token_type' => 'Bearer',
+                        'expires_in' => 3600,
                     ], 200);
                 }
 
@@ -280,17 +269,14 @@ final class PayPalWebhookQueueTest extends TestCase
                         === "{$baseUrl}/v1/notifications/verify-webhook-signature"
                 ) {
                     return Http::response([
-                        'verification_status' =>
-                            $verificationStatus,
+                        'verification_status' => $verificationStatus,
                     ], 200);
                 }
 
                 return Http::response([
-                    'name' =>
-                        'UNEXPECTED_REQUEST',
+                    'name' => 'UNEXPECTED_REQUEST',
 
-                    'message' =>
-                        "Petición no simulada: {$request->method()} {$request->url()}",
+                    'message' => "Petición no simulada: {$request->method()} {$request->url()}",
                 ], 500);
             },
         );
@@ -303,23 +289,17 @@ final class PayPalWebhookQueueTest extends TestCase
         string $transmissionId,
     ): array {
         return [
-            'Accept' =>
-                'application/json',
+            'Accept' => 'application/json',
 
-            'PAYPAL-AUTH-ALGO' =>
-                'SHA256withRSA',
+            'PAYPAL-AUTH-ALGO' => 'SHA256withRSA',
 
-            'PAYPAL-CERT-URL' =>
-                'https://api-m.paypal.com/cert.pem',
+            'PAYPAL-CERT-URL' => 'https://api-m.paypal.com/cert.pem',
 
-            'PAYPAL-TRANSMISSION-ID' =>
-                $transmissionId,
+            'PAYPAL-TRANSMISSION-ID' => $transmissionId,
 
-            'PAYPAL-TRANSMISSION-SIG' =>
-                'signature-test',
+            'PAYPAL-TRANSMISSION-SIG' => 'signature-test',
 
-            'PAYPAL-TRANSMISSION-TIME' =>
-                now()->toIso8601String(),
+            'PAYPAL-TRANSMISSION-TIME' => now()->toIso8601String(),
         ];
     }
 }

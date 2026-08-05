@@ -17,12 +17,11 @@ final class OpenCashSessionRequest extends FormRequest
     {
         if ($this->has('opening_note')) {
             $this->merge([
-                'opening_note' =>
-                    trim(
-                        (string) $this->input(
-                            'opening_note'
-                        )
-                    ),
+                'opening_note' => trim(
+                    (string) $this->input(
+                        'opening_note'
+                    )
+                ),
             ]);
         }
     }

@@ -19,95 +19,73 @@ final class PayPalPaymentStatusResource extends JsonResource
         Request $request
     ): array {
         return [
-            'payment_id' =>
-                $this->uuid,
+            'payment_id' => $this->uuid,
 
-            'paypal_order_id' =>
-                $this->provider_order_id,
+            'paypal_order_id' => $this->provider_order_id,
 
-            'paypal_capture_id' =>
-                $this->provider_capture_id,
+            'paypal_capture_id' => $this->provider_capture_id,
 
-            'status' =>
-                $this->status->value,
+            'status' => $this->status->value,
 
-            'provider_status' =>
-                $this->provider_status,
+            'provider_status' => $this->provider_status,
 
-            'amount' =>
-                number_format(
-                    (float) $this->amount,
-                    2,
-                    '.',
-                    '',
-                ),
+            'amount' => number_format(
+                (float) $this->amount,
+                2,
+                '.',
+                '',
+            ),
 
-            'currency' =>
-                $this->currency,
+            'currency' => $this->currency,
 
-            'is_terminal' =>
-                ! $this->isPending(),
+            'is_terminal' => ! $this->isPending(),
 
-            'can_retry_capture' =>
-                $this->canBeCaptured(),
+            'can_retry_capture' => $this->canBeCaptured(),
 
-            'order' =>
-                $this->when(
-                    $this->relationLoaded('order')
-                    && $this->order !== null,
+            'order' => $this->when(
+                $this->relationLoaded('order')
+                && $this->order !== null,
 
-                    fn (): array => [
-                        'id' =>
-                            $this->order->id,
+                fn (): array => [
+                    'id' => $this->order->id,
 
-                        'order_number' =>
-                            $this->order->order_number,
+                    'order_number' => $this->order->order_number,
 
-                        'status' =>
-                            $this->order->orderStatus
-                                ?->status_name,
+                    'status' => $this->order->orderStatus
+                        ?->status_name,
 
-                        'total' =>
-                            number_format(
-                                (float) $this->order->total,
-                                2,
-                                '.',
-                                '',
-                            ),
+                    'total' => number_format(
+                        (float) $this->order->total,
+                        2,
+                        '.',
+                        '',
+                    ),
 
-                        'ordered_at' =>
-                            $this->order->ordered_at
-                                ?->toISOString(),
-                    ],
-                ),
+                    'ordered_at' => $this->order->ordered_at
+                        ?->toISOString(),
+                ],
+            ),
 
-            'approved_at' =>
-                $this->approved_at
-                    ?->toISOString(),
+            'approved_at' => $this->approved_at
+                ?->toISOString(),
 
-            'paid_at' =>
-                $this->paid_at
-                    ?->toISOString(),
+            'paid_at' => $this->paid_at
+                ?->toISOString(),
 
-            'failed_at' =>
-                $this->failed_at
-                    ?->toISOString(),
+            'failed_at' => $this->failed_at
+                ?->toISOString(),
 
-            'cancelled_at' =>
-                $this->cancelled_at
-                    ?->toISOString(),
+            'cancelled_at' => $this->cancelled_at
+                ?->toISOString(),
 
-            'refunded_at' =>
-                $this->refunded_at
-                    ?->toISOString(),
+            'refunded_at' => $this->refunded_at
+                ?->toISOString(),
 
-            'created_at' =>
-                $this->created_at
-                    ?->toISOString(),
+            'created_at' => $this->created_at
+                ?->toISOString(),
 
-            'updated_at' =>
-                $this->updated_at
-                    ?->toISOString(),
+            'updated_at' => $this->updated_at
+                ?->toISOString(),
         ];
     }
 }

@@ -129,50 +129,35 @@ final class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'first_name.required' =>
-                'Ingresa tus nombres.',
+            'first_name.required' => 'Ingresa tus nombres.',
 
-            'first_name.min' =>
-                'Los nombres deben contener al menos 2 caracteres.',
+            'first_name.min' => 'Los nombres deben contener al menos 2 caracteres.',
 
-            'first_name.regex' =>
-                'Los nombres contienen caracteres no permitidos.',
+            'first_name.regex' => 'Los nombres contienen caracteres no permitidos.',
 
-            'last_name.required' =>
-                'Ingresa tus apellidos.',
+            'last_name.required' => 'Ingresa tus apellidos.',
 
-            'last_name.min' =>
-                'Los apellidos deben contener al menos 2 caracteres.',
+            'last_name.min' => 'Los apellidos deben contener al menos 2 caracteres.',
 
-            'last_name.regex' =>
-                'Los apellidos contienen caracteres no permitidos.',
+            'last_name.regex' => 'Los apellidos contienen caracteres no permitidos.',
 
-            'email.required' =>
-                'Ingresa tu correo electrónico.',
+            'email.required' => 'Ingresa tu correo electrónico.',
 
-            'email.email' =>
-                'Ingresa un correo electrónico válido.',
+            'email.email' => 'Ingresa un correo electrónico válido.',
 
-            'email.unique' =>
-                'Ya existe una cuenta registrada con este correo.',
+            'email.unique' => 'Ya existe una cuenta registrada con este correo.',
 
-            'phone.required' =>
-                'Ingresa tu número de teléfono.',
+            'phone.required' => 'Ingresa tu número de teléfono.',
 
-            'phone.regex' =>
-                'Ingresa un número celular ecuatoriano válido.',
+            'phone.regex' => 'Ingresa un número celular ecuatoriano válido.',
 
-            'phone.unique' =>
-                'Ya existe una cuenta registrada con este teléfono.',
+            'phone.unique' => 'Ya existe una cuenta registrada con este teléfono.',
 
-            'password.required' =>
-                'Crea una contraseña.',
+            'password.required' => 'Crea una contraseña.',
 
-            'password.confirmed' =>
-                'Las contraseñas no coinciden.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
 
-            'password_confirmation.required' =>
-                'Confirma tu contraseña.',
+            'password_confirmation.required' => 'Confirma tu contraseña.',
         ];
     }
 
@@ -182,23 +167,17 @@ final class RegisterRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'first_name' =>
-                'nombres',
+            'first_name' => 'nombres',
 
-            'last_name' =>
-                'apellidos',
+            'last_name' => 'apellidos',
 
-            'email' =>
-                'correo electrónico',
+            'email' => 'correo electrónico',
 
-            'phone' =>
-                'teléfono',
+            'phone' => 'teléfono',
 
-            'password' =>
-                'contraseña',
+            'password' => 'contraseña',
 
-            'password_confirmation' =>
-                'confirmación de contraseña',
+            'password_confirmation' => 'confirmación de contraseña',
         ];
     }
 }

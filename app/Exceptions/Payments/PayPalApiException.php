@@ -10,7 +10,7 @@ use Throwable;
 final class PayPalApiException extends RuntimeException
 {
     /**
-     * @param array<string, mixed>|null $details
+     * @param  array<string, mixed>|null  $details
      */
     public function __construct(
         string $message,

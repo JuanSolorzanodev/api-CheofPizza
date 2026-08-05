@@ -17,12 +17,11 @@ final class CloseCashSessionRequest extends FormRequest
     {
         if ($this->has('closing_note')) {
             $this->merge([
-                'closing_note' =>
-                    trim(
-                        (string) $this->input(
-                            'closing_note'
-                        )
-                    ),
+                'closing_note' => trim(
+                    (string) $this->input(
+                        'closing_note'
+                    )
+                ),
             ]);
         }
     }

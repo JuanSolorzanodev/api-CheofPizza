@@ -18,13 +18,11 @@ final class SizeController
         AdminCatalogService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                AdminSizeResource::collection(
-                    $service->sizes()
-                ),
+            data: AdminSizeResource::collection(
+                $service->sizes()
+            ),
 
-            message:
-                'Tamaños recuperados correctamente.'
+            message: 'Tamaños recuperados correctamente.'
         );
     }
 
@@ -37,13 +35,11 @@ final class SizeController
         );
 
         return ApiResponse::success(
-            data:
-                new AdminSizeResource(
-                    $size
-                ),
+            data: new AdminSizeResource(
+                $size
+            ),
 
-            message:
-                'Tamaño creado correctamente.',
+            message: 'Tamaño creado correctamente.',
 
             status: 201
         );
@@ -54,13 +50,11 @@ final class SizeController
         AdminCatalogService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new AdminSizeResource(
-                    $service->size($size)
-                ),
+            data: new AdminSizeResource(
+                $service->size($size)
+            ),
 
-            message:
-                'Tamaño recuperado correctamente.'
+            message: 'Tamaño recuperado correctamente.'
         );
     }
 
@@ -75,13 +69,11 @@ final class SizeController
         );
 
         return ApiResponse::success(
-            data:
-                new AdminSizeResource(
-                    $size
-                ),
+            data: new AdminSizeResource(
+                $size
+            ),
 
-            message:
-                'Tamaño actualizado correctamente.'
+            message: 'Tamaño actualizado correctamente.'
         );
     }
 
@@ -93,8 +85,7 @@ final class SizeController
 
         return ApiResponse::success(
             data: null,
-            message:
-                'Tamaño eliminado correctamente.'
+            message: 'Tamaño eliminado correctamente.'
         );
     }
 }

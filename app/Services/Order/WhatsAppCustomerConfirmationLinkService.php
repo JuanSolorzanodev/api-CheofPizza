@@ -33,7 +33,7 @@ final class WhatsAppCustomerConfirmationLinkService
             'orderItems.orderPromotionItems:id,order_item_id,pizza_id,pizza_name',
         ]);
 
-        if (!$this->canConfirm($order)) {
+        if (! $this->canConfirm($order)) {
             return null;
         }
 
@@ -122,7 +122,7 @@ final class WhatsAppCustomerConfirmationLinkService
             "Tipo de entrega: {$deliveryType}",
             "Método de pago: {$paymentMethod}",
             'Total: $'
-                . number_format(
+                .number_format(
                     (float) ($order->total ?? 0),
                     2,
                     '.',
@@ -154,7 +154,7 @@ final class WhatsAppCustomerConfirmationLinkService
         $lines[] = '';
         $lines[] =
             'Por favor, confírmenos si los datos son correctos '
-            . 'para continuar con la preparación.';
+            .'para continuar con la preparación.';
 
         $lines[] = '';
         $lines[] =
@@ -197,12 +197,10 @@ final class WhatsAppCustomerConfirmationLinkService
         return $order
             ->orderItems
             ->map(
-                fn(OrderItem $item): string =>
-                '• ' . $this->buildItemSummary($item),
+                fn (OrderItem $item): string => '• '.$this->buildItemSummary($item),
             )
             ->filter(
-                fn(string $value): bool =>
-                trim($value) !== '•',
+                fn (string $value): bool => trim($value) !== '•',
             )
             ->implode("\n");
     }
@@ -219,7 +217,7 @@ final class WhatsAppCustomerConfirmationLinkService
             (string) ($item->size_name ?? ''),
         );
 
-        if (!empty($item->promotion_id)) {
+        if (! empty($item->promotion_id)) {
             $promotionName = trim(
                 (string) (
                     $item->promotion_name
@@ -287,14 +285,11 @@ final class WhatsAppCustomerConfirmationLinkService
         string $deliveryType,
     ): string {
         return match (strtolower(trim($deliveryType))) {
-            'delivery' =>
-            'Entrega a domicilio',
+            'delivery' => 'Entrega a domicilio',
 
-            'pickup' =>
-            'Retiro en el local',
+            'pickup' => 'Retiro en el local',
 
-            default =>
-            'No especificado',
+            default => 'No especificado',
         };
     }
 
@@ -302,20 +297,15 @@ final class WhatsAppCustomerConfirmationLinkService
         string $paymentMethod,
     ): string {
         return match (strtolower(trim($paymentMethod))) {
-            'cash' =>
-            'Efectivo',
+            'cash' => 'Efectivo',
 
-            'transfer' =>
-            'Transferencia bancaria',
+            'transfer' => 'Transferencia bancaria',
 
-            'card' =>
-            'Tarjeta',
+            'card' => 'Tarjeta',
 
-            'paypal' =>
-            'PayPal',
+            'paypal' => 'PayPal',
 
-            default =>
-            $paymentMethod !== ''
+            default => $paymentMethod !== ''
                 ? ucfirst($paymentMethod)
                 : 'No especificado',
         };
@@ -341,7 +331,7 @@ final class WhatsAppCustomerConfirmationLinkService
         );
 
         if (
-            !is_string($digits) ||
+            ! is_string($digits) ||
             $digits === ''
         ) {
             return null;
@@ -364,14 +354,14 @@ final class WhatsAppCustomerConfirmationLinkService
         ) {
             $digits =
                 self::ECUADOR_COUNTRY_CODE
-                . substr($digits, 1);
+                .substr($digits, 1);
         } elseif (
             strlen($digits) === 9 &&
             str_starts_with($digits, '9')
         ) {
             $digits =
                 self::ECUADOR_COUNTRY_CODE
-                . $digits;
+                .$digits;
         } else {
             return null;
         }

@@ -23,8 +23,7 @@ final class ProductPerformanceController
 
         return ApiResponse::success(
             data: $service->get($range),
-            message:
-                'Rendimiento de productos recuperado correctamente.',
+            message: 'Rendimiento de productos recuperado correctamente.',
         );
     }
 }

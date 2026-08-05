@@ -19,31 +19,24 @@ final class PayPalOrderResource extends JsonResource
         Request $request
     ): array {
         return [
-            'payment_id' =>
-                $this->uuid,
+            'payment_id' => $this->uuid,
 
-            'paypal_order_id' =>
-                $this->provider_order_id,
+            'paypal_order_id' => $this->provider_order_id,
 
-            'status' =>
-                $this->status->value,
+            'status' => $this->status->value,
 
-            'provider_status' =>
-                $this->provider_status,
+            'provider_status' => $this->provider_status,
 
-            'amount' =>
-                number_format(
-                    (float) $this->amount,
-                    2,
-                    '.',
-                    '',
-                ),
+            'amount' => number_format(
+                (float) $this->amount,
+                2,
+                '.',
+                '',
+            ),
 
-            'currency' =>
-                $this->currency,
+            'currency' => $this->currency,
 
-            'created_at' =>
-                $this->created_at?->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
         ];
     }
 }

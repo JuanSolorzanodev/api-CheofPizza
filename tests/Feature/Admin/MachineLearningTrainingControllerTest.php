@@ -21,68 +21,50 @@ function trainingHttpFeature(
     int $pizzas = 10,
 ): MlDailyFeature {
     return MlDailyFeature::query()->create([
-        'date' =>
-            $date,
+        'date' => $date,
 
-        'total_pizzas_sold' =>
-            $pizzas,
+        'total_pizzas_sold' => $pizzas,
 
-        'mini_sales' =>
-            1,
+        'mini_sales' => 1,
 
-        'small_sales' =>
-            2,
+        'small_sales' => 2,
 
-        'medium_sales' =>
-            max(
-                0,
-                $pizzas - 6,
-            ),
-
-        'family_sales' =>
-            2,
-
-        'giant_sales' =>
-            1,
-
-        'basic_sales' =>
-            4,
-
-        'special_sales' =>
-            max(
-                0,
-                $pizzas - 4,
-            ),
-
-        'promotion_sales' =>
-            2,
-
-        'regular_sales' =>
-            max(
-                0,
-                $pizzas - 2,
-            ),
-
-        'delivered_orders' =>
-            5,
-
-        'cancelled_orders' =>
+        'medium_sales' => max(
             0,
+            $pizzas - 6,
+        ),
 
-        'net_sales' =>
-            $pizzas * 10,
+        'family_sales' => 2,
 
-        'pickup_orders' =>
-            2,
+        'giant_sales' => 1,
 
-        'delivery_orders' =>
-            3,
+        'basic_sales' => 4,
 
-        'consolidated_at' =>
-            now(),
+        'special_sales' => max(
+            0,
+            $pizzas - 4,
+        ),
 
-        'source' =>
-            'laravel_sales',
+        'promotion_sales' => 2,
+
+        'regular_sales' => max(
+            0,
+            $pizzas - 2,
+        ),
+
+        'delivered_orders' => 5,
+
+        'cancelled_orders' => 0,
+
+        'net_sales' => $pizzas * 10,
+
+        'pickup_orders' => 2,
+
+        'delivery_orders' => 3,
+
+        'consolidated_at' => now(),
+
+        'source' => 'laravel_sales',
     ]);
 }
 
@@ -116,29 +98,22 @@ function seedTrainingHttpFeatures(
 function trainingHttpPreviewResponse(): array
 {
     return [
-        'trained' =>
-            true,
+        'trained' => true,
 
-        'schema_version' =>
-            '1.0',
+        'schema_version' => '1.0',
 
-        'received_records' =>
-            45,
+        'received_records' => 45,
 
-        'training_records' =>
-            31,
+        'training_records' => 31,
 
-        'folds' =>
-            5,
+        'folds' => 5,
 
-        'trained_from' =>
-            now()
-                ->subDays(44)
-                ->toDateString(),
+        'trained_from' => now()
+            ->subDays(44)
+            ->toDateString(),
 
-        'trained_until' =>
-            now()
-                ->toDateString(),
+        'trained_until' => now()
+            ->toDateString(),
 
         'targets' => [
             'mini_sales',
@@ -166,67 +141,49 @@ function trainingHttpPreviewResponse(): array
 
         'candidates' => [
             [
-                'algorithm' =>
-                    'mean_baseline',
+                'algorithm' => 'mean_baseline',
 
-                'algorithm_label' =>
-                    'Mean Baseline',
+                'algorithm_label' => 'Mean Baseline',
 
-                'mean_mae' =>
-                    1.8,
+                'mean_mae' => 1.8,
 
-                'mean_rmse' =>
-                    2.2,
+                'mean_rmse' => 2.2,
             ],
 
             [
-                'algorithm' =>
-                    'ridge',
+                'algorithm' => 'ridge',
 
-                'algorithm_label' =>
-                    'Ridge Regression',
+                'algorithm_label' => 'Ridge Regression',
 
-                'mean_mae' =>
-                    1.1,
+                'mean_mae' => 1.1,
 
-                'mean_rmse' =>
-                    1.5,
+                'mean_rmse' => 1.5,
             ],
 
             [
-                'algorithm' =>
-                    'random_forest',
+                'algorithm' => 'random_forest',
 
-                'algorithm_label' =>
-                    'Random Forest',
+                'algorithm_label' => 'Random Forest',
 
-                'mean_mae' =>
-                    0.8,
+                'mean_mae' => 0.8,
 
-                'mean_rmse' =>
-                    1.1,
+                'mean_rmse' => 1.1,
             ],
         ],
 
         'winner' => [
-            'algorithm' =>
-                'random_forest',
+            'algorithm' => 'random_forest',
 
-            'algorithm_label' =>
-                'Random Forest',
+            'algorithm_label' => 'Random Forest',
 
-            'mean_mae' =>
-                0.8,
+            'mean_mae' => 0.8,
 
-            'mean_rmse' =>
-                1.1,
+            'mean_rmse' => 1.1,
         ],
 
-        'warnings' =>
-            [],
+        'warnings' => [],
 
-        'message' =>
-            'Evaluación completada correctamente.',
+        'message' => 'Evaluación completada correctamente.',
     ];
 }
 
@@ -236,38 +193,28 @@ function trainingHttpPreviewResponse(): array
 function trainingHttpBuildResponse(): array
 {
     return [
-        'built' =>
-            true,
+        'built' => true,
 
-        'artifact_id' =>
-            'candidate-20260804T150000Z-abcd1234',
+        'artifact_id' => 'candidate-20260804T150000Z-abcd1234',
 
-        'version' =>
-            'sales-2026.08.04-abcd1234',
+        'version' => 'sales-2026.08.04-abcd1234',
 
-        'algorithm' =>
-            'random_forest',
+        'algorithm' => 'random_forest',
 
-        'algorithm_label' =>
-            'Random Forest',
+        'algorithm_label' => 'Random Forest',
 
-        'schema_version' =>
-            '1.0',
+        'schema_version' => '1.0',
 
-        'trained_from' =>
-            now()
-                ->subDays(44)
-                ->toDateString(),
+        'trained_from' => now()
+            ->subDays(44)
+            ->toDateString(),
 
-        'trained_until' =>
-            now()
-                ->toDateString(),
+        'trained_until' => now()
+            ->toDateString(),
 
-        'received_records' =>
-            45,
+        'received_records' => 45,
 
-        'training_records' =>
-            31,
+        'training_records' => 31,
 
         'targets' => [
             'mini_sales',
@@ -295,51 +242,37 @@ function trainingHttpBuildResponse(): array
 
         'metrics' => [
             [
-                'target' =>
-                    'mini_sales',
+                'target' => 'mini_sales',
 
-                'algorithm' =>
-                    'random_forest',
+                'algorithm' => 'random_forest',
 
-                'mae' =>
-                    0.4,
+                'mae' => 0.4,
 
-                'rmse' =>
-                    0.6,
+                'rmse' => 0.6,
             ],
 
             [
-                'target' =>
-                    'small_sales',
+                'target' => 'small_sales',
 
-                'algorithm' =>
-                    'random_forest',
+                'algorithm' => 'random_forest',
 
-                'mae' =>
-                    0.7,
+                'mae' => 0.7,
 
-                'rmse' =>
-                    0.9,
+                'rmse' => 0.9,
             ],
         ],
 
-        'mean_mae' =>
-            0.8,
+        'mean_mae' => 0.8,
 
-        'mean_rmse' =>
-            1.1,
+        'mean_rmse' => 1.1,
 
-        'activated' =>
-            false,
+        'activated' => false,
 
-        'created_at' =>
-            now()->toIso8601String(),
+        'created_at' => now()->toIso8601String(),
 
-        'warnings' =>
-            [],
+        'warnings' => [],
 
-        'message' =>
-            'Candidato construido correctamente.',
+        'message' => 'Candidato construido correctamente.',
     ];
 }
 
@@ -351,56 +284,43 @@ function trainingHttpRegistryResponse(
     string $artifactId = 'legacy-calendar-model',
 ): array {
     return [
-        'registry_version' =>
-            '1.0',
+        'registry_version' => '1.0',
 
         'active' => [
-            'kind' =>
-                $kind,
+            'kind' => $kind,
 
-            'artifact_id' =>
-                $artifactId,
+            'artifact_id' => $artifactId,
 
-            'version' =>
-                $kind === 'legacy'
+            'version' => $kind === 'legacy'
                     ? 'legacy'
                     : 'sales-2026.08.04-abcd1234',
 
-            'activated_at' =>
-                now()->toIso8601String(),
+            'activated_at' => now()->toIso8601String(),
         ],
 
-        'rollback_available' =>
-            $kind === 'historical',
+        'rollback_available' => $kind === 'historical',
 
-        'rollback_depth' =>
-            $kind === 'historical'
+        'rollback_depth' => $kind === 'historical'
                 ? 1
                 : 0,
 
-        'history' =>
-            $kind === 'historical'
+        'history' => $kind === 'historical'
                 ? [
                     [
-                        'kind' =>
-                            'legacy',
+                        'kind' => 'legacy',
 
-                        'artifact_id' =>
-                            'legacy-calendar-model',
+                        'artifact_id' => 'legacy-calendar-model',
 
-                        'version' =>
-                            'legacy',
+                        'version' => 'legacy',
 
-                        'activated_at' =>
-                            now()
-                                ->subMinute()
-                                ->toIso8601String(),
+                        'activated_at' => now()
+                            ->subMinute()
+                            ->toIso8601String(),
                     ],
                 ]
                 : [],
 
-        'updated_at' =>
-            now()->toIso8601String(),
+        'updated_at' => now()->toIso8601String(),
     ];
 }
 
@@ -411,44 +331,33 @@ function trainingHttpActivationResponse(
     string $artifactId,
 ): array {
     return [
-        'activated' =>
-            true,
+        'activated' => true,
 
         'previous' => [
-            'kind' =>
-                'legacy',
+            'kind' => 'legacy',
 
-            'artifact_id' =>
-                'legacy-calendar-model',
+            'artifact_id' => 'legacy-calendar-model',
 
-            'version' =>
-                'legacy',
+            'version' => 'legacy',
 
-            'activated_at' =>
-                now()
-                    ->subMinute()
-                    ->toIso8601String(),
+            'activated_at' => now()
+                ->subMinute()
+                ->toIso8601String(),
         ],
 
         'active' => [
-            'kind' =>
-                'historical',
+            'kind' => 'historical',
 
-            'artifact_id' =>
-                $artifactId,
+            'artifact_id' => $artifactId,
 
-            'version' =>
-                'sales-2026.08.04-abcd1234',
+            'version' => 'sales-2026.08.04-abcd1234',
 
-            'activated_at' =>
-                now()->toIso8601String(),
+            'activated_at' => now()->toIso8601String(),
         ],
 
-        'rollback_available' =>
-            true,
+        'rollback_available' => true,
 
-        'message' =>
-            'El candidato fue activado correctamente.',
+        'message' => 'El candidato fue activado correctamente.',
     ];
 }
 
@@ -458,51 +367,40 @@ function trainingHttpActivationResponse(
 function trainingHttpRollbackResponse(): array
 {
     return [
-        'rolled_back' =>
-            true,
+        'rolled_back' => true,
 
         'previous' => [
-            'kind' =>
-                'historical',
+            'kind' => 'historical',
 
-            'artifact_id' =>
-                'candidate-20260804T150000Z-abcd1234',
+            'artifact_id' => 'candidate-20260804T150000Z-abcd1234',
 
-            'version' =>
-                'sales-2026.08.04-abcd1234',
+            'version' => 'sales-2026.08.04-abcd1234',
 
-            'activated_at' =>
-                now()
-                    ->subMinute()
-                    ->toIso8601String(),
+            'activated_at' => now()
+                ->subMinute()
+                ->toIso8601String(),
         ],
 
         'active' => [
-            'kind' =>
-                'legacy',
+            'kind' => 'legacy',
 
-            'artifact_id' =>
-                'legacy-calendar-model',
+            'artifact_id' => 'legacy-calendar-model',
 
-            'version' =>
-                'legacy',
+            'version' => 'legacy',
 
-            'activated_at' =>
-                now()->toIso8601String(),
+            'activated_at' => now()->toIso8601String(),
         ],
 
-        'rollback_available' =>
-            false,
+        'rollback_available' => false,
 
-        'message' =>
-            'El modelo anterior fue restaurado correctamente.',
+        'message' => 'El modelo anterior fue restaurado correctamente.',
     ];
 }
 
 /**
  * Registra un mock del cliente remoto en el contenedor.
  *
- * @param callable(MockInterface): void $configure
+ * @param  callable(MockInterface): void  $configure
  */
 function mockTrainingHttpClient(
     callable $configure,
@@ -528,7 +426,6 @@ it(
     'requires authentication for training administration',
     function (): void {
         /** @var TestCase $this */
-
         $this
             ->getJson(
                 '/api/v1/admin/machine-learning/training/runs',
@@ -541,7 +438,6 @@ it(
     'forbids customers from accessing training administration',
     function (): void {
         /** @var TestCase $this */
-
         $customer = User::factory()
             ->customer()
             ->create();
@@ -562,7 +458,6 @@ it(
     'allows an administrator to inspect the remote model registry',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -618,68 +513,50 @@ it(
     'lists persisted training runs',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
 
         MlTrainingRun::query()->create([
-            'uuid' =>
-                fake()->uuid(),
+            'uuid' => fake()->uuid(),
 
-            'dataset_hash' =>
-                hash(
-                    'sha256',
-                    'first-dataset',
-                ),
+            'dataset_hash' => hash(
+                'sha256',
+                'first-dataset',
+            ),
 
-            'status' =>
-                MlTrainingRun::STATUS_BUILT,
+            'status' => MlTrainingRun::STATUS_BUILT,
 
-            'schema_version' =>
-                '1.0',
+            'schema_version' => '1.0',
 
-            'artifact_id' =>
-                'candidate-first',
+            'artifact_id' => 'candidate-first',
 
-            'version' =>
-                'sales-first',
+            'version' => 'sales-first',
 
-            'algorithm' =>
-                'ridge',
+            'algorithm' => 'ridge',
 
-            'algorithm_label' =>
-                'Ridge Regression',
+            'algorithm_label' => 'Ridge Regression',
 
-            'trained_from' =>
-                now()
-                    ->subDays(30)
-                    ->toDateString(),
+            'trained_from' => now()
+                ->subDays(30)
+                ->toDateString(),
 
-            'trained_until' =>
-                now()
-                    ->toDateString(),
+            'trained_until' => now()
+                ->toDateString(),
 
-            'received_records' =>
-                45,
+            'received_records' => 45,
 
-            'training_records' =>
-                31,
+            'training_records' => 31,
 
-            'mean_mae' =>
-                1.2,
+            'mean_mae' => 1.2,
 
-            'mean_rmse' =>
-                1.7,
+            'mean_rmse' => 1.7,
 
-            'is_active' =>
-                false,
+            'is_active' => false,
 
-            'built_at' =>
-                now(),
+            'built_at' => now(),
 
-            'created_by' =>
-                $admin->id,
+            'created_by' => $admin->id,
         ]);
 
         $this
@@ -718,59 +595,43 @@ it(
     'shows a persisted training run by uuid',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
 
         $run = MlTrainingRun::query()->create([
-            'uuid' =>
-                fake()->uuid(),
+            'uuid' => fake()->uuid(),
 
-            'dataset_hash' =>
-                hash(
-                    'sha256',
-                    'show-dataset',
-                ),
+            'dataset_hash' => hash(
+                'sha256',
+                'show-dataset',
+            ),
 
-            'status' =>
-                MlTrainingRun::STATUS_BUILT,
+            'status' => MlTrainingRun::STATUS_BUILT,
 
-            'schema_version' =>
-                '1.0',
+            'schema_version' => '1.0',
 
-            'artifact_id' =>
-                'candidate-show',
+            'artifact_id' => 'candidate-show',
 
-            'version' =>
-                'sales-show',
+            'version' => 'sales-show',
 
-            'algorithm' =>
-                'random_forest',
+            'algorithm' => 'random_forest',
 
-            'algorithm_label' =>
-                'Random Forest',
+            'algorithm_label' => 'Random Forest',
 
-            'received_records' =>
-                45,
+            'received_records' => 45,
 
-            'training_records' =>
-                31,
+            'training_records' => 31,
 
-            'mean_mae' =>
-                0.8,
+            'mean_mae' => 0.8,
 
-            'mean_rmse' =>
-                1.1,
+            'mean_rmse' => 1.1,
 
-            'is_active' =>
-                false,
+            'is_active' => false,
 
-            'built_at' =>
-                now(),
+            'built_at' => now(),
 
-            'created_by' =>
-                $admin->id,
+            'created_by' => $admin->id,
         ]);
 
         $this
@@ -781,8 +642,8 @@ it(
             ->getJson(
                 (
                     '/api/v1/admin/machine-learning/'
-                    . 'training/runs/'
-                    . $run->uuid
+                    .'training/runs/'
+                    .$run->uuid
                 ),
             )
             ->assertOk()
@@ -809,7 +670,6 @@ it(
     'previews training without persisting a run',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -828,8 +688,7 @@ it(
                     ->withArgs(
                         static fn (
                             array $dataset,
-                        ): bool =>
-                            $dataset[
+                        ): bool => $dataset[
                                 'summary'
                             ][
                                 'records'
@@ -849,11 +708,9 @@ it(
             ->postJson(
                 '/api/v1/admin/machine-learning/training/preview',
                 [
-                    'limit' =>
-                        365,
+                    'limit' => 365,
 
-                    'include_empty_days' =>
-                        true,
+                    'include_empty_days' => true,
                 ],
             )
             ->assertOk()
@@ -884,7 +741,6 @@ it(
     'builds and persists a candidate through the administrative endpoint',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -903,8 +759,7 @@ it(
                     ->withArgs(
                         static fn (
                             array $dataset,
-                        ): bool =>
-                            $dataset[
+                        ): bool => $dataset[
                                 'summary'
                             ][
                                 'records'
@@ -924,11 +779,9 @@ it(
             ->postJson(
                 '/api/v1/admin/machine-learning/training/build',
                 [
-                    'limit' =>
-                        365,
+                    'limit' => 365,
 
-                    'include_empty_days' =>
-                        true,
+                    'include_empty_days' => true,
                 ],
             )
             ->assertCreated()
@@ -977,59 +830,43 @@ it(
     'activates a built candidate and synchronizes its local state',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
 
         $run = MlTrainingRun::query()->create([
-            'uuid' =>
-                fake()->uuid(),
+            'uuid' => fake()->uuid(),
 
-            'dataset_hash' =>
-                hash(
-                    'sha256',
-                    'activation-dataset',
-                ),
+            'dataset_hash' => hash(
+                'sha256',
+                'activation-dataset',
+            ),
 
-            'status' =>
-                MlTrainingRun::STATUS_BUILT,
+            'status' => MlTrainingRun::STATUS_BUILT,
 
-            'schema_version' =>
-                '1.0',
+            'schema_version' => '1.0',
 
-            'artifact_id' =>
-                'candidate-20260804T150000Z-abcd1234',
+            'artifact_id' => 'candidate-20260804T150000Z-abcd1234',
 
-            'version' =>
-                'sales-2026.08.04-abcd1234',
+            'version' => 'sales-2026.08.04-abcd1234',
 
-            'algorithm' =>
-                'random_forest',
+            'algorithm' => 'random_forest',
 
-            'algorithm_label' =>
-                'Random Forest',
+            'algorithm_label' => 'Random Forest',
 
-            'received_records' =>
-                45,
+            'received_records' => 45,
 
-            'training_records' =>
-                31,
+            'training_records' => 31,
 
-            'mean_mae' =>
-                0.8,
+            'mean_mae' => 0.8,
 
-            'mean_rmse' =>
-                1.1,
+            'mean_rmse' => 1.1,
 
-            'is_active' =>
-                false,
+            'is_active' => false,
 
-            'built_at' =>
-                now(),
+            'built_at' => now(),
 
-            'created_by' =>
-                $admin->id,
+            'created_by' => $admin->id,
         ]);
 
         mockTrainingHttpClient(
@@ -1062,9 +899,9 @@ it(
             ->postJson(
                 (
                     '/api/v1/admin/machine-learning/'
-                    . 'training/runs/'
-                    . $run->uuid
-                    . '/activate'
+                    .'training/runs/'
+                    .$run->uuid
+                    .'/activate'
                 ),
             )
             ->assertOk()
@@ -1107,64 +944,47 @@ it(
     'rolls back to the legacy model and deactivates the local candidate',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
 
         $run = MlTrainingRun::query()->create([
-            'uuid' =>
-                fake()->uuid(),
+            'uuid' => fake()->uuid(),
 
-            'dataset_hash' =>
-                hash(
-                    'sha256',
-                    'rollback-dataset',
-                ),
+            'dataset_hash' => hash(
+                'sha256',
+                'rollback-dataset',
+            ),
 
-            'status' =>
-                MlTrainingRun::STATUS_ACTIVATED,
+            'status' => MlTrainingRun::STATUS_ACTIVATED,
 
-            'schema_version' =>
-                '1.0',
+            'schema_version' => '1.0',
 
-            'artifact_id' =>
-                'candidate-20260804T150000Z-abcd1234',
+            'artifact_id' => 'candidate-20260804T150000Z-abcd1234',
 
-            'version' =>
-                'sales-2026.08.04-abcd1234',
+            'version' => 'sales-2026.08.04-abcd1234',
 
-            'algorithm' =>
-                'random_forest',
+            'algorithm' => 'random_forest',
 
-            'algorithm_label' =>
-                'Random Forest',
+            'algorithm_label' => 'Random Forest',
 
-            'received_records' =>
-                45,
+            'received_records' => 45,
 
-            'training_records' =>
-                31,
+            'training_records' => 31,
 
-            'mean_mae' =>
-                0.8,
+            'mean_mae' => 0.8,
 
-            'mean_rmse' =>
-                1.1,
+            'mean_rmse' => 1.1,
 
-            'is_active' =>
-                true,
+            'is_active' => true,
 
-            'built_at' =>
-                now()
-                    ->subMinute(),
+            'built_at' => now()
+                ->subMinute(),
 
-            'activated_at' =>
-                now()
-                    ->subMinute(),
+            'activated_at' => now()
+                ->subMinute(),
 
-            'created_by' =>
-                $admin->id,
+            'created_by' => $admin->id,
         ]);
 
         mockTrainingHttpClient(
@@ -1230,47 +1050,35 @@ it(
     'rejects activation of a training run without a built artifact',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
 
         $run = MlTrainingRun::query()->create([
-            'uuid' =>
-                fake()->uuid(),
+            'uuid' => fake()->uuid(),
 
-            'dataset_hash' =>
-                hash(
-                    'sha256',
-                    'failed-dataset',
-                ),
+            'dataset_hash' => hash(
+                'sha256',
+                'failed-dataset',
+            ),
 
-            'status' =>
-                MlTrainingRun::STATUS_FAILED,
+            'status' => MlTrainingRun::STATUS_FAILED,
 
-            'schema_version' =>
-                '1.0',
+            'schema_version' => '1.0',
 
-            'artifact_id' =>
-                null,
+            'artifact_id' => null,
 
-            'received_records' =>
-                1,
+            'received_records' => 1,
 
-            'training_records' =>
-                0,
+            'training_records' => 0,
 
-            'is_active' =>
-                false,
+            'is_active' => false,
 
-            'failed_at' =>
-                now(),
+            'failed_at' => now(),
 
-            'error_message' =>
-                'Dataset insuficiente.',
+            'error_message' => 'Dataset insuficiente.',
 
-            'created_by' =>
-                $admin->id,
+            'created_by' => $admin->id,
         ]);
 
         mockTrainingHttpClient(
@@ -1292,9 +1100,9 @@ it(
             ->postJson(
                 (
                     '/api/v1/admin/machine-learning/'
-                    . 'training/runs/'
-                    . $run->uuid
-                    . '/activate'
+                    .'training/runs/'
+                    .$run->uuid
+                    .'/activate'
                 ),
             )
             ->assertStatus(409)

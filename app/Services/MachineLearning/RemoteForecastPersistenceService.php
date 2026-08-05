@@ -19,7 +19,7 @@ final class RemoteForecastPersistenceService
      * Convierte la respuesta de FastAPI al formato interno
      * utilizado por Laravel y la guarda de manera idempotente.
      *
-     * @param array<string, mixed> $forecast
+     * @param  array<string, mixed>  $forecast
      */
     public function persist(
         array $forecast,
@@ -45,27 +45,22 @@ final class RemoteForecastPersistenceService
             json_encode(
                 [
                     'model' => [
-                        'type' =>
-                            Arr::get(
-                                $forecast,
-                                'model.type'
-                            ),
+                        'type' => Arr::get(
+                            $forecast,
+                            'model.type'
+                        ),
 
-                        'version' =>
-                            Arr::get(
-                                $forecast,
-                                'model.version'
-                            ),
+                        'version' => Arr::get(
+                            $forecast,
+                            'model.version'
+                        ),
                     ],
 
-                    'forecast_from' =>
-                        $forecast['forecast_from'],
+                    'forecast_from' => $forecast['forecast_from'],
 
-                    'forecast_until' =>
-                        $forecast['forecast_until'],
+                    'forecast_until' => $forecast['forecast_until'],
 
-                    'predictions' =>
-                        $forecast['predictions'],
+                    'predictions' => $forecast['predictions'],
                 ],
                 JSON_THROW_ON_ERROR
             )
@@ -80,38 +75,33 @@ final class RemoteForecastPersistenceService
                 'model.version'
             ),
             metadata: [
-                'generation_mode' =>
-                    'remote_inference',
+                'generation_mode' => 'remote_inference',
 
-                'service' =>
-                    'cheofpizza-ml',
+                'service' => 'cheofpizza-ml',
 
-                'model_type' =>
-                    Arr::get(
-                        $forecast,
-                        'model.type'
-                    ),
+                'model_type' => Arr::get(
+                    $forecast,
+                    'model.type'
+                ),
 
-                'features' =>
-                    Arr::get(
-                        $forecast,
-                        'model.features',
-                        []
-                    ),
+                'features' => Arr::get(
+                    $forecast,
+                    'model.features',
+                    []
+                ),
 
-                'limitations' =>
-                    Arr::get(
-                        $forecast,
-                        'limitations',
-                        []
-                    ),
+                'limitations' => Arr::get(
+                    $forecast,
+                    'limitations',
+                    []
+                ),
             ],
             sourceHash: $sourceHash,
         );
     }
 
     /**
-     * @param array<string, mixed> $forecast
+     * @param  array<string, mixed>  $forecast
      * @return array<string, mixed>
      */
     private function normalize(
@@ -136,39 +126,31 @@ final class RemoteForecastPersistenceService
 
                     return [
                         $target => [
-                            'name' =>
-                                (string) (
-                                    $metric['algorithm']
-                                    ?? ''
-                                ),
+                            'name' => (string) (
+                                $metric['algorithm']
+                                ?? ''
+                            ),
 
-                            'selection_score' =>
-                                $metric[
+                            'selection_score' => $metric[
                                     'selection_score'
                                 ] ?? null,
 
-                            'test_mae' =>
-                                $metric['mae']
+                            'test_mae' => $metric['mae']
                                 ?? null,
 
-                            'test_rmse' =>
-                                $metric['rmse']
+                            'test_rmse' => $metric['rmse']
                                 ?? null,
 
-                            'test_smape' =>
-                                $metric['smape']
+                            'test_smape' => $metric['smape']
                                 ?? null,
 
-                            'test_r2' =>
-                                $metric['r2']
+                            'test_r2' => $metric['r2']
                                 ?? null,
 
-                            'cv_mae' =>
-                                $metric['cv_mae']
+                            'cv_mae' => $metric['cv_mae']
                                 ?? null,
 
-                            'cv_rmse' =>
-                                $metric['cv_rmse']
+                            'cv_rmse' => $metric['cv_rmse']
                                 ?? null,
                         ],
                     ];
@@ -194,46 +176,39 @@ final class RemoteForecastPersistenceService
                     ];
 
                     return [
-                        'date' =>
-                            (string) $prediction[
+                        'date' => (string) $prediction[
                                 'date'
                             ],
 
-                        'day_of_week' =>
-                            (string) (
-                                $prediction[
-                                    'day_of_week'
-                                ] ?? ''
-                            ),
+                        'day_of_week' => (string) (
+                            $prediction[
+                                'day_of_week'
+                            ] ?? ''
+                        ),
 
-                        'total_units' =>
-                            (int) $prediction[
+                        'total_units' => (int) $prediction[
                                 'total_units'
                             ],
 
-                        'mini' =>
-                            (int) (
-                                $sizes['mini']
-                                ?? 0
-                            ),
+                        'mini' => (int) (
+                            $sizes['mini']
+                            ?? 0
+                        ),
 
-                        'small' =>
-                            (int) (
-                                $sizes['small']
-                                ?? 0
-                            ),
+                        'small' => (int) (
+                            $sizes['small']
+                            ?? 0
+                        ),
 
-                        'medium' =>
-                            (int) (
-                                $sizes['medium']
-                                ?? 0
-                            ),
+                        'medium' => (int) (
+                            $sizes['medium']
+                            ?? 0
+                        ),
 
-                        'family' =>
-                            (int) (
-                                $sizes['family']
-                                ?? 0
-                            ),
+                        'family' => (int) (
+                            $sizes['family']
+                            ?? 0
+                        ),
                     ];
                 }
             )
@@ -243,34 +218,28 @@ final class RemoteForecastPersistenceService
         $summary = $forecast['summary'];
 
         return [
-            'generated_at' =>
-                $forecast['generated_at'],
+            'generated_at' => $forecast['generated_at'],
 
-            'trained_from' =>
-                Arr::get(
-                    $forecast,
-                    'model.trained_from'
-                ),
+            'trained_from' => Arr::get(
+                $forecast,
+                'model.trained_from'
+            ),
 
-            'trained_until' =>
-                Arr::get(
-                    $forecast,
-                    'model.trained_until'
-                ),
+            'trained_until' => Arr::get(
+                $forecast,
+                'model.trained_until'
+            ),
 
-            'historical_days' =>
-                (int) Arr::get(
-                    $forecast,
-                    'model.training_records'
-                ),
+            'historical_days' => (int) Arr::get(
+                $forecast,
+                'model.training_records'
+            ),
 
-            'forecast_days' =>
-                (int) $forecast[
+            'forecast_days' => (int) $forecast[
                     'forecast_days'
                 ],
 
-            'models' =>
-                $models,
+            'models' => $models,
 
             'summary' => array_merge(
                 $summary,
@@ -279,23 +248,20 @@ final class RemoteForecastPersistenceService
                      * El microservicio actual no devuelve
                      * este acumulado histórico.
                      */
-                    'historical_total_units' =>
-                        null,
+                    'historical_total_units' => null,
                 ]
             ),
 
-            'recommendations' =>
-                $this->recommendations(
-                    $summary
-                ),
+            'recommendations' => $this->recommendations(
+                $summary
+            ),
 
-            'predictions' =>
-                $predictions,
+            'predictions' => $predictions,
         ];
     }
 
     /**
-     * @param array<string, mixed> $summary
+     * @param  array<string, mixed>  $summary
      * @return array<int, string>
      */
     private function recommendations(
@@ -368,7 +334,7 @@ final class RemoteForecastPersistenceService
     }
 
     /**
-     * @param array<string, mixed> $forecast
+     * @param  array<string, mixed>  $forecast
      */
     private function validateRemotePayload(
         array $forecast
@@ -389,7 +355,7 @@ final class RemoteForecastPersistenceService
         ];
 
         foreach ($requiredPaths as $path) {
-            if (!Arr::has($forecast, $path)) {
+            if (! Arr::has($forecast, $path)) {
                 throw new MachineLearningServiceException(
                     sprintf(
                         'La respuesta predictiva no contiene el campo requerido: %s.',
@@ -405,7 +371,7 @@ final class RemoteForecastPersistenceService
         );
 
         if (
-            !is_array($predictions)
+            ! is_array($predictions)
             || $predictions === []
         ) {
             throw new MachineLearningServiceException(
@@ -419,7 +385,7 @@ final class RemoteForecastPersistenceService
         );
 
         if (
-            !is_array($metrics)
+            ! is_array($metrics)
             || $metrics === []
         ) {
             throw new MachineLearningServiceException(
@@ -431,15 +397,14 @@ final class RemoteForecastPersistenceService
             ->contains(
                 static fn (
                     mixed $metric
-                ): bool =>
-                    is_array($metric)
+                ): bool => is_array($metric)
                     && (
                         $metric['target']
                         ?? null
                     ) === 'total_units'
             );
 
-        if (!$hasTotalModel) {
+        if (! $hasTotalModel) {
             throw new MachineLearningServiceException(
                 'La respuesta predictiva no contiene el modelo total_units.'
             );

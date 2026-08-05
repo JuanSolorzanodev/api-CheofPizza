@@ -116,7 +116,6 @@ describe('Captura de órdenes PayPal', function (): void {
         'captura un pago aprobado y crea el pedido sin duplicarlo',
         function (): void {
             /** @var TestCase $this */
-
             [
                 'user' => $user,
                 'cart' => $cart,
@@ -161,14 +160,11 @@ describe('Captura de órdenes PayPal', function (): void {
                             === "{$baseUrl}/v1/oauth2/token"
                     ) {
                         return Http::response([
-                            'access_token' =>
-                                'ACCESS-TOKEN-CAPTURE-TEST',
+                            'access_token' => 'ACCESS-TOKEN-CAPTURE-TEST',
 
-                            'token_type' =>
-                                'Bearer',
+                            'token_type' => 'Bearer',
 
-                            'expires_in' =>
-                                32400,
+                            'expires_in' => 32400,
                         ], 200);
                     }
 
@@ -181,22 +177,17 @@ describe('Captura de órdenes PayPal', function (): void {
                             === "{$baseUrl}/v2/checkout/orders"
                     ) {
                         return Http::response([
-                            'id' =>
-                                $paypalOrderId,
+                            'id' => $paypalOrderId,
 
-                            'status' =>
-                                'CREATED',
+                            'status' => 'CREATED',
 
                             'links' => [
                                 [
-                                    'href' =>
-                                        "https://www.sandbox.paypal.com/checkoutnow?token={$paypalOrderId}",
+                                    'href' => "https://www.sandbox.paypal.com/checkoutnow?token={$paypalOrderId}",
 
-                                    'rel' =>
-                                        'approve',
+                                    'rel' => 'approve',
 
-                                    'method' =>
-                                        'GET',
+                                    'method' => 'GET',
                                 ],
                             ],
                         ], 201);
@@ -212,35 +203,27 @@ describe('Captura de órdenes PayPal', function (): void {
                             === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}"
                     ) {
                         return Http::response([
-                            'id' =>
-                                $paypalOrderId,
+                            'id' => $paypalOrderId,
 
-                            'intent' =>
-                                'CAPTURE',
+                            'intent' => 'CAPTURE',
 
-                            'status' =>
-                                'APPROVED',
+                            'status' => 'APPROVED',
 
                             'purchase_units' => [
                                 [
-                                    'reference_id' =>
-                                        $paymentUuid,
+                                    'reference_id' => $paymentUuid,
 
-                                    'custom_id' =>
-                                        $paymentUuid,
+                                    'custom_id' => $paymentUuid,
 
                                     'amount' => [
-                                        'currency_code' =>
-                                            'USD',
+                                        'currency_code' => 'USD',
 
-                                        'value' =>
-                                            '5.00',
+                                        'value' => '5.00',
                                     ],
                                 ],
                             ],
 
-                            'update_time' =>
-                                now()->toISOString(),
+                            'update_time' => now()->toISOString(),
                         ], 200);
                     }
 
@@ -253,81 +236,63 @@ describe('Captura de órdenes PayPal', function (): void {
                             === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}/capture"
                     ) {
                         return Http::response([
-                            'id' =>
-                                $paypalOrderId,
+                            'id' => $paypalOrderId,
 
-                            'intent' =>
-                                'CAPTURE',
+                            'intent' => 'CAPTURE',
 
-                            'status' =>
-                                'COMPLETED',
+                            'status' => 'COMPLETED',
 
                             'purchase_units' => [
                                 [
-                                    'reference_id' =>
-                                        $paymentUuid,
+                                    'reference_id' => $paymentUuid,
 
-                                    'custom_id' =>
-                                        $paymentUuid,
+                                    'custom_id' => $paymentUuid,
 
                                     'amount' => [
-                                        'currency_code' =>
-                                            'USD',
+                                        'currency_code' => 'USD',
 
-                                        'value' =>
-                                            '5.00',
+                                        'value' => '5.00',
                                     ],
 
                                     'payments' => [
                                         'captures' => [
                                             [
-                                                'id' =>
-                                                    $paypalCaptureId,
+                                                'id' => $paypalCaptureId,
 
-                                                'status' =>
-                                                    'COMPLETED',
+                                                'status' => 'COMPLETED',
 
                                                 'amount' => [
-                                                    'currency_code' =>
-                                                        'USD',
+                                                    'currency_code' => 'USD',
 
-                                                    'value' =>
-                                                        '5.00',
+                                                    'value' => '5.00',
                                                 ],
 
-                                                'final_capture' =>
-                                                    true,
+                                                'final_capture' => true,
 
                                                 'seller_protection' => [
-                                                    'status' =>
-                                                        'ELIGIBLE',
+                                                    'status' => 'ELIGIBLE',
                                                 ],
 
-                                                'create_time' =>
-                                                    now()
-                                                        ->subSecond()
-                                                        ->toISOString(),
+                                                'create_time' => now()
+                                                    ->subSecond()
+                                                    ->toISOString(),
 
-                                                'update_time' =>
-                                                    now()
-                                                        ->toISOString(),
+                                                'update_time' => now()
+                                                    ->toISOString(),
                                             ],
                                         ],
                                     ],
                                 ],
                             ],
 
-                            'update_time' =>
-                                now()->toISOString(),
+                            'update_time' => now()->toISOString(),
                         ], 201);
                     }
 
                     return Http::response([
-                        'name' =>
-                            'UNEXPECTED_REQUEST',
+                        'name' => 'UNEXPECTED_REQUEST',
 
-                        'message' =>
-                            "Petición no configurada: {$request->method()} {$request->url()}",
+                        'message' => "Petición no configurada: {$request->method()} {$request->url()}",
                     ], 500);
                 },
             );
@@ -340,21 +305,16 @@ describe('Captura de órdenes PayPal', function (): void {
             $createResponse = $this->postJson(
                 '/api/v1/payments/paypal/orders',
                 [
-                    'delivery_type' =>
-                        'pickup',
+                    'delivery_type' => 'pickup',
 
-                    'address' =>
-                        null,
+                    'address' => null,
 
-                    'delivery_location' =>
-                        null,
+                    'delivery_location' => null,
 
-                    'notes' =>
-                        'Pedido capturado desde prueba automática',
+                    'notes' => 'Pedido capturado desde prueba automática',
                 ],
                 [
-                    'Idempotency-Key' =>
-                        $idempotencyKey,
+                    'Idempotency-Key' => $idempotencyKey,
                 ],
             );
 
@@ -488,57 +448,43 @@ describe('Captura de órdenes PayPal', function (): void {
             $this->assertDatabaseHas(
                 'payments',
                 [
-                    'id' =>
-                        $payment->id,
+                    'id' => $payment->id,
 
-                    'order_id' =>
-                        $order->id,
+                    'order_id' => $order->id,
 
-                    'provider_order_id' =>
-                        $paypalOrderId,
+                    'provider_order_id' => $paypalOrderId,
 
-                    'provider_capture_id' =>
-                        $paypalCaptureId,
+                    'provider_capture_id' => $paypalCaptureId,
 
-                    'provider_status' =>
-                        'COMPLETED',
+                    'provider_status' => 'COMPLETED',
 
-                    'status' =>
-                        PaymentStatus::COMPLETED->value,
+                    'status' => PaymentStatus::COMPLETED->value,
                 ],
             );
 
             $this->assertDatabaseHas(
                 'orders',
                 [
-                    'id' =>
-                        $order->id,
+                    'id' => $order->id,
 
-                    'user_id' =>
-                        $user->id,
+                    'user_id' => $user->id,
 
-                    'total' =>
-                        '5.00',
+                    'total' => '5.00',
                 ],
             );
 
             $this->assertDatabaseHas(
                 'order_items',
                 [
-                    'order_id' =>
-                        $order->id,
+                    'order_id' => $order->id,
 
-                    'pizza_name' =>
-                        'Americana',
+                    'pizza_name' => 'Americana',
 
-                    'size_name' =>
-                        'Pequeña',
+                    'size_name' => 'Pequeña',
 
-                    'quantity' =>
-                        1,
+                    'quantity' => 1,
 
-                    'subtotal' =>
-                        '5.00',
+                    'subtotal' => '5.00',
                 ],
             );
 
@@ -590,11 +536,10 @@ describe('Captura de órdenes PayPal', function (): void {
                 ): bool {
                     [$request] = $record;
 
-                    return (
+                    return
                         $request->method() === 'POST'
                         && $request->url()
-                            === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}/capture"
-                    );
+                            === "{$baseUrl}/v2/checkout/orders/{$paypalOrderId}/capture";
                 },
             );
 

@@ -22,11 +22,9 @@ final class MachineLearningTrainingController
     ): JsonResponse {
         try {
             return ApiResponse::success(
-                data:
-                    $service->registry(),
+                data: $service->registry(),
 
-                message:
-                    'Registro remoto de modelos recuperado correctamente.',
+                message: 'Registro remoto de modelos recuperado correctamente.',
             );
         } catch (
             MachineLearningServiceException $exception
@@ -59,26 +57,20 @@ final class MachineLearningTrainingController
             );
 
         return ApiResponse::success(
-            data:
-                MlTrainingRunResource::collection(
-                    $runs->getCollection(),
-                ),
+            data: MlTrainingRunResource::collection(
+                $runs->getCollection(),
+            ),
 
-            message:
-                'Historial de entrenamientos recuperado correctamente.',
+            message: 'Historial de entrenamientos recuperado correctamente.',
 
             meta: [
-                'current_page' =>
-                    $runs->currentPage(),
+                'current_page' => $runs->currentPage(),
 
-                'last_page' =>
-                    $runs->lastPage(),
+                'last_page' => $runs->lastPage(),
 
-                'per_page' =>
-                    $runs->perPage(),
+                'per_page' => $runs->perPage(),
 
-                'total' =>
-                    $runs->total(),
+                'total' => $runs->total(),
             ],
         );
     }
@@ -91,13 +83,11 @@ final class MachineLearningTrainingController
         );
 
         return ApiResponse::success(
-            data:
-                new MlTrainingRunResource(
-                    $trainingRun,
-                ),
+            data: new MlTrainingRunResource(
+                $trainingRun,
+            ),
 
-            message:
-                'Ejecución de entrenamiento recuperada correctamente.',
+            message: 'Ejecución de entrenamiento recuperada correctamente.',
         );
     }
 
@@ -107,13 +97,11 @@ final class MachineLearningTrainingController
     ): JsonResponse {
         try {
             return ApiResponse::success(
-                data:
-                    $service->preview(
-                        $request->validated(),
-                    ),
+                data: $service->preview(
+                    $request->validated(),
+                ),
 
-                message:
-                    'Previsualización de entrenamiento generada correctamente.',
+                message: 'Previsualización de entrenamiento generada correctamente.',
             );
         } catch (
             MachineLearningServiceException $exception
@@ -133,24 +121,19 @@ final class MachineLearningTrainingController
 
         try {
             $run = $service->build(
-                options:
-                    $request->validated(),
+                options: $request->validated(),
 
-                admin:
-                    $admin,
+                admin: $admin,
             );
 
             return ApiResponse::success(
-                data:
-                    new MlTrainingRunResource(
-                        $run,
-                    ),
+                data: new MlTrainingRunResource(
+                    $run,
+                ),
 
-                message:
-                    'Candidato de entrenamiento construido correctamente.',
+                message: 'Candidato de entrenamiento construido correctamente.',
 
-                status:
-                    201,
+                status: 201,
             );
         } catch (
             MachineLearningServiceException $exception
@@ -172,34 +155,28 @@ final class MachineLearningTrainingController
 
             return ApiResponse::success(
                 data: [
-                    'registry' =>
-                        $result[
+                    'registry' => $result[
                             'remote'
                         ],
 
-                    'training_run' =>
-                        new MlTrainingRunResource(
-                            $result[
-                                'training_run'
-                            ],
-                        ),
+                    'training_run' => new MlTrainingRunResource(
+                        $result[
+                            'training_run'
+                        ],
+                    ),
                 ],
 
-                message:
-                    'Modelo candidato activado correctamente.',
+                message: 'Modelo candidato activado correctamente.',
             );
         } catch (
             RuntimeException $exception
         ) {
             return ApiResponse::error(
-                message:
-                    $exception->getMessage(),
+                message: $exception->getMessage(),
 
-                status:
-                    409,
+                status: 409,
 
-                code:
-                    'ML_TRAINING_RUN_NOT_ACTIVATABLE',
+                code: 'ML_TRAINING_RUN_NOT_ACTIVATABLE',
             );
         } catch (
             MachineLearningServiceException $exception
@@ -218,13 +195,11 @@ final class MachineLearningTrainingController
 
             return ApiResponse::success(
                 data: [
-                    'registry' =>
-                        $result[
+                    'registry' => $result[
                             'remote'
                         ],
 
-                    'training_run' =>
-                        $result[
+                    'training_run' => $result[
                             'training_run'
                         ] === null
                             ? null
@@ -235,8 +210,7 @@ final class MachineLearningTrainingController
                             ),
                 ],
 
-                message:
-                    'Rollback del modelo ejecutado correctamente.',
+                message: 'Rollback del modelo ejecutado correctamente.',
             );
         } catch (
             MachineLearningServiceException $exception
@@ -265,25 +239,19 @@ final class MachineLearningTrainingController
         $code = match (
             $remoteStatus
         ) {
-            409 =>
-                'ML_MODEL_ROLLBACK_UNAVAILABLE',
+            409 => 'ML_MODEL_ROLLBACK_UNAVAILABLE',
 
-            422 =>
-                'ML_SERVICE_VALIDATION_FAILED',
+            422 => 'ML_SERVICE_VALIDATION_FAILED',
 
-            default =>
-                'ML_SERVICE_UNAVAILABLE',
+            default => 'ML_SERVICE_UNAVAILABLE',
         };
 
         return ApiResponse::error(
-            message:
-                $exception->getMessage(),
+            message: $exception->getMessage(),
 
-            status:
-                $status,
+            status: $status,
 
-            code:
-                $code,
+            code: $code,
         );
     }
 }

@@ -116,6 +116,7 @@ final class Order extends Model
             'order_id',
         );
     }
+
     public function latestPayment(): HasOne
     {
         return $this
@@ -125,6 +126,7 @@ final class Order extends Model
             )
             ->latestOfMany();
     }
+
     public function paymentReceipts(): HasMany
     {
         return $this->hasMany(

@@ -138,68 +138,47 @@ final class CreatePayPalOrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'idempotency_key.required' =>
-                'Debes enviar el encabezado Idempotency-Key.',
+            'idempotency_key.required' => 'Debes enviar el encabezado Idempotency-Key.',
 
-            'idempotency_key.uuid' =>
-                'El encabezado Idempotency-Key debe contener un UUID válido.',
+            'idempotency_key.uuid' => 'El encabezado Idempotency-Key debe contener un UUID válido.',
 
-            'delivery_type.required' =>
-                'Debes seleccionar el tipo de entrega.',
+            'delivery_type.required' => 'Debes seleccionar el tipo de entrega.',
 
-            'delivery_type.in' =>
-                'El tipo de entrega seleccionado no es válido.',
+            'delivery_type.in' => 'El tipo de entrega seleccionado no es válido.',
 
-            'address.required' =>
-                'La dirección es obligatoria para la entrega a domicilio.',
+            'address.required' => 'La dirección es obligatoria para la entrega a domicilio.',
 
-            'address.string' =>
-                'La dirección debe ser un texto válido.',
+            'address.string' => 'La dirección debe ser un texto válido.',
 
-            'address.max' =>
-                'La dirección no puede superar los 500 caracteres.',
+            'address.max' => 'La dirección no puede superar los 500 caracteres.',
 
-            'delivery_location.required' =>
-                'Debes seleccionar una ubicación para la entrega.',
+            'delivery_location.required' => 'Debes seleccionar una ubicación para la entrega.',
 
-            'delivery_location.array' =>
-                'La ubicación de entrega no tiene un formato válido.',
+            'delivery_location.array' => 'La ubicación de entrega no tiene un formato válido.',
 
-            'delivery_location.lat.required' =>
-                'La latitud de entrega es obligatoria.',
+            'delivery_location.lat.required' => 'La latitud de entrega es obligatoria.',
 
-            'delivery_location.lat.numeric' =>
-                'La latitud de entrega debe ser numérica.',
+            'delivery_location.lat.numeric' => 'La latitud de entrega debe ser numérica.',
 
-            'delivery_location.lat.between' =>
-                'La latitud de entrega no es válida.',
+            'delivery_location.lat.between' => 'La latitud de entrega no es válida.',
 
-            'delivery_location.lng.required' =>
-                'La longitud de entrega es obligatoria.',
+            'delivery_location.lng.required' => 'La longitud de entrega es obligatoria.',
 
-            'delivery_location.lng.numeric' =>
-                'La longitud de entrega debe ser numérica.',
+            'delivery_location.lng.numeric' => 'La longitud de entrega debe ser numérica.',
 
-            'delivery_location.lng.between' =>
-                'La longitud de entrega no es válida.',
+            'delivery_location.lng.between' => 'La longitud de entrega no es válida.',
 
-            'delivery_location.maps_url.url' =>
-                'El enlace de Google Maps no es válido.',
+            'delivery_location.maps_url.url' => 'El enlace de Google Maps no es válido.',
 
-            'delivery_location.maps_url.max' =>
-                'El enlace de Google Maps es demasiado extenso.',
+            'delivery_location.maps_url.max' => 'El enlace de Google Maps es demasiado extenso.',
 
-            'delivery_location.place_id.max' =>
-                'El identificador del lugar es demasiado extenso.',
+            'delivery_location.place_id.max' => 'El identificador del lugar es demasiado extenso.',
 
-            'delivery_location.reference.max' =>
-                'La referencia no puede superar los 500 caracteres.',
+            'delivery_location.reference.max' => 'La referencia no puede superar los 500 caracteres.',
 
-            'delivery_location.formatted_address.max' =>
-                'La dirección seleccionada no puede superar los 500 caracteres.',
+            'delivery_location.formatted_address.max' => 'La dirección seleccionada no puede superar los 500 caracteres.',
 
-            'notes.max' =>
-                'Las notas no pueden superar los 500 caracteres.',
+            'notes.max' => 'Las notas no pueden superar los 500 caracteres.',
         ];
     }
 

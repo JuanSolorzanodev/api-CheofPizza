@@ -22,13 +22,11 @@ final class SalesDashboardController
             );
 
         return ApiResponse::success(
-            data:
-                $service->dashboard(
-                    $range
-                ),
+            data: $service->dashboard(
+                $range
+            ),
 
-            message:
-                'Resumen de ventas recuperado correctamente.'
+            message: 'Resumen de ventas recuperado correctamente.'
         );
     }
 }

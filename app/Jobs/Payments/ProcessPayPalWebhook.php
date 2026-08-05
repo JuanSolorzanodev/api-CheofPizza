@@ -13,7 +13,7 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-final class ProcessPayPalWebhook implements ShouldQueue, ShouldBeUnique
+final class ProcessPayPalWebhook implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 

@@ -97,16 +97,16 @@ it('can create an active guest cart without running seeders', function (): void 
         ->and($cart->cartStatus?->status_name)
         ->toBe('active');
 
-expect(
-    DB::table('carts')
-        ->where('id', $cart->id)
-        ->whereNull('user_id')
-        ->where(
-            'session_id',
-            'required-reference-data-test-session',
-        )
-        ->exists(),
-)->toBeTrue();
+    expect(
+        DB::table('carts')
+            ->where('id', $cart->id)
+            ->whereNull('user_id')
+            ->where(
+                'session_id',
+                'required-reference-data-test-session',
+            )
+            ->exists(),
+    )->toBeTrue();
 });
 
 it('does not create optional commercial catalog data through migrations', function (): void {

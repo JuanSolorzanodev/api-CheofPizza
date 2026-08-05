@@ -14,13 +14,12 @@ final class AuthSessionService
 {
     public function __construct(
         private readonly CartService $cartService,
-    ) {
-    }
+    ) {}
 
     public function createResponse(
         User $user,
         string $tokenName,
-        string|null $cartSessionId,
+        ?string $cartSessionId,
         string $message = 'Sesión iniciada correctamente.',
         int $status = 200,
     ): JsonResponse {
@@ -48,18 +47,15 @@ final class AuthSessionService
                 'message' => $message,
 
                 'data' => [
-                    'token' =>
-                        $plainTextToken,
+                    'token' => $plainTextToken,
 
-                    'user' =>
-                        new AuthUserResource(
-                            $user,
-                        ),
+                    'user' => new AuthUserResource(
+                        $user,
+                    ),
 
-                    'cart' =>
-                        new CartResource(
-                            $cart,
-                        ),
+                    'cart' => new CartResource(
+                        $cart,
+                    ),
                 ],
             ], $status)
             ->header(
@@ -69,9 +65,9 @@ final class AuthSessionService
     }
 
     public function resolveCartSessionId(
-        string|null $headerSessionId,
-        string|null $bodySessionId,
-    ): string|null {
+        ?string $headerSessionId,
+        ?string $bodySessionId,
+    ): ?string {
         $sessionId = trim(
             (string) (
                 $headerSessionId

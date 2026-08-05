@@ -16,6 +16,7 @@ class OrderUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public string $connection = 'database';
+
     public string $queue = 'broadcasts';
 
     public function __construct(
@@ -26,8 +27,8 @@ class OrderUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('customer.orders.' . $this->order->user_id),
-            new PrivateChannel('customer.order.' . $this->order->id),
+            new PrivateChannel('customer.orders.'.$this->order->user_id),
+            new PrivateChannel('customer.order.'.$this->order->id),
         ];
     }
 

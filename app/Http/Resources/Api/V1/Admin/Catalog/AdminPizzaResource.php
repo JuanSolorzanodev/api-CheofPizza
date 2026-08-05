@@ -102,8 +102,7 @@ final class AdminPizzaResource extends JsonResource
 
                 'cart_items_second' => $cartItemsSecondary,
 
-                'cart_items_total' =>
-                    $cartItemsPrimary +
+                'cart_items_total' => $cartItemsPrimary +
                     $cartItemsSecondary,
 
                 'cart_promotions' => $cartPromotions,
@@ -112,16 +111,14 @@ final class AdminPizzaResource extends JsonResource
 
                 'order_items_second' => $orderItemsSecondary,
 
-                'order_items_total' =>
-                    $orderItemsPrimary +
+                'order_items_total' => $orderItemsPrimary +
                     $orderItemsSecondary,
 
                 'order_promotions' => $orderPromotions,
 
                 'sales_history' => $salesHistory,
 
-                'total' =>
-                    $cartItemsPrimary +
+                'total' => $cartItemsPrimary +
                     $cartItemsSecondary +
                     $cartPromotions +
                     $orderItemsPrimary +
@@ -134,11 +131,9 @@ final class AdminPizzaResource extends JsonResource
                 $this->can_delete ?? false
             ),
 
-            'created_at' =>
-                $this->created_at?->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
 
-            'updated_at' =>
-                $this->updated_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

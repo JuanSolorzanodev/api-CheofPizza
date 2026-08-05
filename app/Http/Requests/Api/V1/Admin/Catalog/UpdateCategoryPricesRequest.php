@@ -59,11 +59,9 @@ final class UpdateCategoryPricesRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'prices.*.price.min' =>
-                'El precio no puede ser negativo.',
+            'prices.*.price.min' => 'El precio no puede ser negativo.',
 
-            'prices.*.price.decimal' =>
-                'El precio debe tener máximo dos decimales.',
+            'prices.*.price.decimal' => 'El precio debe tener máximo dos decimales.',
         ];
     }
 }

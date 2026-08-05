@@ -25,13 +25,12 @@ final class PayPalOrderService
         private readonly PayPalClient $payPalClient,
         private readonly CartFingerprintService $cartFingerprintService,
         private readonly CheckoutPricingService $pricingService,
-    ) {
-    }
+    ) {}
 
     /**
      * Crea una operación de pago local y su correspondiente orden en PayPal.
      *
-     * @param array<string, mixed> $checkoutContext
+     * @param  array<string, mixed>  $checkoutContext
      *
      * @throws PayPalApiException
      * @throws ValidationException
@@ -316,7 +315,7 @@ final class PayPalOrderService
     /**
      * Guarda los datos normalizados de la orden PayPal.
      *
-     * @param array<string, mixed> $paypalOrder
+     * @param  array<string, mixed>  $paypalOrder
      *
      * @throws PayPalApiException
      */
@@ -401,7 +400,7 @@ final class PayPalOrderService
     /**
      * Extrae una URL de la colección HATEOAS links.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function extractLink(
         array $payload,
@@ -478,8 +477,7 @@ final class PayPalOrderService
         $payment->markAsFailed(
             code: 'UNEXPECTED_ERROR',
 
-            message:
-                'Ocurrió un error inesperado al crear la orden PayPal.',
+            message: 'Ocurrió un error inesperado al crear la orden PayPal.',
 
             providerStatus: null,
 
@@ -544,36 +542,36 @@ final class PayPalOrderService
         );
     }
 
-private function paypalLocale(): string
-{
-    $locale = trim(
-        (string) config(
-            'paypal.locale',
-            'es-EC'
-        )
-    );
-
-    if ($locale === '') {
-        return 'es-EC';
-    }
-
-    /*
-     * PayPal Orders API utiliza locale BCP 47:
-     * es-EC, en-US, es-ES, etc.
-     */
-    if (
-        preg_match(
-            '/^[a-z]{2}-[A-Z]{2}$/',
-            $locale
-        ) !== 1
-    ) {
-        throw new RuntimeException(
-            'PAYPAL_LOCALE debe usar el formato BCP 47, por ejemplo es-EC.'
+    private function paypalLocale(): string
+    {
+        $locale = trim(
+            (string) config(
+                'paypal.locale',
+                'es-EC'
+            )
         );
-    }
 
-    return $locale;
-}
+        if ($locale === '') {
+            return 'es-EC';
+        }
+
+        /*
+         * PayPal Orders API utiliza locale BCP 47:
+         * es-EC, en-US, es-ES, etc.
+         */
+        if (
+            preg_match(
+                '/^[a-z]{2}-[A-Z]{2}$/',
+                $locale
+            ) !== 1
+        ) {
+            throw new RuntimeException(
+                'PAYPAL_LOCALE debe usar el formato BCP 47, por ejemplo es-EC.'
+            );
+        }
+
+        return $locale;
+    }
 
     private function paypalReturnUrl(): string
     {
@@ -702,7 +700,7 @@ private function paypalLocale(): string
         );
 
         $cents = ((int) $whole * 100)
-            +(int) $decimals;
+            + (int) $decimals;
 
         return $negative
             ? -$cents

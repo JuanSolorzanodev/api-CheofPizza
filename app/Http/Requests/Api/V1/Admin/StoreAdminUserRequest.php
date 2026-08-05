@@ -126,14 +126,11 @@ final class StoreAdminUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.unique' =>
-                'Ya existe un usuario con este correo.',
+            'email.unique' => 'Ya existe un usuario con este correo.',
 
-            'phone.unique' =>
-                'Ya existe un usuario con este teléfono.',
+            'phone.unique' => 'Ya existe un usuario con este teléfono.',
 
-            'role.in' =>
-                'El rol seleccionado no es válido.',
+            'role.in' => 'El rol seleccionado no es válido.',
         ];
     }
 }

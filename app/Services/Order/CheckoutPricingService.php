@@ -33,34 +33,27 @@ final class CheckoutPricingService
             $this->settingService->current();
 
         $this->validateStoreAvailability(
-            acceptsOrders:
-                (bool) $setting->accepts_orders,
+            acceptsOrders: (bool) $setting->accepts_orders,
 
-            closedMessage:
-                $setting->closed_message,
+            closedMessage: $setting->closed_message,
         );
 
         $this->validateDeliveryType(
             deliveryType: $deliveryType,
 
-            pickupEnabled:
-                (bool) $setting->pickup_enabled,
+            pickupEnabled: (bool) $setting->pickup_enabled,
 
-            deliveryEnabled:
-                (bool) $setting->delivery_enabled,
+            deliveryEnabled: (bool) $setting->delivery_enabled,
         );
 
         $this->validatePaymentMethod(
             paymentMethod: $paymentMethod,
 
-            paypalEnabled:
-                (bool) $setting->paypal_enabled,
+            paypalEnabled: (bool) $setting->paypal_enabled,
 
-            transferEnabled:
-                (bool) $setting->transfer_enabled,
+            transferEnabled: (bool) $setting->transfer_enabled,
 
-            cashEnabled:
-                (bool) $setting->cash_enabled,
+            cashEnabled: (bool) $setting->cash_enabled,
         );
 
         $subtotalInCents =
@@ -101,20 +94,17 @@ final class CheckoutPricingService
             + $deliveryFeeInCents;
 
         return [
-            'subtotal' =>
-                self::centsToMoney(
-                    $subtotalInCents,
-                ),
+            'subtotal' => self::centsToMoney(
+                $subtotalInCents,
+            ),
 
-            'delivery_fee' =>
-                self::centsToMoney(
-                    $deliveryFeeInCents,
-                ),
+            'delivery_fee' => self::centsToMoney(
+                $deliveryFeeInCents,
+            ),
 
-            'total' =>
-                self::centsToMoney(
-                    $totalInCents,
-                ),
+            'total' => self::centsToMoney(
+                $totalInCents,
+            ),
         ];
     }
 
@@ -215,10 +205,9 @@ final class CheckoutPricingService
     ): int {
         $subtotalInCents =
             $cart->cartItems->sum(
-                static fn ($item): int =>
-                    self::moneyToCents(
-                        $item->subtotal,
-                    ),
+                static fn ($item): int => self::moneyToCents(
+                    $item->subtotal,
+                ),
             );
 
         if ($subtotalInCents <= 0) {

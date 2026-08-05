@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('emission_types', function (Blueprint $table) {
             $table->id();
             $table->string('emission_name', 80);        // nombre_emision :contentReference[oaicite:36]{index=36}
-            $table->string('code', 10);  
+            $table->string('code', 10);
             $table->timestamps();
         });
     }

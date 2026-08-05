@@ -20,58 +20,43 @@ final class CashSessionResource extends JsonResource
         Request $request
     ): array {
         return [
-            'uuid' =>
-                $this->uuid,
+            'uuid' => $this->uuid,
 
-            'status' =>
-                $this->status->value,
+            'status' => $this->status->value,
 
-            'opening_amount' =>
-                (float) $this->opening_amount,
+            'opening_amount' => (float) $this->opening_amount,
 
-            'expected_cash' =>
-                $this->expected_cash !== null
+            'expected_cash' => $this->expected_cash !== null
                     ? (float) $this->expected_cash
                     : null,
 
-            'counted_cash' =>
-                $this->counted_cash !== null
+            'counted_cash' => $this->counted_cash !== null
                     ? (float) $this->counted_cash
                     : null,
 
-            'difference' =>
-                $this->difference !== null
+            'difference' => $this->difference !== null
                     ? (float) $this->difference
                     : null,
 
-            'opened_at' =>
-                $this->opened_at?->toISOString(),
+            'opened_at' => $this->opened_at?->toISOString(),
 
-            'closed_at' =>
-                $this->closed_at?->toISOString(),
+            'closed_at' => $this->closed_at?->toISOString(),
 
-            'opening_note' =>
-                $this->opening_note,
+            'opening_note' => $this->opening_note,
 
-            'closing_note' =>
-                $this->closing_note,
+            'closing_note' => $this->closing_note,
 
             'opened_by' => [
-                'id' =>
-                    $this->openedBy?->id,
+                'id' => $this->openedBy?->id,
 
-                'name' =>
-                    $this->openedBy?->full_name,
+                'name' => $this->openedBy?->full_name,
             ],
 
-            'closed_by' =>
-                $this->closedBy !== null
+            'closed_by' => $this->closedBy !== null
                     ? [
-                        'id' =>
-                            $this->closedBy->id,
+                        'id' => $this->closedBy->id,
 
-                        'name' =>
-                            $this->closedBy->full_name,
+                        'name' => $this->closedBy->full_name,
                     ]
                     : null,
         ];

@@ -23,7 +23,6 @@ it(
     'returns the complete cash session detail',
     function (): void {
         /** @var TestCase $this */
-
         CarbonImmutable::setTestNow(
             '2026-08-03 17:00:00'
         );
@@ -143,7 +142,6 @@ it(
     'filters the cash session history',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -173,10 +171,10 @@ it(
             ->actingAs($admin, 'sanctum')
             ->getJson(
                 '/api/v1/admin/cash-register/history'
-                    . '?date_from=2026-08-01'
-                    . '&date_to=2026-08-01'
-                    . '&status=closed'
-                    . '&per_page=15'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-01'
+                    .'&status=closed'
+                    .'&per_page=15'
             )
             ->assertOk()
             ->assertJsonPath(
@@ -198,7 +196,6 @@ it(
     'validates cash session history filters',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -207,10 +204,10 @@ it(
             ->actingAs($admin, 'sanctum')
             ->getJson(
                 '/api/v1/admin/cash-register/history'
-                    . '?date_from=2026-08-03'
-                    . '&date_to=2026-08-01'
-                    . '&status=invalid'
-                    . '&per_page=12'
+                    .'?date_from=2026-08-03'
+                    .'&date_to=2026-08-01'
+                    .'&status=invalid'
+                    .'&per_page=12'
             )
             ->assertUnprocessable()
             ->assertJsonValidationErrors([

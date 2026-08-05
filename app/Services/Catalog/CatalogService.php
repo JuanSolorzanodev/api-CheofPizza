@@ -21,13 +21,12 @@ final class CatalogService
         return Category::query()
             ->orderBy('category_name')
             ->with([
-                'categorySizePrices' =>
-                    static function ($query): void {
-                        $query
-                            ->where('price', '>', 0)
-                            ->orderBy('size_id')
-                            ->with('size');
-                    },
+                'categorySizePrices' => static function ($query): void {
+                    $query
+                        ->where('price', '>', 0)
+                        ->orderBy('size_id')
+                        ->with('size');
+                },
             ])
             ->get();
     }
@@ -43,21 +42,20 @@ final class CatalogService
             ->with([
                 'ingredientType:id,type_name',
 
-                'sizes' =>
-                    static function ($query): void {
-                        $query
-                            ->select(
-                                'sizes.id',
-                                'size_name',
-                                'portion'
-                            )
-                            ->wherePivot(
-                                'extra_price',
-                                '>',
-                                0
-                            )
-                            ->orderBy('portion');
-                    },
+                'sizes' => static function ($query): void {
+                    $query
+                        ->select(
+                            'sizes.id',
+                            'size_name',
+                            'portion'
+                        )
+                        ->wherePivot(
+                            'extra_price',
+                            '>',
+                            0
+                        )
+                        ->orderBy('portion');
+                },
             ])
             ->get();
     }
@@ -70,21 +68,19 @@ final class CatalogService
             ->when(
                 $categoryId !== null,
 
-                static fn (Builder $query) =>
-                    $query->where(
-                        'category_id',
-                        $categoryId
-                    ),
+                static fn (Builder $query) => $query->where(
+                    'category_id',
+                    $categoryId
+                ),
             )
             ->when(
                 filled($search),
 
-                static fn (Builder $query) =>
-                    $query->where(
-                        'pizza_name',
-                        'like',
-                        '%'.trim((string) $search).'%'
-                    ),
+                static fn (Builder $query) => $query->where(
+                    'pizza_name',
+                    'like',
+                    '%'.trim((string) $search).'%'
+                ),
             )
             ->get();
     }
@@ -103,11 +99,10 @@ final class CatalogService
             ->whereHas(
                 'category',
 
-                static fn (Builder $query) =>
-                    $query->where(
-                        'category_name',
-                        $categoryName
-                    ),
+                static fn (Builder $query) => $query->where(
+                    'category_name',
+                    $categoryName
+                ),
             )
             ->get();
     }
@@ -139,43 +134,39 @@ final class CatalogService
             ->whereHas(
                 'category.categorySizePrices',
 
-                static fn (Builder $query) =>
-                    $query->where(
-                        'price',
-                        '>',
-                        0
-                    ),
+                static fn (Builder $query) => $query->where(
+                    'price',
+                    '>',
+                    0
+                ),
             )
             ->with([
-                'category' =>
-                    static function ($query): void {
-                        $query->with([
-                            'categorySizePrices' =>
-                                static function (
-                                    $priceQuery
-                                ): void {
-                                    $priceQuery
-                                        ->where(
-                                            'price',
-                                            '>',
-                                            0
-                                        )
-                                        ->orderBy(
-                                            'size_id'
-                                        )
-                                        ->with(
-                                            'size'
-                                        );
-                                },
-                        ]);
-                    },
+                'category' => static function ($query): void {
+                    $query->with([
+                        'categorySizePrices' => static function (
+                            $priceQuery
+                        ): void {
+                            $priceQuery
+                                ->where(
+                                    'price',
+                                    '>',
+                                    0
+                                )
+                                ->orderBy(
+                                    'size_id'
+                                )
+                                ->with(
+                                    'size'
+                                );
+                        },
+                    ]);
+                },
 
-                'ingredients' =>
-                    static function ($query): void {
-                        $query->with(
-                            'ingredientType:id,type_name'
-                        );
-                    },
+                'ingredients' => static function ($query): void {
+                    $query->with(
+                        'ingredientType:id,type_name'
+                    );
+                },
             ])
             ->orderBy('pizza_name');
     }

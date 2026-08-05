@@ -42,43 +42,35 @@ final class SalesAnalyticsService
         );
 
         return [
-            'period' =>
-            $range->toArray(),
+            'period' => $range->toArray(),
 
-            'summary' =>
-            $current,
+            'summary' => $current,
 
             'comparison' => [
-                'period' =>
-                $previousRange->toArray(),
+                'period' => $previousRange->toArray(),
 
-                'net_sales_percentage' =>
-                $this->percentageChange(
+                'net_sales_percentage' => $this->percentageChange(
                     current: $current['net_sales'],
                     previous: $previous['net_sales'],
                 ),
 
-                'delivered_orders_percentage' =>
-                $this->percentageChange(
+                'delivered_orders_percentage' => $this->percentageChange(
                     current: $current['delivered_orders'],
                     previous: $previous['delivered_orders'],
                 ),
 
-                'pizzas_sold_percentage' =>
-                $this->percentageChange(
+                'pizzas_sold_percentage' => $this->percentageChange(
                     current: $current['pizzas_sold'],
                     previous: $previous['pizzas_sold'],
                 ),
 
-                'average_ticket_percentage' =>
-                $this->percentageChange(
+                'average_ticket_percentage' => $this->percentageChange(
                     current: $current['average_ticket'],
                     previous: $previous['average_ticket'],
                 ),
             ],
 
-            'previous_summary' =>
-            $previous,
+            'previous_summary' => $previous,
         ];
     }
 
@@ -189,32 +181,23 @@ final class SalesAnalyticsService
             : 0.0;
 
         return [
-            'gross_sales' =>
-            (float) $grossSales,
+            'gross_sales' => (float) $grossSales,
 
-            'refunds' =>
-            (float) $refunds,
+            'refunds' => (float) $refunds,
 
-            'net_sales' =>
-            (float) $netSales,
+            'net_sales' => (float) $netSales,
 
-            'delivered_orders' =>
-            $deliveredOrders,
+            'delivered_orders' => $deliveredOrders,
 
-            'cancelled_orders' =>
-            $cancelledOrders,
+            'cancelled_orders' => $cancelledOrders,
 
-            'pizzas_sold' =>
-            $pizzasSold,
+            'pizzas_sold' => $pizzasSold,
 
-            'promotions_sold' =>
-            $promotionsSold,
+            'promotions_sold' => $promotionsSold,
 
-            'average_ticket' =>
-            (float) $averageTicket,
+            'average_ticket' => (float) $averageTicket,
 
-            'cancellation_rate' =>
-            $cancellationRate,
+            'cancellation_rate' => $cancellationRate,
         ];
     }
 

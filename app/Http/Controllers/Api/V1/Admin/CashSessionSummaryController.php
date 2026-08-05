@@ -21,13 +21,11 @@ final class CashSessionSummaryController
         ]);
 
         return ApiResponse::success(
-            data:
-                $service->get(
-                    $cashSession
-                ),
+            data: $service->get(
+                $cashSession
+            ),
 
-            message:
-                'Resumen de caja recuperado correctamente.',
+            message: 'Resumen de caja recuperado correctamente.',
         );
     }
 }

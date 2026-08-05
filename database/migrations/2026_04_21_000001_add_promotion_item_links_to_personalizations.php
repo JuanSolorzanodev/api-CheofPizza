@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('cart_item_personalizations', function (Blueprint $table) {
-            if (!Schema::hasColumn('cart_item_personalizations', 'cart_promotion_item_id')) {
+            if (! Schema::hasColumn('cart_item_personalizations', 'cart_promotion_item_id')) {
                 $table->foreignId('cart_promotion_item_id')
                     ->nullable()
                     ->after('cart_item_id')
@@ -21,7 +21,7 @@ return new class extends Migration
         });
 
         Schema::table('order_item_personalizations', function (Blueprint $table) {
-            if (!Schema::hasColumn('order_item_personalizations', 'order_promotion_item_id')) {
+            if (! Schema::hasColumn('order_item_personalizations', 'order_promotion_item_id')) {
                 $table->foreignId('order_promotion_item_id')
                     ->nullable()
                     ->after('order_item_id')

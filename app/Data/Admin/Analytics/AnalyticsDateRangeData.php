@@ -17,9 +17,7 @@ use JsonSerializable;
  *
  * @implements Arrayable<string, mixed>
  */
-final readonly class AnalyticsDateRangeData implements
-    Arrayable,
-    JsonSerializable
+final readonly class AnalyticsDateRangeData implements Arrayable, JsonSerializable
 {
     private const DEFAULT_TIMEZONE = 'America/Guayaquil';
 
@@ -27,8 +25,7 @@ final readonly class AnalyticsDateRangeData implements
         public CarbonImmutable $from,
         public CarbonImmutable $to,
         public string $timezone,
-    ) {
-    }
+    ) {}
 
     /**
      * Construye el DTO usando exclusivamente datos previamente validados.

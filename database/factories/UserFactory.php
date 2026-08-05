@@ -23,35 +23,30 @@ final class UserFactory extends Factory
      */
     public function definition(): array
     {
-       return [
-    'role_id' => Role::query()->firstOrCreate(
-        [
-            'role_name' => 'customer',
-        ],
-    )->id,
+        return [
+            'role_id' => Role::query()->firstOrCreate(
+                [
+                    'role_name' => 'customer',
+                ],
+            )->id,
 
-    'first_name' =>
-        fake()->firstName(),
+            'first_name' => fake()->firstName(),
 
-    'last_name' =>
-        fake()->lastName(),
+            'last_name' => fake()->lastName(),
 
-    'phone' =>
-        fake()
-            ->unique()
-            ->numerify('09########'),
+            'phone' => fake()
+                ->unique()
+                ->numerify('09########'),
 
-    'email' =>
-        fake()
-            ->unique()
-            ->safeEmail(),
+            'email' => fake()
+                ->unique()
+                ->safeEmail(),
 
-    'password' =>
-        static::$password ??=
-            Hash::make('password'),
+            'password' => self::$password ??=
+                    Hash::make('password'),
 
-    'is_active' => true,
-];
+            'is_active' => true,
+        ];
     }
 
     public function customer(): static

@@ -23,27 +23,21 @@ it(
     'requires authentication to view a cash session summary',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
 
         $session = CashSession::query()
             ->create([
-                'uuid' =>
-                    (string) Str::uuid(),
+                'uuid' => (string) Str::uuid(),
 
-                'opened_by' =>
-                    $admin->id,
+                'opened_by' => $admin->id,
 
-                'status' =>
-                    CashSessionStatus::Open,
+                'status' => CashSessionStatus::Open,
 
-                'opening_amount' =>
-                    '50.00',
+                'opening_amount' => '50.00',
 
-                'opened_at' =>
-                    now(),
+                'opened_at' => now(),
             ]);
 
         $this
@@ -76,143 +70,105 @@ it(
 
         $deliveredStatus = OrderStatus::query()
             ->firstOrCreate([
-                'status_name' =>
-                    'delivered',
+                'status_name' => 'delivered',
             ]);
 
         $deliveryType = DeliveryType::query()
             ->firstOrCreate([
-                'delivery_type_name' =>
-                    'pickup',
+                'delivery_type_name' => 'pickup',
             ]);
 
         $cashMethod = PaymentMethod::query()
             ->firstOrCreate(
                 [
-                    'name' =>
-                        'cash',
+                    'name' => 'cash',
                 ],
                 [
-                    'description' =>
-                        'Efectivo',
+                    'description' => 'Efectivo',
 
-                    'active' =>
-                        true,
+                    'active' => true,
                 ],
             );
 
         $session = CashSession::query()
             ->create([
-                'uuid' =>
-                    (string) Str::uuid(),
+                'uuid' => (string) Str::uuid(),
 
-                'opened_by' =>
-                    $admin->id,
+                'opened_by' => $admin->id,
 
-                'status' =>
-                    CashSessionStatus::Open,
+                'status' => CashSessionStatus::Open,
 
-                'opening_amount' =>
-                    '50.00',
+                'opening_amount' => '50.00',
 
-                'opened_at' =>
-                    now(),
+                'opened_at' => now(),
             ]);
 
         $order = Order::query()
             ->create([
-                'order_number' =>
-                    'CH-SUMMARY-001',
+                'order_number' => 'CH-SUMMARY-001',
 
-                'user_id' =>
-                    $customer->id,
+                'user_id' => $customer->id,
 
-                'ordered_at' =>
-                    '2026-08-03 17:30:00',
+                'ordered_at' => '2026-08-03 17:30:00',
 
-                'subtotal' =>
-                    '30.00',
+                'subtotal' => '30.00',
 
-                'delivery_fee' =>
-                    '0.00',
+                'delivery_fee' => '0.00',
 
-                'total' =>
-                    '30.00',
+                'total' => '30.00',
 
-                'delivery_type_id' =>
-                    $deliveryType->id,
+                'delivery_type_id' => $deliveryType->id,
 
-                'payment_method_id' =>
-                    $cashMethod->id,
+                'payment_method_id' => $cashMethod->id,
 
-                'order_status_id' =>
-                    $deliveredStatus->id,
+                'order_status_id' => $deliveredStatus->id,
             ]);
 
         OrderStatusChange::query()
             ->create([
-                'order_id' =>
-                    $order->id,
+                'order_id' => $order->id,
 
-                'from_order_status_id' =>
-                    null,
+                'from_order_status_id' => null,
 
-                'to_order_status_id' =>
-                    $deliveredStatus->id,
+                'to_order_status_id' => $deliveredStatus->id,
 
-                'changed_by_user_id' =>
-                    $admin->id,
+                'changed_by_user_id' => $admin->id,
 
-                'changed_at' =>
-                    '2026-08-03 18:00:00',
+                'changed_at' => '2026-08-03 18:00:00',
             ]);
 
         CashMovement::query()
             ->create([
-                'uuid' =>
-                    (string) Str::uuid(),
+                'uuid' => (string) Str::uuid(),
 
-                'cash_session_id' =>
-                    $session->id,
+                'cash_session_id' => $session->id,
 
-                'created_by' =>
-                    $admin->id,
+                'created_by' => $admin->id,
 
-                'type' =>
-                    CashMovementType::Income,
+                'type' => CashMovementType::Income,
 
-                'amount' =>
-                    '10.00',
+                'amount' => '10.00',
 
-                'reason' =>
-                    'Cambio adicional',
+                'reason' => 'Cambio adicional',
 
-                'occurred_at' =>
-                    '2026-08-03 18:10:00',
+                'occurred_at' => '2026-08-03 18:10:00',
             ]);
 
         CashMovement::query()
             ->create([
-                'uuid' =>
-                    (string) Str::uuid(),
+                'uuid' => (string) Str::uuid(),
 
-                'cash_session_id' =>
-                    $session->id,
+                'cash_session_id' => $session->id,
 
-                'created_by' =>
-                    $admin->id,
+                'created_by' => $admin->id,
 
-                'type' =>
-                    CashMovementType::Expense,
+                'type' => CashMovementType::Expense,
 
-                'amount' =>
-                    '4.00',
+                'amount' => '4.00',
 
-                'reason' =>
-                    'Compra operativa',
+                'reason' => 'Compra operativa',
 
-                'occurred_at' =>
-                    '2026-08-03 18:20:00',
+                'occurred_at' => '2026-08-03 18:20:00',
             ]);
 
         /*
@@ -278,42 +234,31 @@ it(
     'keeps the stored closing values for a closed session summary',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
 
         $session = CashSession::query()
             ->create([
-                'uuid' =>
-                    (string) Str::uuid(),
+                'uuid' => (string) Str::uuid(),
 
-                'opened_by' =>
-                    $admin->id,
+                'opened_by' => $admin->id,
 
-                'closed_by' =>
-                    $admin->id,
+                'closed_by' => $admin->id,
 
-                'status' =>
-                    CashSessionStatus::Closed,
+                'status' => CashSessionStatus::Closed,
 
-                'opening_amount' =>
-                    '50.00',
+                'opening_amount' => '50.00',
 
-                'expected_cash' =>
-                    '80.00',
+                'expected_cash' => '80.00',
 
-                'counted_cash' =>
-                    '79.00',
+                'counted_cash' => '79.00',
 
-                'difference' =>
-                    '-1.00',
+                'difference' => '-1.00',
 
-                'opened_at' =>
-                    now()->subHours(5),
+                'opened_at' => now()->subHours(5),
 
-                'closed_at' =>
-                    now(),
+                'closed_at' => now(),
             ]);
 
         $this

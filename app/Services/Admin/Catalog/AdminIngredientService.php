@@ -52,17 +52,16 @@ final class AdminIngredientService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function createIngredientType(
         array $data
     ): IngredientType {
         $ingredientType =
             IngredientType::query()->create([
-                'type_name' =>
-                    trim(
-                        (string) $data['name']
-                    ),
+                'type_name' => trim(
+                    (string) $data['name']
+                ),
             ]);
 
         return $this->ingredientType(
@@ -71,17 +70,16 @@ final class AdminIngredientService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function updateIngredientType(
         IngredientType $ingredientType,
         array $data
     ): IngredientType {
         $ingredientType->forceFill([
-            'type_name' =>
-                trim(
-                    (string) $data['name']
-                ),
+            'type_name' => trim(
+                (string) $data['name']
+            ),
         ])->save();
 
         return $this->ingredientType(
@@ -104,8 +102,7 @@ final class AdminIngredientService
                 ->ingredients_count > 0
         ) {
             throw ValidationException::withMessages([
-                'ingredient_type' =>
-                    'No puedes eliminar este tipo porque contiene ingredientes.',
+                'ingredient_type' => 'No puedes eliminar este tipo porque contiene ingredientes.',
             ]);
         }
 
@@ -121,14 +118,13 @@ final class AdminIngredientService
             ->with([
                 'ingredientType:id,type_name',
 
-                'ingredientSizePrices' =>
-                    static function ($query): void {
-                        $query
-                            ->with(
-                                'size:id,size_name,portion'
-                            )
-                            ->orderBy('size_id');
-                    },
+                'ingredientSizePrices' => static function ($query): void {
+                    $query
+                        ->with(
+                            'size:id,size_name,portion'
+                        )
+                        ->orderBy('size_id');
+                },
             ])
             ->withCount([
                 'pizzas',
@@ -139,10 +135,9 @@ final class AdminIngredientService
             ->orderBy('ingredient_name')
             ->get()
             ->each(
-                fn (Ingredient $ingredient): Ingredient =>
-                    $this->appendDeleteState(
-                        $ingredient
-                    )
+                fn (Ingredient $ingredient): Ingredient => $this->appendDeleteState(
+                    $ingredient
+                )
             );
     }
 
@@ -152,14 +147,13 @@ final class AdminIngredientService
         $ingredient->load([
             'ingredientType:id,type_name',
 
-            'ingredientSizePrices' =>
-                static function ($query): void {
-                    $query
-                        ->with(
-                            'size:id,size_name,portion'
-                        )
-                        ->orderBy('size_id');
-                },
+            'ingredientSizePrices' => static function ($query): void {
+                $query
+                    ->with(
+                        'size:id,size_name,portion'
+                    )
+                    ->orderBy('size_id');
+            },
         ]);
 
         $ingredient->loadCount([
@@ -175,22 +169,20 @@ final class AdminIngredientService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function createIngredient(
         array $data
     ): Ingredient {
         $ingredient =
             Ingredient::query()->create([
-                'ingredient_type_id' =>
-                    (int) $data[
+                'ingredient_type_id' => (int) $data[
                         'ingredient_type_id'
                     ],
 
-                'ingredient_name' =>
-                    trim(
-                        (string) $data['name']
-                    ),
+                'ingredient_name' => trim(
+                    (string) $data['name']
+                ),
             ]);
 
         return $this->ingredient(
@@ -199,22 +191,20 @@ final class AdminIngredientService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function updateIngredient(
         Ingredient $ingredient,
         array $data
     ): Ingredient {
         $ingredient->forceFill([
-            'ingredient_type_id' =>
-                (int) $data[
+            'ingredient_type_id' => (int) $data[
                     'ingredient_type_id'
                 ],
 
-            'ingredient_name' =>
-                trim(
-                    (string) $data['name']
-                ),
+            'ingredient_name' => trim(
+                (string) $data['name']
+            ),
         ])->save();
 
         return $this->ingredient(
@@ -239,8 +229,7 @@ final class AdminIngredientService
                 ->order_item_personalizations_count > 0
         ) {
             throw ValidationException::withMessages([
-                'ingredient' =>
-                    'No puedes eliminar este ingrediente porque está registrado en pedidos históricos.',
+                'ingredient' => 'No puedes eliminar este ingrediente porque está registrado en pedidos históricos.',
             ]);
         }
 
@@ -249,8 +238,7 @@ final class AdminIngredientService
                 ->cart_item_personalizations_count > 0
         ) {
             throw ValidationException::withMessages([
-                'ingredient' =>
-                    'No puedes eliminar este ingrediente porque está utilizado en carritos.',
+                'ingredient' => 'No puedes eliminar este ingrediente porque está utilizado en carritos.',
             ]);
         }
 
@@ -259,8 +247,7 @@ final class AdminIngredientService
                 ->pizzas_count > 0
         ) {
             throw ValidationException::withMessages([
-                'ingredient' =>
-                    'No puedes eliminar este ingrediente porque forma parte de una o más pizzas.',
+                'ingredient' => 'No puedes eliminar este ingrediente porque forma parte de una o más pizzas.',
             ]);
         }
 
@@ -312,8 +299,7 @@ final class AdminIngredientService
     }
 
     /**
-     * @param array<string, mixed> $data
-     *
+     * @param  array<string, mixed>  $data
      * @return Collection<int, IngredientSizePrice>
      */
     public function updatePrices(
@@ -332,19 +318,16 @@ final class AdminIngredientService
                         static fn (
                             array $price
                         ): array => [
-                            'ingredient_id' =>
-                                (int) $ingredient->id,
+                            'ingredient_id' => (int) $ingredient->id,
 
-                            'size_id' =>
-                                (int) $price['size_id'],
+                            'size_id' => (int) $price['size_id'],
 
-                            'extra_price' =>
-                                round(
-                                    (float) $price[
-                                        'extra_price'
-                                    ],
-                                    2
-                                ),
+                            'extra_price' => round(
+                                (float) $price[
+                                    'extra_price'
+                                ],
+                                2
+                            ),
 
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -363,13 +346,11 @@ final class AdminIngredientService
                     )
                     ->when(
                         $sizeIds !== [],
-                        static fn ($query) =>
-                            $query->whereNotIn(
-                                'size_id',
-                                $sizeIds
-                            ),
-                        static fn ($query) =>
-                            $query
+                        static fn ($query) => $query->whereNotIn(
+                            'size_id',
+                            $sizeIds
+                        ),
+                        static fn ($query) => $query
                     )
                     ->delete();
 

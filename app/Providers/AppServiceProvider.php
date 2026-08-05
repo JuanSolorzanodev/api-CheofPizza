@@ -36,8 +36,8 @@ final class AppServiceProvider extends ServiceProvider
             fn (Request $request): Limit => Limit::perMinute(10)
                 ->by(
                     $request->ip()
-                    . '|'
-                    . strtolower(
+                    .'|'
+                    .strtolower(
                         (string) $request->input(
                             'email',
                             'firebase',
@@ -50,7 +50,7 @@ final class AppServiceProvider extends ServiceProvider
                             'success' => false,
                             'message' => (
                                 'Demasiados intentos de inicio de sesión. '
-                                . 'Intenta nuevamente en un momento.'
+                                .'Intenta nuevamente en un momento.'
                             ),
                             'code' => 'TOO_MANY_AUTH_ATTEMPTS',
                         ],
@@ -134,7 +134,7 @@ final class AppServiceProvider extends ServiceProvider
             ?->getAuthIdentifier();
 
         if ($userId !== null) {
-            return 'user:' . $userId;
+            return 'user:'.$userId;
         }
 
         $cartSession = trim(
@@ -145,9 +145,9 @@ final class AppServiceProvider extends ServiceProvider
         );
 
         if ($cartSession !== '') {
-            return 'cart:' . $cartSession;
+            return 'cart:'.$cartSession;
         }
 
-        return 'ip:' . $request->ip();
+        return 'ip:'.$request->ip();
     }
 }

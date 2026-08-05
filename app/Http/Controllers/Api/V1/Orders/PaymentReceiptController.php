@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Orders;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Orders\StorePaymentReceiptRequest;
 use App\Http\Resources\Api\V1\PaymentReceiptResource;
 use App\Models\User;
@@ -21,8 +20,7 @@ final class PaymentReceiptController
 {
     public function __construct(
         private readonly PaymentReceiptService $service,
-    ) {
-    }
+    ) {}
 
     /**
      * Guarda un comprobante para un pedido del cliente.
@@ -214,32 +212,24 @@ final class PaymentReceiptController
             },
             200,
             [
-                'Content-Type' =>
-                    $mimeType,
+                'Content-Type' => $mimeType,
 
-                'Content-Disposition' =>
-                    sprintf(
-                        'inline; filename="%s"',
-                        $originalName,
-                    ),
+                'Content-Disposition' => sprintf(
+                    'inline; filename="%s"',
+                    $originalName,
+                ),
 
-                'Cache-Control' =>
-                    'private, no-store, no-cache, must-revalidate, max-age=0',
+                'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
 
-                'Pragma' =>
-                    'no-cache',
+                'Pragma' => 'no-cache',
 
-                'Expires' =>
-                    '0',
+                'Expires' => '0',
 
-                'X-Content-Type-Options' =>
-                    'nosniff',
+                'X-Content-Type-Options' => 'nosniff',
 
-                'X-Frame-Options' =>
-                    'SAMEORIGIN',
+                'X-Frame-Options' => 'SAMEORIGIN',
 
-                'Content-Security-Policy' =>
-                    "default-src 'none'; frame-ancestors 'self'",
+                'Content-Security-Policy' => "default-src 'none'; frame-ancestors 'self'",
             ],
         );
     }

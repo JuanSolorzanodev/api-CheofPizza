@@ -143,7 +143,7 @@ final class AggregateMlDailySales extends Command
                         ->total_pizzas_sold,
 
                     '$'
-                    . number_format(
+                    .number_format(
                         (float) $feature
                             ->net_sales,
                         2,
@@ -218,7 +218,7 @@ final class AggregateMlDailySales extends Command
                 [
                     'Venta neta',
                     '$'
-                    . number_format(
+                    .number_format(
                         (float) $feature
                             ->net_sales,
                         2,

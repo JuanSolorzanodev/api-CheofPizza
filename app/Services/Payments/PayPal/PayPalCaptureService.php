@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Payments\PayPal;
 
-use App\Enums\PaymentStatus;
 use App\Exceptions\Payments\PayPalApiException;
+use App\Exceptions\Payments\PayPalPaymentActionRequiredException;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Payment;
@@ -16,7 +16,6 @@ use App\Services\Payments\CartFingerprintService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use App\Exceptions\Payments\PayPalPaymentActionRequiredException;
 use Throwable;
 
 final class PayPalCaptureService
@@ -113,8 +112,7 @@ final class PayPalCaptureService
             providerStatus: $remoteStatus,
             providerMetadata: [
                 'approval' => [
-                    'update_time' =>
-                    $paypalOrder['update_time']
+                    'update_time' => $paypalOrder['update_time']
                         ?? null,
                 ],
             ],
@@ -126,59 +124,49 @@ final class PayPalCaptureService
                 ->postEmptyObject(
                     uri: "/v2/checkout/orders/{$payment->provider_order_id}/capture",
 
-                    requestId: 'capture-' . $payment->uuid,
+                    requestId: 'capture-'.$payment->uuid,
                 );
         } catch (PayPalApiException $exception) {
-           if (
-    $this->hasPayPalIssue(
-        exception: $exception,
-        issue: 'INSTRUMENT_DECLINED',
-    )
-) {
-    Log::notice(
-        'PayPal funding source declined.',
-        [
-            'payment_id' =>
-                $payment->id,
+            if (
+                $this->hasPayPalIssue(
+                    exception: $exception,
+                    issue: 'INSTRUMENT_DECLINED',
+                )
+            ) {
+                Log::notice(
+                    'PayPal funding source declined.',
+                    [
+                        'payment_id' => $payment->id,
 
-            'payment_uuid' =>
-                $payment->uuid,
+                        'payment_uuid' => $payment->uuid,
 
-            'paypal_order_id' =>
-                $payment->provider_order_id,
+                        'paypal_order_id' => $payment->provider_order_id,
 
-            'paypal_debug_id' =>
-                $exception->debugId,
-        ],
-    );
+                        'paypal_debug_id' => $exception->debugId,
+                    ],
+                );
 
-    /*
-     * INSTRUMENT_DECLINED es recuperable.
-     *
-     * No se marca el pago como fallido porque PayPal permite
-     * volver al flujo y elegir otra fuente de fondos mediante
-     * actions.restart() en el SDK JavaScript.
-     */
-    throw new PayPalPaymentActionRequiredException(
-        message:
-            'PayPal rechazó la tarjeta o fuente de pago. Selecciona otro método e inténtalo nuevamente.',
+                /*
+                 * INSTRUMENT_DECLINED es recuperable.
+                 *
+                 * No se marca el pago como fallido porque PayPal permite
+                 * volver al flujo y elegir otra fuente de fondos mediante
+                 * actions.restart() en el SDK JavaScript.
+                 */
+                throw new PayPalPaymentActionRequiredException(
+                    message: 'PayPal rechazó la tarjeta o fuente de pago. Selecciona otro método e inténtalo nuevamente.',
 
-        action:
-            'RESTART_PAYMENT_SELECTION',
+                    action: 'RESTART_PAYMENT_SELECTION',
 
-        paypalCode:
-            'INSTRUMENT_DECLINED',
+                    paypalCode: 'INSTRUMENT_DECLINED',
 
-        reference:
-            $exception->debugId,
+                    reference: $exception->debugId,
 
-        recoverable:
-            true,
+                    recoverable: true,
 
-        previous:
-            $exception,
-    );
-}
+                    previous: $exception,
+                );
+            }
 
             /*
              * Una caída de red o un 5xx puede ocurrir después de que
@@ -319,7 +307,6 @@ final class PayPalCaptureService
         }
     }
 
-
     /**
      * Recupera el desglose congelado al crear la orden PayPal.
      * Para pagos antiguos sin snapshot, recalcula con la configuración
@@ -375,7 +362,7 @@ final class PayPalCaptureService
     }
 
     /**
-     * @param array<string, mixed> $paypalOrder
+     * @param  array<string, mixed>  $paypalOrder
      */
     private function validateRemoteOrder(
         Payment $payment,
@@ -469,7 +456,7 @@ final class PayPalCaptureService
     }
 
     /**
-     * @param array<string, mixed> $captureResponse
+     * @param  array<string, mixed>  $captureResponse
      */
     private function finalizeCapture(
         User $user,
@@ -525,7 +512,7 @@ final class PayPalCaptureService
 
         return DB::transaction(
             function () use (
-                $user,
+
                 $payment,
                 $captureResponse,
                 $capture,
@@ -595,8 +582,7 @@ final class PayPalCaptureService
                     );
 
                 $lockedPayment->forceFill([
-                    'order_id' =>
-                    (int) $order->id,
+                    'order_id' => (int) $order->id,
                 ])->save();
 
                 $lockedPayment->markAsCompleted(
@@ -606,36 +592,28 @@ final class PayPalCaptureService
 
                     providerMetadata: [
                         'capture' => [
-                            'id' =>
-                            $captureId,
+                            'id' => $captureId,
 
-                            'status' =>
-                            $captureStatus,
+                            'status' => $captureStatus,
 
-                            'create_time' =>
-                            $capture['create_time']
+                            'create_time' => $capture['create_time']
                                 ?? null,
 
-                            'update_time' =>
-                            $capture['update_time']
+                            'update_time' => $capture['update_time']
                                 ?? null,
 
-                            'final_capture' =>
-                            $capture['final_capture']
+                            'final_capture' => $capture['final_capture']
                                 ?? null,
 
-                            'seller_protection_status' =>
-                            $capture['seller_protection']['status']
+                            'seller_protection_status' => $capture['seller_protection']['status']
                                 ?? null,
                         ],
 
                         'order' => [
-                            'status' =>
-                            $captureResponse['status']
+                            'status' => $captureResponse['status']
                                 ?? null,
 
-                            'update_time' =>
-                            $captureResponse['update_time'] ?? null,
+                            'update_time' => $captureResponse['update_time'] ?? null,
                         ],
                     ],
                 );
@@ -643,27 +621,20 @@ final class PayPalCaptureService
                 Log::info(
                     'PayPal payment captured and order created.',
                     [
-                        'payment_id' =>
-                        $lockedPayment->id,
+                        'payment_id' => $lockedPayment->id,
 
-                        'payment_uuid' =>
-                        $lockedPayment->uuid,
+                        'payment_uuid' => $lockedPayment->uuid,
 
-                        'paypal_order_id' =>
-                        $lockedPayment
+                        'paypal_order_id' => $lockedPayment
                             ->provider_order_id,
 
-                        'paypal_capture_id' =>
-                        $captureId,
+                        'paypal_capture_id' => $captureId,
 
-                        'order_id' =>
-                        $order->id,
+                        'order_id' => $order->id,
 
-                        'amount' =>
-                        (string) $lockedPayment->amount,
+                        'amount' => (string) $lockedPayment->amount,
 
-                        'currency' =>
-                        $lockedPayment->currency,
+                        'currency' => $lockedPayment->currency,
                     ]
                 );
 
@@ -674,7 +645,7 @@ final class PayPalCaptureService
     }
 
     /**
-     * @param array<string, mixed> $paypalOrder
+     * @param  array<string, mixed>  $paypalOrder
      */
     private function reconcileCompletedOrder(
         User $user,
@@ -710,14 +681,11 @@ final class PayPalCaptureService
             Log::warning(
                 'PayPal capture reconciled after API error.',
                 [
-                    'payment_id' =>
-                    $payment->id,
+                    'payment_id' => $payment->id,
 
-                    'payment_uuid' =>
-                    $payment->uuid,
+                    'payment_uuid' => $payment->uuid,
 
-                    'paypal_debug_id' =>
-                    $originalException->debugId,
+                    'paypal_debug_id' => $originalException->debugId,
                 ]
             );
 
@@ -740,20 +708,15 @@ final class PayPalCaptureService
             Log::critical(
                 'Unable to reconcile uncertain PayPal capture.',
                 [
-                    'payment_id' =>
-                    $payment->id,
+                    'payment_id' => $payment->id,
 
-                    'payment_uuid' =>
-                    $payment->uuid,
+                    'payment_uuid' => $payment->uuid,
 
-                    'paypal_order_id' =>
-                    $payment->provider_order_id,
+                    'paypal_order_id' => $payment->provider_order_id,
 
-                    'original_error' =>
-                    $originalException->getMessage(),
+                    'original_error' => $originalException->getMessage(),
 
-                    'reconciliation_error' =>
-                    $reconciliationException->getMessage(),
+                    'reconciliation_error' => $reconciliationException->getMessage(),
                 ]
             );
 
@@ -762,7 +725,7 @@ final class PayPalCaptureService
     }
 
     /**
-     * @param array<string, mixed> $capture
+     * @param  array<string, mixed>  $capture
      */
     private function validateCaptureAmount(
         Payment $payment,
@@ -816,8 +779,7 @@ final class PayPalCaptureService
     }
 
     /**
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function firstPurchaseUnit(
@@ -841,8 +803,7 @@ final class PayPalCaptureService
     }
 
     /**
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function extractCapture(

@@ -108,8 +108,7 @@ function fakePayPalCreateOrder(
             'status' => 'CREATED',
             'links' => [
                 [
-                    'href' =>
-                        "https://www.sandbox.paypal.com/checkoutnow?token={$paypalOrderId}",
+                    'href' => "https://www.sandbox.paypal.com/checkoutnow?token={$paypalOrderId}",
                     'rel' => 'approve',
                     'method' => 'GET',
                 ],
@@ -118,8 +117,7 @@ function fakePayPalCreateOrder(
 
         '*' => Http::response([
             'name' => 'UNEXPECTED_REQUEST',
-            'message' =>
-                'La prueba realizó una petición HTTP no configurada.',
+            'message' => 'La prueba realizó una petición HTTP no configurada.',
         ], 500),
     ]);
 }
@@ -129,7 +127,6 @@ describe('Creación de órdenes PayPal', function (): void {
         'crea una orden PayPal para un carrito válido',
         function (): void {
             /** @var TestCase $this */
-
             [
                 'user' => $user,
                 'cart' => $cart,
@@ -216,20 +213,17 @@ describe('Creación de órdenes PayPal', function (): void {
                     )->toBe('CAPTURE');
 
                     expect(
-                        $payload['purchase_units'][0]
-                            ['amount']['currency_code']
+                        $payload['purchase_units'][0]['amount']['currency_code']
                             ?? null
                     )->toBe('USD');
 
                     expect(
-                        $payload['purchase_units'][0]
-                            ['amount']['value']
+                        $payload['purchase_units'][0]['amount']['value']
                             ?? null
                     )->toBe('5.00');
 
                     expect(
-                        $payload['purchase_units'][0]
-                            ['reference_id']
+                        $payload['purchase_units'][0]['reference_id']
                             ?? null
                     )->toBe($payment->uuid);
 
@@ -243,7 +237,6 @@ describe('Creación de órdenes PayPal', function (): void {
         'reutiliza el mismo pago cuando se repite la clave de idempotencia',
         function (): void {
             /** @var TestCase $this */
-
             [
                 'user' => $user,
             ] = createPayPalTestCart();

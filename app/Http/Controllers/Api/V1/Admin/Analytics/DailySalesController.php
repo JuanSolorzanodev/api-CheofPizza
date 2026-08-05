@@ -23,8 +23,7 @@ final class DailySalesController
 
         return ApiResponse::success(
             data: $service->get($range),
-            message:
-                'Ventas diarias recuperadas correctamente.',
+            message: 'Ventas diarias recuperadas correctamente.',
         );
     }
 }

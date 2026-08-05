@@ -10,8 +10,8 @@ class CategoryResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'          => $this->id,
-            'name'        => $this->category_name,
+            'id' => $this->id,
+            'name' => $this->category_name,
             'description' => $this->description,
             'size_prices' => CategorySizePriceResource::collection(
                 $this->whenLoaded('categorySizePrices')

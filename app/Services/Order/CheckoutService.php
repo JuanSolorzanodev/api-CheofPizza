@@ -22,10 +22,11 @@ final class CheckoutService
     public function __construct(
         private readonly CheckoutPricingService $pricingService,
     ) {}
+
     /**
      * Checkout tradicional para efectivo y transferencia.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function checkout(
         Cart $cart,
@@ -50,7 +51,7 @@ final class CheckoutService
         }
 
         return DB::transaction(
-            fn(): Order => $this->createOrderFromCart(
+            fn (): Order => $this->createOrderFromCart(
                 cart: $cart,
                 payload: $payload,
                 paymentMethodCode: $paymentMethod,
@@ -65,7 +66,7 @@ final class CheckoutService
      *
      * El llamador debe ejecutar este método dentro de una transacción.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function createOrderFromCart(
         Cart $cart,
@@ -126,50 +127,35 @@ final class CheckoutService
         );
 
         $order = Order::query()->create([
-            'order_number' =>
-            $this->generateOrderNumber(),
+            'order_number' => $this->generateOrderNumber(),
 
-            'user_id' =>
-            (int) $cart->user_id,
+            'user_id' => (int) $cart->user_id,
 
-            'ordered_at' =>
-            now(),
+            'ordered_at' => now(),
 
-            'subtotal' =>
-            $pricing['subtotal'],
+            'subtotal' => $pricing['subtotal'],
 
-            'delivery_fee' =>
-            $pricing['delivery_fee'],
+            'delivery_fee' => $pricing['delivery_fee'],
 
-            'total' =>
-            $pricing['total'],
+            'total' => $pricing['total'],
 
-            'delivery_type_id' =>
-            (int) $deliveryType->id,
+            'delivery_type_id' => (int) $deliveryType->id,
 
-            'address' =>
-            $deliveryData['address'],
+            'address' => $deliveryData['address'],
 
-            'delivery_lat' =>
-            $deliveryData['latitude'],
+            'delivery_lat' => $deliveryData['latitude'],
 
-            'delivery_lng' =>
-            $deliveryData['longitude'],
+            'delivery_lng' => $deliveryData['longitude'],
 
-            'delivery_maps_url' =>
-            $deliveryData['maps_url'],
+            'delivery_maps_url' => $deliveryData['maps_url'],
 
-            'delivery_place_id' =>
-            $deliveryData['place_id'],
+            'delivery_place_id' => $deliveryData['place_id'],
 
-            'delivery_reference' =>
-            $deliveryData['reference'],
+            'delivery_reference' => $deliveryData['reference'],
 
-            'payment_method_id' =>
-            (int) $paymentMethod->id,
+            'payment_method_id' => (int) $paymentMethod->id,
 
-            'order_status_id' =>
-            (int) $orderStatus->id,
+            'order_status_id' => (int) $orderStatus->id,
         ]);
 
         $this->createInitialStatusChange(
@@ -265,8 +251,7 @@ final class CheckoutService
     }
 
     /**
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array{
      *     address: ?string,
      *     latitude: ?float,
@@ -358,24 +343,18 @@ final class CheckoutService
     ): void {
         OrderStatusChange::query()->firstOrCreate(
             [
-                'order_id' =>
-                (int) $order->id,
+                'order_id' => (int) $order->id,
 
-                'from_order_status_id' =>
-                null,
+                'from_order_status_id' => null,
 
-                'to_order_status_id' =>
-                (int) $orderStatus->id,
+                'to_order_status_id' => (int) $orderStatus->id,
             ],
             [
-                'changed_by_user_id' =>
-                null,
+                'changed_by_user_id' => null,
 
-                'changed_at' =>
-                $order->ordered_at,
+                'changed_at' => $order->ordered_at,
 
-                'note' =>
-                null,
+                'note' => null,
             ]
         );
     }
@@ -408,61 +387,44 @@ final class CheckoutService
         $orderItem = $order
             ->orderItems()
             ->create([
-                'promotion_id' =>
-                $cartItem->promotion_id,
+                'promotion_id' => $cartItem->promotion_id,
 
-                'promotion_name' =>
-                $cartItem->promotion?->promotion_name,
+                'promotion_name' => $cartItem->promotion?->promotion_name,
 
-                'pizza_id' =>
-                null,
+                'pizza_id' => null,
 
-                'pizza_name' =>
-                null,
+                'pizza_name' => null,
 
-                'pizza_id_second' =>
-                null,
+                'pizza_id_second' => null,
 
-                'pizza_name_second' =>
-                null,
+                'pizza_name_second' => null,
 
-                'size_id' =>
-                $cartItem->size_id,
+                'size_id' => $cartItem->size_id,
 
-                'size_name' =>
-                $cartItem->size?->size_name,
+                'size_name' => $cartItem->size?->size_name,
 
-                'category_name' =>
-                null,
+                'category_name' => null,
 
-                'category_name_second' =>
-                null,
+                'category_name_second' => null,
 
-                'is_half_and_half' =>
-                false,
+                'is_half_and_half' => false,
 
-                'quantity' =>
-                (int) $cartItem->quantity,
+                'quantity' => (int) $cartItem->quantity,
 
-                'unit_price' =>
-                (string) $cartItem->unit_price,
+                'unit_price' => (string) $cartItem->unit_price,
 
-                'subtotal' =>
-                (string) $cartItem->subtotal,
+                'subtotal' => (string) $cartItem->subtotal,
             ]);
 
         foreach (
-            $cartItem->cartPromotionItems
-            as $promotionPizza
+            $cartItem->cartPromotionItems as $promotionPizza
         ) {
             $orderPromotionItem = $orderItem
                 ->orderPromotionItems()
                 ->create([
-                    'pizza_id' =>
-                    (int) $promotionPizza->pizza_id,
+                    'pizza_id' => (int) $promotionPizza->pizza_id,
 
-                    'pizza_name' =>
-                    $promotionPizza->pizza?->pizza_name,
+                    'pizza_name' => $promotionPizza->pizza?->pizza_name,
                 ]);
 
             $personalizations = $cartItem
@@ -474,8 +436,7 @@ final class CheckoutService
                 ->values();
 
             foreach (
-                $personalizations
-                as $personalization
+                $personalizations as $personalization
             ) {
                 $this->copyPersonalization(
                     orderItem: $orderItem,
@@ -493,47 +454,33 @@ final class CheckoutService
         $orderItem = $order
             ->orderItems()
             ->create([
-                'promotion_id' =>
-                null,
+                'promotion_id' => null,
 
-                'promotion_name' =>
-                null,
+                'promotion_name' => null,
 
-                'pizza_id' =>
-                $cartItem->pizza_id,
+                'pizza_id' => $cartItem->pizza_id,
 
-                'pizza_name' =>
-                $cartItem->pizza?->pizza_name,
+                'pizza_name' => $cartItem->pizza?->pizza_name,
 
-                'pizza_id_second' =>
-                $cartItem->pizza_id_second,
+                'pizza_id_second' => $cartItem->pizza_id_second,
 
-                'pizza_name_second' =>
-                $cartItem->pizzaSecond?->pizza_name,
+                'pizza_name_second' => $cartItem->pizzaSecond?->pizza_name,
 
-                'size_id' =>
-                $cartItem->size_id,
+                'size_id' => $cartItem->size_id,
 
-                'size_name' =>
-                $cartItem->size?->size_name,
+                'size_name' => $cartItem->size?->size_name,
 
-                'category_name' =>
-                $cartItem->pizza?->category?->category_name,
+                'category_name' => $cartItem->pizza?->category?->category_name,
 
-                'category_name_second' =>
-                $cartItem->pizzaSecond?->category?->category_name,
+                'category_name_second' => $cartItem->pizzaSecond?->category?->category_name,
 
-                'is_half_and_half' =>
-                (bool) $cartItem->is_half_and_half,
+                'is_half_and_half' => (bool) $cartItem->is_half_and_half,
 
-                'quantity' =>
-                (int) $cartItem->quantity,
+                'quantity' => (int) $cartItem->quantity,
 
-                'unit_price' =>
-                (string) $cartItem->unit_price,
+                'unit_price' => (string) $cartItem->unit_price,
 
-                'subtotal' =>
-                (string) $cartItem->subtotal,
+                'subtotal' => (string) $cartItem->subtotal,
             ]);
 
         $personalizations = $cartItem
@@ -543,8 +490,7 @@ final class CheckoutService
             );
 
         foreach (
-            $personalizations
-            as $personalization
+            $personalizations as $personalization
         ) {
             $this->copyPersonalization(
                 orderItem: $orderItem,
@@ -562,30 +508,23 @@ final class CheckoutService
         $orderItem
             ->orderItemPersonalizations()
             ->create([
-                'order_promotion_item_id' =>
-                $orderPromotionItemId,
+                'order_promotion_item_id' => $orderPromotionItemId,
 
-                'ingredient_id' =>
-                (int) $personalization->ingredient_id,
+                'ingredient_id' => (int) $personalization->ingredient_id,
 
-                'ingredient_name' =>
-                $personalization
+                'ingredient_name' => $personalization
                     ->ingredient
                     ?->ingredient_name,
 
-                'personalization_action_id' =>
-                (int) $personalization
+                'personalization_action_id' => (int) $personalization
                     ->personalization_action_id,
 
-                'applies_to' =>
-                $personalization->applies_to
+                'applies_to' => $personalization->applies_to
                     ?? 'ALL',
 
-                'modification_type' =>
-                null,
+                'modification_type' => null,
 
-                'extra_price' =>
-                (string) $personalization->extra_price,
+                'extra_price' => (string) $personalization->extra_price,
             ]);
     }
 
@@ -597,8 +536,7 @@ final class CheckoutService
             ->firstOrFail();
 
         $cart->forceFill([
-            'cart_status_id' =>
-            (int) $orderedStatus->id,
+            'cart_status_id' => (int) $orderedStatus->id,
         ])->save();
     }
 
@@ -629,9 +567,9 @@ final class CheckoutService
     {
         for ($attempt = 0; $attempt < 5; $attempt++) {
             $number = 'CH-'
-                . now()->format('Ymd-His')
-                . '-'
-                . Str::upper(
+                .now()->format('Ymd-His')
+                .'-'
+                .Str::upper(
                     Str::random(4)
                 );
 
@@ -648,7 +586,7 @@ final class CheckoutService
         }
 
         return 'CH-'
-            . Str::uuid()->toString();
+            .Str::uuid()->toString();
     }
 
     private function buildMapsUrl(

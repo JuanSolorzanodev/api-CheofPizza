@@ -115,33 +115,29 @@ final class UserController
                     ],
                     true,
                 ),
-                fn (Builder $query): Builder =>
-                    $query->whereHas(
-                        'role',
-                        fn (
-                            Builder $roleQuery,
-                        ): Builder =>
-                            $roleQuery->where(
-                                'role_name',
-                                $role,
-                            ),
+                fn (Builder $query): Builder => $query->whereHas(
+                    'role',
+                    fn (
+                        Builder $roleQuery,
+                    ): Builder => $roleQuery->where(
+                        'role_name',
+                        $role,
                     ),
+                ),
             )
             ->when(
                 $status === 'active',
-                fn (Builder $query): Builder =>
-                    $query->where(
-                        'is_active',
-                        true,
-                    ),
+                fn (Builder $query): Builder => $query->where(
+                    'is_active',
+                    true,
+                ),
             )
             ->when(
                 $status === 'inactive',
-                fn (Builder $query): Builder =>
-                    $query->where(
-                        'is_active',
-                        false,
-                    ),
+                fn (Builder $query): Builder => $query->where(
+                    'is_active',
+                    false,
+                ),
             )
             ->latest('id')
             ->paginate($perPage)
@@ -152,27 +148,20 @@ final class UserController
                 $users->getCollection(),
             ),
 
-            message:
-                'Usuarios recuperados correctamente.',
+            message: 'Usuarios recuperados correctamente.',
 
             meta: [
-                'current_page' =>
-                    $users->currentPage(),
+                'current_page' => $users->currentPage(),
 
-                'last_page' =>
-                    $users->lastPage(),
+                'last_page' => $users->lastPage(),
 
-                'per_page' =>
-                    $users->perPage(),
+                'per_page' => $users->perPage(),
 
-                'total' =>
-                    $users->total(),
+                'total' => $users->total(),
 
-                'from' =>
-                    $users->firstItem(),
+                'from' => $users->firstItem(),
 
-                'to' =>
-                    $users->lastItem(),
+                'to' => $users->lastItem(),
             ],
         );
     }
@@ -203,23 +192,18 @@ final class UserController
                 static fn (
                     Role $role,
                 ): array => [
-                    'id' =>
-                        (int) $role->id,
+                    'id' => (int) $role->id,
 
-                    'name' =>
-                        (string) $role->role_name,
+                    'name' => (string) $role->role_name,
 
                     'label' => match (
                         $role->role_name
                     ) {
-                        'admin' =>
-                            'Administrador',
+                        'admin' => 'Administrador',
 
-                        'operator' =>
-                            'Operador',
+                        'operator' => 'Operador',
 
-                        default =>
-                            'Cliente',
+                        default => 'Cliente',
                     },
                 ],
             )
@@ -227,8 +211,7 @@ final class UserController
 
         return ApiResponse::success(
             data: $roles,
-            message:
-                'Roles recuperados correctamente.',
+            message: 'Roles recuperados correctamente.',
         );
     }
 
@@ -246,40 +229,30 @@ final class UserController
 
         if ($roleId === null) {
             return ApiResponse::error(
-                message:
-                    'El rol seleccionado no existe.',
-                status:
-                    Response::HTTP_UNPROCESSABLE_ENTITY,
-                code:
-                    'ROLE_NOT_FOUND',
+                message: 'El rol seleccionado no existe.',
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+                code: 'ROLE_NOT_FOUND',
             );
         }
 
         $user = User::query()->create([
-            'role_id' =>
-                (int) $roleId,
+            'role_id' => (int) $roleId,
 
-            'first_name' =>
-                $data['first_name'],
+            'first_name' => $data['first_name'],
 
-            'last_name' =>
-                $data['last_name'],
+            'last_name' => $data['last_name'],
 
-            'phone' =>
-                $data['phone'],
+            'phone' => $data['phone'],
 
-            'email' =>
-                $data['email'],
+            'email' => $data['email'],
 
             /*
              * La autenticación actual usa Google/Firebase.
              * La contraseña queda aleatoria y no se comparte.
              */
-            'password' =>
-                Str::random(64),
+            'password' => Str::random(64),
 
-            'is_active' =>
-                (bool) $data['is_active'],
+            'is_active' => (bool) $data['is_active'],
         ]);
 
         $user
@@ -291,16 +264,13 @@ final class UserController
             ]);
 
         return ApiResponse::success(
-            data:
-                new AdminUserResource(
-                    $user,
-                ),
+            data: new AdminUserResource(
+                $user,
+            ),
 
-            message:
-                'Usuario creado correctamente.',
+            message: 'Usuario creado correctamente.',
 
-            status:
-                Response::HTTP_CREATED,
+            status: Response::HTTP_CREATED,
         );
     }
 
@@ -316,13 +286,11 @@ final class UserController
             ]);
 
         return ApiResponse::success(
-            data:
-                new AdminUserResource(
-                    $user,
-                ),
+            data: new AdminUserResource(
+                $user,
+            ),
 
-            message:
-                'Usuario recuperado correctamente.',
+            message: 'Usuario recuperado correctamente.',
         );
     }
 
@@ -343,13 +311,11 @@ final class UserController
             ]);
 
         return ApiResponse::success(
-            data:
-                new AdminUserResource(
-                    $user,
-                ),
+            data: new AdminUserResource(
+                $user,
+            ),
 
-            message:
-                'Usuario actualizado correctamente.',
+            message: 'Usuario actualizado correctamente.',
         );
     }
 
@@ -365,12 +331,9 @@ final class UserController
             (int) $user->id
         ) {
             return ApiResponse::error(
-                message:
-                    'No puedes cambiar tu propio rol.',
-                status:
-                    Response::HTTP_CONFLICT,
-                code:
-                    'CANNOT_CHANGE_OWN_ROLE',
+                message: 'No puedes cambiar tu propio rol.',
+                status: Response::HTTP_CONFLICT,
+                code: 'CANNOT_CHANGE_OWN_ROLE',
             );
         }
 
@@ -388,12 +351,9 @@ final class UserController
 
         if ($newRole === null) {
             return ApiResponse::error(
-                message:
-                    'El rol seleccionado no existe.',
-                status:
-                    Response::HTTP_UNPROCESSABLE_ENTITY,
-                code:
-                    'ROLE_NOT_FOUND',
+                message: 'El rol seleccionado no existe.',
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+                code: 'ROLE_NOT_FOUND',
             );
         }
 
@@ -430,11 +390,10 @@ final class UserController
                                 'role',
                                 fn (
                                     Builder $query,
-                                ): Builder =>
-                                    $query->where(
-                                        'role_name',
-                                        'admin',
-                                    ),
+                                ): Builder => $query->where(
+                                    'role_name',
+                                    'admin',
+                                ),
                             )
                             ->lockForUpdate()
                             ->count();
@@ -448,8 +407,7 @@ final class UserController
                 }
 
                 $lockedUser->forceFill([
-                    'role_id' =>
-                        (int) $newRole->id,
+                    'role_id' => (int) $newRole->id,
                 ])->save();
 
                 /*
@@ -470,13 +428,11 @@ final class UserController
             ]);
 
         return ApiResponse::success(
-            data:
-                new AdminUserResource(
-                    $user,
-                ),
+            data: new AdminUserResource(
+                $user,
+            ),
 
-            message:
-                'Rol actualizado correctamente.',
+            message: 'Rol actualizado correctamente.',
         );
     }
 
@@ -498,12 +454,9 @@ final class UserController
             ! $newStatus
         ) {
             return ApiResponse::error(
-                message:
-                    'No puedes bloquear tu propia cuenta.',
-                status:
-                    Response::HTTP_CONFLICT,
-                code:
-                    'CANNOT_DISABLE_OWN_ACCOUNT',
+                message: 'No puedes bloquear tu propia cuenta.',
+                status: Response::HTTP_CONFLICT,
+                code: 'CANNOT_DISABLE_OWN_ACCOUNT',
             );
         }
 
@@ -541,11 +494,10 @@ final class UserController
                                 'role',
                                 fn (
                                     Builder $query,
-                                ): Builder =>
-                                    $query->where(
-                                        'role_name',
-                                        'admin',
-                                    ),
+                                ): Builder => $query->where(
+                                    'role_name',
+                                    'admin',
+                                ),
                             )
                             ->lockForUpdate()
                             ->count();
@@ -559,8 +511,7 @@ final class UserController
                 }
 
                 $lockedUser->forceFill([
-                    'is_active' =>
-                        $newStatus,
+                    'is_active' => $newStatus,
                 ])->save();
 
                 if (! $newStatus) {
@@ -582,10 +533,9 @@ final class UserController
             ]);
 
         return ApiResponse::success(
-            data:
-                new AdminUserResource(
-                    $user,
-                ),
+            data: new AdminUserResource(
+                $user,
+            ),
 
             message: $newStatus
                 ? 'Usuario activado correctamente.'

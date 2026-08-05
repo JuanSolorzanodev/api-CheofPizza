@@ -19,13 +19,11 @@ final class PizzaController
         AdminPizzaService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                AdminPizzaResource::collection(
-                    $service->pizzas()
-                ),
+            data: AdminPizzaResource::collection(
+                $service->pizzas()
+            ),
 
-            message:
-                'Pizzas recuperadas correctamente.'
+            message: 'Pizzas recuperadas correctamente.'
         );
     }
 
@@ -38,13 +36,11 @@ final class PizzaController
         );
 
         return ApiResponse::success(
-            data:
-                new AdminPizzaResource(
-                    $pizza
-                ),
+            data: new AdminPizzaResource(
+                $pizza
+            ),
 
-            message:
-                'Pizza creada correctamente.',
+            message: 'Pizza creada correctamente.',
 
             status: 201
         );
@@ -55,15 +51,13 @@ final class PizzaController
         AdminPizzaService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new AdminPizzaResource(
-                    $service->pizza(
-                        $pizza
-                    )
-                ),
+            data: new AdminPizzaResource(
+                $service->pizza(
+                    $pizza
+                )
+            ),
 
-            message:
-                'Pizza recuperada correctamente.'
+            message: 'Pizza recuperada correctamente.'
         );
     }
 
@@ -78,13 +72,11 @@ final class PizzaController
         );
 
         return ApiResponse::success(
-            data:
-                new AdminPizzaResource(
-                    $pizza
-                ),
+            data: new AdminPizzaResource(
+                $pizza
+            ),
 
-            message:
-                'Pizza actualizada correctamente.'
+            message: 'Pizza actualizada correctamente.'
         );
     }
 
@@ -96,20 +88,17 @@ final class PizzaController
         $pizza =
             $service->updateVisibility(
                 pizza: $pizza,
-                isVisible:
-                    (bool) $request->validated(
-                        'is_visible'
-                    ),
+                isVisible: (bool) $request->validated(
+                    'is_visible'
+                ),
             );
 
         return ApiResponse::success(
-            data:
-                new AdminPizzaResource(
-                    $pizza
-                ),
+            data: new AdminPizzaResource(
+                $pizza
+            ),
 
-            message:
-                $pizza->is_visible
+            message: $pizza->is_visible
                     ? 'Pizza visible en el catálogo.'
                     : 'Pizza ocultada del catálogo.'
         );
@@ -123,8 +112,7 @@ final class PizzaController
 
         return ApiResponse::success(
             data: null,
-            message:
-                'Pizza eliminada correctamente.'
+            message: 'Pizza eliminada correctamente.'
         );
     }
 }

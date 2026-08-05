@@ -34,82 +34,59 @@ function createPayPalDeliveryFeeFixture(): array
         ]);
 
     $category = Category::query()->create([
-        'category_name' =>
-        'Sencillas PayPal delivery',
+        'category_name' => 'Sencillas PayPal delivery',
 
-        'description' =>
-        'Categoría para prueba PayPal',
+        'description' => 'Categoría para prueba PayPal',
     ]);
 
     $pizza = Pizza::query()->create([
-        'category_id' =>
-        $category->id,
+        'category_id' => $category->id,
 
-        'pizza_name' =>
-        'Americana PayPal delivery',
+        'pizza_name' => 'Americana PayPal delivery',
 
-        'description' =>
-        'Pizza para prueba PayPal',
+        'description' => 'Pizza para prueba PayPal',
 
-        'image_url' =>
-        null,
+        'image_url' => null,
 
-        'is_visible' =>
-        true,
+        'is_visible' => true,
     ]);
 
     $size = Size::query()->create([
-        'size_name' =>
-        'Pequeña PayPal delivery',
+        'size_name' => 'Pequeña PayPal delivery',
 
-        'portion' =>
-        4,
+        'portion' => 4,
     ]);
 
     $cart = Cart::query()->create([
-        'user_id' =>
-        $user->id,
+        'user_id' => $user->id,
 
-        'cart_status_id' =>
-        $activeStatus->id,
+        'cart_status_id' => $activeStatus->id,
 
-        'session_id' =>
-        null,
+        'session_id' => null,
 
-        'total' =>
-        '5.00',
+        'total' => '5.00',
     ]);
 
     CartItem::query()->create([
-        'cart_id' =>
-        $cart->id,
+        'cart_id' => $cart->id,
 
-        'item_type' =>
-        'pizza',
+        'item_type' => 'pizza',
 
-        'pizza_id' =>
-        $pizza->id,
+        'pizza_id' => $pizza->id,
 
-        'pizza_id_second' =>
-        null,
+        'pizza_id_second' => null,
 
-        'promotion_id' =>
-        null,
+        'promotion_id' => null,
 
-        'size_id' =>
-        $size->id,
+        'size_id' => $size->id,
 
-        'is_half_and_half' =>
-        false,
+        'is_half_and_half' => false,
 
-        'quantity' =>
-        1,
+        'quantity' => 1,
 
-        'unit_price' =>
-        '5.00',
+        'unit_price' => '5.00',
 
-        'subtotal' =>
-        '5.00',
+        'subtotal' => '5.00',
     ]);
 
     BusinessSetting::query()->updateOrCreate(
@@ -119,23 +96,17 @@ function createPayPalDeliveryFeeFixture(): array
         [
             ...BusinessSetting::defaultValues(),
 
-            'accepts_orders' =>
-            true,
+            'accepts_orders' => true,
 
-            'pickup_enabled' =>
-            true,
+            'pickup_enabled' => true,
 
-            'delivery_enabled' =>
-            true,
+            'delivery_enabled' => true,
 
-            'delivery_fee' =>
-            '1.50',
+            'delivery_fee' => '1.50',
 
-            'minimum_order' =>
-            '0.00',
+            'minimum_order' => '0.00',
 
-            'paypal_enabled' =>
-            true,
+            'paypal_enabled' => true,
         ],
     );
 
@@ -152,7 +123,6 @@ describe('Tarifa de delivery en PayPal', function (): void {
         'cobra subtotal más tarifa de delivery y conserva el desglose',
         function (): void {
             /** @var TestCase $this */
-
             [
                 'user' => $user,
                 'cart' => $cart,
@@ -187,14 +157,11 @@ describe('Tarifa de delivery en PayPal', function (): void {
                         === "{$baseUrl}/v1/oauth2/token"
                     ) {
                         return Http::response([
-                            'access_token' =>
-                            'ACCESS-TOKEN-DELIVERY-FEE',
+                            'access_token' => 'ACCESS-TOKEN-DELIVERY-FEE',
 
-                            'token_type' =>
-                            'Bearer',
+                            'token_type' => 'Bearer',
 
-                            'expires_in' =>
-                            32400,
+                            'expires_in' => 32400,
                         ], 200);
                     }
 
@@ -204,33 +171,26 @@ describe('Tarifa de delivery en PayPal', function (): void {
                         === "{$baseUrl}/v2/checkout/orders"
                     ) {
                         return Http::response([
-                            'id' =>
-                            $paypalOrderId,
+                            'id' => $paypalOrderId,
 
-                            'status' =>
-                            'CREATED',
+                            'status' => 'CREATED',
 
                             'links' => [
                                 [
-                                    'href' =>
-                                    "https://www.sandbox.paypal.com/checkoutnow?token={$paypalOrderId}",
+                                    'href' => "https://www.sandbox.paypal.com/checkoutnow?token={$paypalOrderId}",
 
-                                    'rel' =>
-                                    'approve',
+                                    'rel' => 'approve',
 
-                                    'method' =>
-                                    'GET',
+                                    'method' => 'GET',
                                 ],
                             ],
                         ], 201);
                     }
 
                     return Http::response([
-                        'name' =>
-                        'UNEXPECTED_REQUEST',
+                        'name' => 'UNEXPECTED_REQUEST',
 
-                        'message' =>
-                        'Petición no configurada.',
+                        'message' => 'Petición no configurada.',
                     ], 500);
                 },
             );
@@ -241,32 +201,24 @@ describe('Tarifa de delivery en PayPal', function (): void {
             $response = $this->postJson(
                 '/api/v1/payments/paypal/orders',
                 [
-                    'delivery_type' =>
-                    'delivery',
+                    'delivery_type' => 'delivery',
 
-                    'address' =>
-                    'Dirección de prueba',
+                    'address' => 'Dirección de prueba',
 
                     'delivery_location' => [
-                        'lat' =>
-                        -2.170998,
+                        'lat' => -2.170998,
 
-                        'lng' =>
-                        -79.922359,
+                        'lng' => -79.922359,
 
-                        'formatted_address' =>
-                        'Dirección de prueba',
+                        'formatted_address' => 'Dirección de prueba',
 
-                        'reference' =>
-                        'Casa color blanco',
+                        'reference' => 'Casa color blanco',
 
-                        'maps_url' =>
-                        'https://www.google.com/maps?q=-2.170998,-79.922359',
+                        'maps_url' => 'https://www.google.com/maps?q=-2.170998,-79.922359',
                     ],
                 ],
                 [
-                    'Idempotency-Key' =>
-                    $idempotencyKey,
+                    'Idempotency-Key' => $idempotencyKey,
                 ],
             );
 
@@ -332,23 +284,17 @@ describe('Tarifa de delivery en PayPal', function (): void {
             $this->assertDatabaseHas(
                 'payments',
                 [
-                    'user_id' =>
-                    $user->id,
+                    'user_id' => $user->id,
 
-                    'cart_id' =>
-                    $cart->id,
+                    'cart_id' => $cart->id,
 
-                    'provider' =>
-                    'paypal',
+                    'provider' => 'paypal',
 
-                    'provider_order_id' =>
-                    $paypalOrderId,
+                    'provider_order_id' => $paypalOrderId,
 
-                    'amount' =>
-                    '6.50',
+                    'amount' => '6.50',
 
-                    'currency' =>
-                    'USD',
+                    'currency' => 'USD',
                 ],
             );
         },
@@ -358,7 +304,6 @@ describe('Tarifa de delivery en PayPal', function (): void {
         'rechaza PayPal cuando está deshabilitado',
         function (): void {
             /** @var TestCase $this */
-
             [
                 'user' => $user,
             ] = createPayPalDeliveryFeeFixture();
@@ -376,12 +321,10 @@ describe('Tarifa de delivery en PayPal', function (): void {
                 ->postJson(
                     '/api/v1/payments/paypal/orders',
                     [
-                        'delivery_type' =>
-                        'pickup',
+                        'delivery_type' => 'pickup',
                     ],
                     [
-                        'Idempotency-Key' =>
-                        fake()->uuid(),
+                        'Idempotency-Key' => fake()->uuid(),
                     ],
                 )
                 ->assertUnprocessable()

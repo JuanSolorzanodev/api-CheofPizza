@@ -55,31 +55,24 @@ final class CashRegisterService
 
                 if ($existing !== null) {
                     throw ValidationException::withMessages([
-                        'cash_session' =>
-                            'Ya existe una caja abierta.',
+                        'cash_session' => 'Ya existe una caja abierta.',
                     ]);
                 }
 
                 $session = CashSession::query()->create([
-                    'uuid' =>
-                        (string) Str::uuid(),
+                    'uuid' => (string) Str::uuid(),
 
-                    'opened_by' =>
-                        $admin->id,
+                    'opened_by' => $admin->id,
 
-                    'status' =>
-                        CashSessionStatus::Open,
+                    'status' => CashSessionStatus::Open,
 
-                    'opening_amount' =>
-                        $this->money(
-                            $data['opening_amount']
-                        ),
+                    'opening_amount' => $this->money(
+                        $data['opening_amount']
+                    ),
 
-                    'opened_at' =>
-                        now(),
+                    'opened_at' => now(),
 
-                    'opening_note' =>
-                        $data['opening_note'] ?? null,
+                    'opening_note' => $data['opening_note'] ?? null,
                 ]);
 
                 return $session->load([
@@ -115,36 +108,28 @@ final class CashRegisterService
                     !== CashSessionStatus::Open
                 ) {
                     throw ValidationException::withMessages([
-                        'cash_session' =>
-                            'No se pueden registrar movimientos en una caja cerrada.',
+                        'cash_session' => 'No se pueden registrar movimientos en una caja cerrada.',
                     ]);
                 }
 
                 $movement = CashMovement::query()->create([
-                    'uuid' =>
-                        (string) Str::uuid(),
+                    'uuid' => (string) Str::uuid(),
 
-                    'cash_session_id' =>
-                        $locked->id,
+                    'cash_session_id' => $locked->id,
 
-                    'created_by' =>
-                        $admin->id,
+                    'created_by' => $admin->id,
 
-                    'type' =>
-                        CashMovementType::from(
-                            (string) $data['type']
-                        ),
+                    'type' => CashMovementType::from(
+                        (string) $data['type']
+                    ),
 
-                    'amount' =>
-                        $this->money(
-                            $data['amount']
-                        ),
+                    'amount' => $this->money(
+                        $data['amount']
+                    ),
 
-                    'reason' =>
-                        $data['reason'],
+                    'reason' => $data['reason'],
 
-                    'occurred_at' =>
-                        now(),
+                    'occurred_at' => now(),
                 ]);
 
                 return $movement->load('createdBy');
@@ -187,8 +172,7 @@ final class CashRegisterService
                     !== CashSessionStatus::Open
                 ) {
                     throw ValidationException::withMessages([
-                        'cash_session' =>
-                            'La caja ya está cerrada.',
+                        'cash_session' => 'La caja ya está cerrada.',
                     ]);
                 }
 
@@ -228,26 +212,19 @@ final class CashRegisterService
                 );
 
                 $locked->forceFill([
-                    'closed_by' =>
-                        $admin->id,
+                    'closed_by' => $admin->id,
 
-                    'status' =>
-                        CashSessionStatus::Closed,
+                    'status' => CashSessionStatus::Closed,
 
-                    'expected_cash' =>
-                        $expectedCash,
+                    'expected_cash' => $expectedCash,
 
-                    'counted_cash' =>
-                        $countedCash,
+                    'counted_cash' => $countedCash,
 
-                    'difference' =>
-                        $difference,
+                    'difference' => $difference,
 
-                    'closed_at' =>
-                        $closedAt,
+                    'closed_at' => $closedAt,
 
-                    'closing_note' =>
-                        $data['closing_note'] ?? null,
+                    'closing_note' => $data['closing_note'] ?? null,
                 ])->save();
 
                 return $locked->load([
@@ -332,19 +309,17 @@ final class CashRegisterService
             ->pluck('total', 'type');
 
         return [
-            'income' =>
-                $this->money(
-                    $totals[
-                        CashMovementType::Income->value
-                    ] ?? 0
-                ),
+            'income' => $this->money(
+                $totals[
+                    CashMovementType::Income->value
+                ] ?? 0
+            ),
 
-            'expense' =>
-                $this->money(
-                    $totals[
-                        CashMovementType::Expense->value
-                    ] ?? 0
-                ),
+            'expense' => $this->money(
+                $totals[
+                    CashMovementType::Expense->value
+                ] ?? 0
+            ),
         ];
     }
 

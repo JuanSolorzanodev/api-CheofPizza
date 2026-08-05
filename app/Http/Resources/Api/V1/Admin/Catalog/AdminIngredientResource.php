@@ -34,24 +34,20 @@ final class AdminIngredientResource extends JsonResource
         return [
             'id' => (int) $this->id,
 
-            'ingredient_type_id' =>
-                (int) $this->ingredient_type_id,
+            'ingredient_type_id' => (int) $this->ingredient_type_id,
 
-            'name' =>
-                (string) $this->ingredient_name,
+            'name' => (string) $this->ingredient_name,
 
             'type' => $this->whenLoaded(
                 'ingredientType',
                 fn (): array => [
-                    'id' =>
-                        (int) $this
-                            ->ingredientType
-                            ->id,
+                    'id' => (int) $this
+                        ->ingredientType
+                        ->id,
 
-                    'name' =>
-                        (string) $this
-                            ->ingredientType
-                            ->type_name,
+                    'name' => (string) $this
+                        ->ingredientType
+                        ->type_name,
                 ],
             ),
 
@@ -61,36 +57,29 @@ final class AdminIngredientResource extends JsonResource
                     ->ingredientSizePrices
                     ->map(
                         static fn ($price): array => [
-                            'id' =>
-                                (int) $price->id,
+                            'id' => (int) $price->id,
 
-                            'ingredient_id' =>
-                                (int) $price
-                                    ->ingredient_id,
+                            'ingredient_id' => (int) $price
+                                ->ingredient_id,
 
-                            'size_id' =>
-                                (int) $price->size_id,
+                            'size_id' => (int) $price->size_id,
 
-                            'extra_price' =>
-                                (float) $price
-                                    ->extra_price,
+                            'extra_price' => (float) $price
+                                ->extra_price,
 
                             'size' => $price->size
                                 ? [
-                                    'id' =>
-                                        (int) $price
-                                            ->size
-                                            ->id,
+                                    'id' => (int) $price
+                                        ->size
+                                        ->id,
 
-                                    'name' =>
-                                        (string) $price
-                                            ->size
-                                            ->size_name,
+                                    'name' => (string) $price
+                                        ->size
+                                        ->size_name,
 
-                                    'portion' =>
-                                        (int) $price
-                                            ->size
-                                            ->portion,
+                                    'portion' => (int) $price
+                                        ->size
+                                        ->portion,
                                 ]
                                 : null,
                         ],
@@ -100,20 +89,15 @@ final class AdminIngredientResource extends JsonResource
             ),
 
             'usage' => [
-                'pizzas' =>
-                    $pizzas,
+                'pizzas' => $pizzas,
 
-                'prices' =>
-                    $prices,
+                'prices' => $prices,
 
-                'cart_personalizations' =>
-                    $cartPersonalizations,
+                'cart_personalizations' => $cartPersonalizations,
 
-                'order_personalizations' =>
-                    $orderPersonalizations,
+                'order_personalizations' => $orderPersonalizations,
 
-                'total' =>
-                    $pizzas +
+                'total' => $pizzas +
                     $cartPersonalizations +
                     $orderPersonalizations,
             ],
@@ -122,11 +106,9 @@ final class AdminIngredientResource extends JsonResource
                 $this->can_delete ?? false
             ),
 
-            'created_at' =>
-                $this->created_at?->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
 
-            'updated_at' =>
-                $this->updated_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

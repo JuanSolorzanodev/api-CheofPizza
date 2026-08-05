@@ -18,68 +18,50 @@ function createWorkflowFeature(
     int $pizzas = 10,
 ): MlDailyFeature {
     return MlDailyFeature::query()->create([
-        'date' =>
-            $date,
+        'date' => $date,
 
-        'total_pizzas_sold' =>
-            $pizzas,
+        'total_pizzas_sold' => $pizzas,
 
-        'mini_sales' =>
-            1,
+        'mini_sales' => 1,
 
-        'small_sales' =>
-            2,
+        'small_sales' => 2,
 
-        'medium_sales' =>
-            max(
-                0,
-                $pizzas - 6,
-            ),
-
-        'family_sales' =>
-            2,
-
-        'giant_sales' =>
-            1,
-
-        'basic_sales' =>
-            4,
-
-        'special_sales' =>
-            max(
-                0,
-                $pizzas - 4,
-            ),
-
-        'promotion_sales' =>
-            2,
-
-        'regular_sales' =>
-            max(
-                0,
-                $pizzas - 2,
-            ),
-
-        'delivered_orders' =>
-            5,
-
-        'cancelled_orders' =>
+        'medium_sales' => max(
             0,
+            $pizzas - 6,
+        ),
 
-        'net_sales' =>
-            $pizzas * 10,
+        'family_sales' => 2,
 
-        'pickup_orders' =>
-            2,
+        'giant_sales' => 1,
 
-        'delivery_orders' =>
-            3,
+        'basic_sales' => 4,
 
-        'consolidated_at' =>
-            now(),
+        'special_sales' => max(
+            0,
+            $pizzas - 4,
+        ),
 
-        'source' =>
-            'laravel_sales',
+        'promotion_sales' => 2,
+
+        'regular_sales' => max(
+            0,
+            $pizzas - 2,
+        ),
+
+        'delivered_orders' => 5,
+
+        'cancelled_orders' => 0,
+
+        'net_sales' => $pizzas * 10,
+
+        'pickup_orders' => 2,
+
+        'delivery_orders' => 3,
+
+        'consolidated_at' => now(),
+
+        'source' => 'laravel_sales',
     ]);
 }
 
@@ -89,35 +71,25 @@ function createWorkflowFeature(
 function workflowArtifactResponse(): array
 {
     return [
-        'built' =>
-            true,
+        'built' => true,
 
-        'artifact_id' =>
-            'candidate-20260804T150000Z-abcd1234',
+        'artifact_id' => 'candidate-20260804T150000Z-abcd1234',
 
-        'version' =>
-            'sales-2026.08.04-abcd1234',
+        'version' => 'sales-2026.08.04-abcd1234',
 
-        'algorithm' =>
-            'random_forest',
+        'algorithm' => 'random_forest',
 
-        'algorithm_label' =>
-            'Random Forest',
+        'algorithm_label' => 'Random Forest',
 
-        'schema_version' =>
-            '1.0',
+        'schema_version' => '1.0',
 
-        'trained_from' =>
-            '2026-06-15',
+        'trained_from' => '2026-06-15',
 
-        'trained_until' =>
-            '2026-07-15',
+        'trained_until' => '2026-07-15',
 
-        'received_records' =>
-            45,
+        'received_records' => 45,
 
-        'training_records' =>
-            31,
+        'training_records' => 31,
 
         'targets' => [
             'mini_sales',
@@ -145,34 +117,25 @@ function workflowArtifactResponse(): array
 
         'metrics' => [
             [
-                'target' =>
-                    'mini_sales',
+                'target' => 'mini_sales',
 
-                'mae' =>
-                    0.4,
+                'mae' => 0.4,
 
-                'rmse' =>
-                    0.6,
+                'rmse' => 0.6,
             ],
         ],
 
-        'mean_mae' =>
-            0.8,
+        'mean_mae' => 0.8,
 
-        'mean_rmse' =>
-            1.1,
+        'mean_rmse' => 1.1,
 
-        'activated' =>
-            false,
+        'activated' => false,
 
-        'created_at' =>
-            now()->toIso8601String(),
+        'created_at' => now()->toIso8601String(),
 
-        'warnings' =>
-            [],
+        'warnings' => [],
 
-        'message' =>
-            'Candidato construido correctamente.',
+        'message' => 'Candidato construido correctamente.',
     ];
 }
 
@@ -211,8 +174,7 @@ it(
             ->withArgs(
                 static fn (
                     array $dataset,
-                ): bool =>
-                    $dataset[
+                ): bool => $dataset[
                         'summary'
                     ][
                         'records'
@@ -233,11 +195,9 @@ it(
 
         $run = $service->build(
             options: [
-                'limit' =>
-                    365,
+                'limit' => 365,
 
-                'include_empty_days' =>
-                    true,
+                'include_empty_days' => true,
             ],
             admin: $admin,
         );
@@ -311,15 +271,12 @@ it(
             ->once()
             ->andThrow(
                 new MachineLearningServiceException(
-                    message:
-                        'Dataset insuficiente.',
+                    message: 'Dataset insuficiente.',
 
-                    remoteStatus:
-                        422,
+                    remoteStatus: 422,
 
                     remotePayload: [
-                        'detail' =>
-                            'Dataset insuficiente.',
+                        'detail' => 'Dataset insuficiente.',
                     ],
                 ),
             );
@@ -380,11 +337,9 @@ it(
             )
             ->once()
             ->andReturn([
-                'trained' =>
-                    false,
+                'trained' => false,
 
-                'winner' =>
-                    null,
+                'winner' => null,
 
                 'warnings' => [
                     'Datos insuficientes.',

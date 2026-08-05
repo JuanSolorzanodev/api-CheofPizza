@@ -14,12 +14,12 @@ return new class extends Migration
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('identification_type_id') // identificacion_id :contentReference[oaicite:39]{index=39}
-            ->constrained('identification_types')
-            ->restrictOnDelete();
+                ->constrained('identification_types')
+                ->restrictOnDelete();
 
             $table->string('identification', 30);       // identificacion
             $table->string('business_name', 200);       // razon_social
-            $table->string('email')->nullable(); 
+            $table->string('email')->nullable();
             $table->timestamps();
         });
     }

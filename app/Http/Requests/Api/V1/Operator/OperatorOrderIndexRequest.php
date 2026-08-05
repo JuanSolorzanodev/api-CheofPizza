@@ -17,10 +17,10 @@ class OperatorOrderIndexRequest extends FormRequest
         return [
             'q' => ['nullable', 'string', 'max:80'], // order_number o texto
             'status' => ['nullable', 'string', Rule::in([
-                'pending','confirmed','preparing','ready','on_the_way','delivered','cancelled'
+                'pending', 'confirmed', 'preparing', 'ready', 'on_the_way', 'delivered', 'cancelled',
             ])],
-            'delivery_type' => ['nullable', 'string', Rule::in(['delivery','pickup'])],
-            'payment_method' => ['nullable', 'string', Rule::in(['cash','transfer','card'])],
+            'delivery_type' => ['nullable', 'string', Rule::in(['delivery', 'pickup'])],
+            'payment_method' => ['nullable', 'string', Rule::in(['cash', 'transfer', 'card'])],
 
             'date_from' => ['nullable', 'date'],
             'date_to' => ['nullable', 'date'],

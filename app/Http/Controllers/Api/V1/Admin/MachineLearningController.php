@@ -7,16 +7,16 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Exceptions\MachineLearningServiceException;
 use App\Http\Requests\Admin\MachineLearning\GenerateForecastRequest;
 use App\Http\Requests\Admin\MachineLearning\ImportForecastRequest;
+use App\Http\Requests\Admin\MachineLearning\TrainingDatasetRequest;
 use App\Http\Resources\Api\V1\Admin\MachineLearning\MlModelRunResource;
 use App\Models\MlModelRun;
 use App\Models\User;
+use App\Services\MachineLearning\Dataset\MlTrainingDatasetService;
 use App\Services\MachineLearning\ForecastImportService;
 use App\Services\MachineLearning\MachineLearningClient;
 use App\Services\MachineLearning\RemoteForecastPersistenceService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
-use App\Http\Requests\Admin\MachineLearning\TrainingDatasetRequest;
-use App\Services\MachineLearning\Dataset\MlTrainingDatasetService;
 use Illuminate\Http\Request;
 
 final class MachineLearningController
@@ -25,8 +25,7 @@ final class MachineLearningController
     {
         $run = MlModelRun::query()
             ->with([
-                'predictions' => static fn ($query) =>
-                    $query->orderBy('prediction_date'),
+                'predictions' => static fn ($query) => $query->orderBy('prediction_date'),
 
                 'creator.role',
             ])
@@ -41,15 +40,13 @@ final class MachineLearningController
         if ($run === null) {
             return ApiResponse::success(
                 data: null,
-                message:
-                    'Todavía no existe un pronóstico predictivo activo.'
+                message: 'Todavía no existe un pronóstico predictivo activo.'
             );
         }
 
         return ApiResponse::success(
             data: new MlModelRunResource($run),
-            message:
-                'Pronóstico activo recuperado correctamente.'
+            message: 'Pronóstico activo recuperado correctamente.'
         );
     }
 
@@ -77,21 +74,16 @@ final class MachineLearningController
                 $runs->getCollection()
             ),
 
-            message:
-                'Historial de modelos recuperado correctamente.',
+            message: 'Historial de modelos recuperado correctamente.',
 
             meta: [
-                'current_page' =>
-                    $runs->currentPage(),
+                'current_page' => $runs->currentPage(),
 
-                'last_page' =>
-                    $runs->lastPage(),
+                'last_page' => $runs->lastPage(),
 
-                'per_page' =>
-                    $runs->perPage(),
+                'per_page' => $runs->perPage(),
 
-                'total' =>
-                    $runs->total(),
+                'total' => $runs->total(),
             ]
         );
     }
@@ -101,8 +93,7 @@ final class MachineLearningController
     ): JsonResponse {
         $run = MlModelRun::query()
             ->with([
-                'predictions' => static fn ($query) =>
-                    $query->orderBy('prediction_date'),
+                'predictions' => static fn ($query) => $query->orderBy('prediction_date'),
 
                 'creator.role',
             ])
@@ -111,8 +102,7 @@ final class MachineLearningController
 
         return ApiResponse::success(
             data: new MlModelRunResource($run),
-            message:
-                'Ejecución predictiva recuperada correctamente.'
+            message: 'Ejecución predictiva recuperada correctamente.'
         );
     }
 
@@ -128,8 +118,7 @@ final class MachineLearningController
 
             return ApiResponse::success(
                 data: $model,
-                message:
-                    'Modelo remoto recuperado correctamente.'
+                message: 'Modelo remoto recuperado correctamente.'
             );
         } catch (
             MachineLearningServiceException $exception
@@ -163,8 +152,7 @@ final class MachineLearningController
 
             return ApiResponse::success(
                 data: $forecast,
-                message:
-                    'Pronóstico remoto generado correctamente.'
+                message: 'Pronóstico remoto generado correctamente.'
             );
         } catch (
             MachineLearningServiceException $exception
@@ -204,16 +192,14 @@ final class MachineLearningController
             );
 
             $run->loadMissing([
-                'predictions' => static fn ($query) =>
-                    $query->orderBy('prediction_date'),
+                'predictions' => static fn ($query) => $query->orderBy('prediction_date'),
 
                 'creator.role',
             ]);
 
             return ApiResponse::success(
                 data: new MlModelRunResource($run),
-                message:
-                    'Pronóstico generado y guardado correctamente.',
+                message: 'Pronóstico generado y guardado correctamente.',
                 status: 201
             );
         } catch (
@@ -242,16 +228,14 @@ final class MachineLearningController
         );
 
         $run->loadMissing([
-            'predictions' => static fn ($query) =>
-                $query->orderBy('prediction_date'),
+            'predictions' => static fn ($query) => $query->orderBy('prediction_date'),
 
             'creator.role',
         ]);
 
         return ApiResponse::success(
             data: new MlModelRunResource($run),
-            message:
-                'Pronóstico importado correctamente.',
+            message: 'Pronóstico importado correctamente.',
             status: 201
         );
     }
@@ -282,52 +266,46 @@ final class MachineLearningController
     }
 
     /**
- * Expone el dataset consolidado únicamente para diagnóstico
- * administrativo y para validar el futuro payload de entrenamiento.
- *
- * FastAPI no consumirá directamente este endpoint desde Internet.
- * Laravel utilizará el mismo servicio para enviar el dataset mediante
- * una llamada autenticada al endpoint de entrenamiento.
- */
-public function dataset(
-    TrainingDatasetRequest $request,
-    MlTrainingDatasetService $service,
-): JsonResponse {
-    $validated =
-        $request->validated();
+     * Expone el dataset consolidado únicamente para diagnóstico
+     * administrativo y para validar el futuro payload de entrenamiento.
+     *
+     * FastAPI no consumirá directamente este endpoint desde Internet.
+     * Laravel utilizará el mismo servicio para enviar el dataset mediante
+     * una llamada autenticada al endpoint de entrenamiento.
+     */
+    public function dataset(
+        TrainingDatasetRequest $request,
+        MlTrainingDatasetService $service,
+    ): JsonResponse {
+        $validated =
+            $request->validated();
 
-    $dataset =
-        $service->build(
-            dateFrom:
-                $validated['date_from']
-                ?? null,
+        $dataset =
+            $service->build(
+                dateFrom: $validated['date_from']
+                    ?? null,
 
-            dateTo:
-                $validated['date_to']
-                ?? null,
+                dateTo: $validated['date_to']
+                    ?? null,
 
-            limit:
-                (int) (
+                limit: (int) (
                     $validated['limit']
                     ?? 365
                 ),
 
-            includeEmptyDays:
-                filter_var(
+                includeEmptyDays: filter_var(
                     $validated[
                         'include_empty_days'
                     ] ?? true,
                     FILTER_VALIDATE_BOOL,
                     FILTER_NULL_ON_FAILURE,
                 ) ?? true,
+            );
+
+        return ApiResponse::success(
+            data: $dataset,
+
+            message: 'Dataset de entrenamiento recuperado correctamente.',
         );
-
-    return ApiResponse::success(
-        data:
-            $dataset,
-
-        message:
-            'Dataset de entrenamiento recuperado correctamente.',
-    );
-}
+    }
 }

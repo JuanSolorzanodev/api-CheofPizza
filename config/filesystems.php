@@ -37,22 +37,17 @@ return [
         */
 
         'local' => [
-            'driver' =>
-                'local',
+            'driver' => 'local',
 
-            'root' =>
-                storage_path(
-                    'app/private',
-                ),
+            'root' => storage_path(
+                'app/private',
+            ),
 
-            'serve' =>
-                true,
+            'serve' => true,
 
-            'throw' =>
-                false,
+            'throw' => false,
 
-            'report' =>
-                false,
+            'report' => false,
         ],
 
         /*
@@ -69,25 +64,20 @@ return [
         */
 
         'payment_receipts' => [
-            'driver' =>
-                'local',
+            'driver' => 'local',
 
-            'root' =>
-                env(
-                    'PAYMENT_RECEIPTS_ROOT',
-                    storage_path(
-                        'app/private/payment-receipts',
-                    ),
+            'root' => env(
+                'PAYMENT_RECEIPTS_ROOT',
+                storage_path(
+                    'app/private/payment-receipts',
                 ),
+            ),
 
-            'visibility' =>
-                'private',
+            'visibility' => 'private',
 
-            'throw' =>
-                true,
+            'throw' => true,
 
-            'report' =>
-                true,
+            'report' => true,
         ],
 
         /*
@@ -101,26 +91,20 @@ return [
         */
 
         'public' => [
-            'driver' =>
-                'local',
+            'driver' => 'local',
 
-            'root' =>
-                storage_path(
-                    'app/public',
-                ),
+            'root' => storage_path(
+                'app/public',
+            ),
 
-            'url' =>
-                env('APP_URL')
-                .'/storage',
+            'url' => env('APP_URL')
+            .'/storage',
 
-            'visibility' =>
-                'public',
+            'visibility' => 'public',
 
-            'throw' =>
-                false,
+            'throw' => false,
 
-            'report' =>
-                false,
+            'report' => false,
         ],
 
         /*
@@ -130,50 +114,40 @@ return [
         */
 
         's3' => [
-            'driver' =>
-                's3',
+            'driver' => 's3',
 
-            'key' =>
-                env(
-                    'AWS_ACCESS_KEY_ID',
-                ),
+            'key' => env(
+                'AWS_ACCESS_KEY_ID',
+            ),
 
-            'secret' =>
-                env(
-                    'AWS_SECRET_ACCESS_KEY',
-                ),
+            'secret' => env(
+                'AWS_SECRET_ACCESS_KEY',
+            ),
 
-            'region' =>
-                env(
-                    'AWS_DEFAULT_REGION',
-                ),
+            'region' => env(
+                'AWS_DEFAULT_REGION',
+            ),
 
-            'bucket' =>
-                env(
-                    'AWS_BUCKET',
-                ),
+            'bucket' => env(
+                'AWS_BUCKET',
+            ),
 
-            'url' =>
-                env(
-                    'AWS_URL',
-                ),
+            'url' => env(
+                'AWS_URL',
+            ),
 
-            'endpoint' =>
-                env(
-                    'AWS_ENDPOINT',
-                ),
+            'endpoint' => env(
+                'AWS_ENDPOINT',
+            ),
 
-            'use_path_style_endpoint' =>
-                env(
-                    'AWS_USE_PATH_STYLE_ENDPOINT',
-                    false,
-                ),
-
-            'throw' =>
+            'use_path_style_endpoint' => env(
+                'AWS_USE_PATH_STYLE_ENDPOINT',
                 false,
+            ),
 
-            'report' =>
-                false,
+            'throw' => false,
+
+            'report' => false,
         ],
     ],
 

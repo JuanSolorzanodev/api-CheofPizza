@@ -29,18 +29,15 @@ final class AdminCategoryResource extends JsonResource
                 $this->category_size_prices_count ?? 0
             ),
 
-            'size_prices' =>
-                AdminCategoryPriceResource::collection(
-                    $this->whenLoaded(
-                        'categorySizePrices'
-                    )
-                ),
+            'size_prices' => AdminCategoryPriceResource::collection(
+                $this->whenLoaded(
+                    'categorySizePrices'
+                )
+            ),
 
-            'created_at' =>
-                $this->created_at?->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
 
-            'updated_at' =>
-                $this->updated_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

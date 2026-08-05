@@ -149,37 +149,28 @@ final class AnalyticsDateRangeRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'date_from' =>
-            'fecha inicial',
+            'date_from' => 'fecha inicial',
 
-            'date_to' =>
-            'fecha final',
+            'date_to' => 'fecha final',
 
-            'timezone' =>
-            'zona horaria',
+            'timezone' => 'zona horaria',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'date_from.required_with' =>
-            'Debes enviar la fecha inicial cuando especifiques una fecha final.',
+            'date_from.required_with' => 'Debes enviar la fecha inicial cuando especifiques una fecha final.',
 
-            'date_to.required_with' =>
-            'Debes enviar la fecha final cuando especifiques una fecha inicial.',
+            'date_to.required_with' => 'Debes enviar la fecha final cuando especifiques una fecha inicial.',
 
-            'date_to.after_or_equal' =>
-            'La fecha final debe ser igual o posterior a la fecha inicial.',
+            'date_to.after_or_equal' => 'La fecha final debe ser igual o posterior a la fecha inicial.',
 
-            'date_from.date_format' =>
-            'La fecha inicial debe utilizar el formato YYYY-MM-DD.',
+            'date_from.date_format' => 'La fecha inicial debe utilizar el formato YYYY-MM-DD.',
 
-            'date_to.date_format' =>
-            'La fecha final debe utilizar el formato YYYY-MM-DD.',
+            'date_to.date_format' => 'La fecha final debe utilizar el formato YYYY-MM-DD.',
 
-            'timezone.in' =>
-            'La zona horaria seleccionada no está permitida.',
+            'timezone.in' => 'La zona horaria seleccionada no está permitida.',
         ];
     }
 }

@@ -19,27 +19,22 @@ final class AdminPromotionResource extends JsonResource
         $now = now();
 
         $status = match (true) {
-            !$this->is_active =>
-                'inactive',
+            ! $this->is_active => 'inactive',
 
             $this->starts_at &&
-            $this->starts_at->isFuture() =>
-                'scheduled',
+            $this->starts_at->isFuture() => 'scheduled',
 
             $this->ends_at &&
-            $this->ends_at->isPast() =>
-                'finished',
+            $this->ends_at->isPast() => 'finished',
 
             $this->starts_at &&
             $this->ends_at &&
             $now->between(
                 $this->starts_at,
                 $this->ends_at
-            ) =>
-                'active',
+            ) => 'active',
 
-            default =>
-                'inactive',
+            default => 'inactive',
         };
 
         $cartItems = (int) (
@@ -53,171 +48,137 @@ final class AdminPromotionResource extends JsonResource
         return [
             'id' => (int) $this->id,
 
-            'name' =>
-                (string) $this
-                    ->promotion_name,
+            'name' => (string) $this
+                ->promotion_name,
 
-            'slug' =>
-                (string) $this->slug,
+            'slug' => (string) $this->slug,
 
-            'description' =>
-                $this->description,
+            'description' => $this->description,
 
-            'banner_image_url' =>
-                $this->banner_image_url,
+            'banner_image_url' => $this->banner_image_url,
 
-            'type' =>
-                (string) $this
-                    ->promotion_type,
+            'type' => (string) $this
+                ->promotion_type,
 
-            'selection_quantity' =>
-                (int) $this
-                    ->selection_quantity,
+            'selection_quantity' => (int) $this
+                ->selection_quantity,
 
-            'price' =>
-                (float) $this
-                    ->promotion_price,
+            'price' => (float) $this
+                ->promotion_price,
 
-            'starts_at' =>
-                $this->starts_at
-                    ?->toISOString(),
+            'starts_at' => $this->starts_at
+                ?->toISOString(),
 
-            'ends_at' =>
-                $this->ends_at
-                    ?->toISOString(),
+            'ends_at' => $this->ends_at
+                ?->toISOString(),
 
-            'is_active' =>
-                (bool) $this->is_active,
+            'is_active' => (bool) $this->is_active,
 
             'status' => $status,
 
-            'details' =>
-                $this->whenLoaded(
-                    'promotionDetails',
-                    fn (): array => $this
-                        ->promotionDetails
-                        ->map(
-                            static fn (
-                                $detail
-                            ): array => [
-                                'id' =>
-                                    (int) $detail->id,
+            'details' => $this->whenLoaded(
+                'promotionDetails',
+                fn (): array => $this
+                    ->promotionDetails
+                    ->map(
+                        static fn (
+                            $detail
+                        ): array => [
+                            'id' => (int) $detail->id,
 
-                                'category_id' =>
-                                    (int) $detail
-                                        ->category_id,
+                            'category_id' => (int) $detail
+                                ->category_id,
 
-                                'size_id' =>
-                                    (int) $detail
-                                        ->size_id,
+                            'size_id' => (int) $detail
+                                ->size_id,
 
-                                'required_quantity' =>
-                                    (int) $detail
-                                        ->required_quantity,
+                            'required_quantity' => (int) $detail
+                                ->required_quantity,
 
-                                'category' =>
-                                    $detail->category
-                                        ? [
-                                            'id' =>
-                                                (int) $detail
-                                                    ->category
-                                                    ->id,
+                            'category' => $detail->category
+                                    ? [
+                                        'id' => (int) $detail
+                                            ->category
+                                            ->id,
 
-                                            'name' =>
-                                                (string) $detail
-                                                    ->category
-                                                    ->category_name,
-                                        ]
-                                        : null,
+                                        'name' => (string) $detail
+                                            ->category
+                                            ->category_name,
+                                    ]
+                                    : null,
 
-                                'size' =>
-                                    $detail->size
-                                        ? [
-                                            'id' =>
-                                                (int) $detail
-                                                    ->size
-                                                    ->id,
+                            'size' => $detail->size
+                                    ? [
+                                        'id' => (int) $detail
+                                            ->size
+                                            ->id,
 
-                                            'name' =>
-                                                (string) $detail
-                                                    ->size
-                                                    ->size_name,
+                                        'name' => (string) $detail
+                                            ->size
+                                            ->size_name,
 
-                                            'portion' =>
-                                                (int) $detail
-                                                    ->size
-                                                    ->portion,
-                                        ]
-                                        : null,
-                            ]
-                        )
-                        ->values()
-                        ->all()
-                ),
+                                        'portion' => (int) $detail
+                                            ->size
+                                            ->portion,
+                                    ]
+                                    : null,
+                        ]
+                    )
+                    ->values()
+                    ->all()
+            ),
 
-            'size_prices' =>
-                $this->whenLoaded(
-                    'sizePrices',
-                    fn (): array => $this
-                        ->sizePrices
-                        ->map(
-                            static fn (
-                                $price
-                            ): array => [
-                                'id' =>
-                                    (int) $price->id,
+            'size_prices' => $this->whenLoaded(
+                'sizePrices',
+                fn (): array => $this
+                    ->sizePrices
+                    ->map(
+                        static fn (
+                            $price
+                        ): array => [
+                            'id' => (int) $price->id,
 
-                                'size_id' =>
-                                    (int) $price
-                                        ->size_id,
+                            'size_id' => (int) $price
+                                ->size_id,
 
-                                'price' =>
-                                    (float) $price
-                                        ->fixed_price,
+                            'price' => (float) $price
+                                ->fixed_price,
 
-                                'size' =>
-                                    $price->size
-                                        ? [
-                                            'id' =>
-                                                (int) $price
-                                                    ->size
-                                                    ->id,
+                            'size' => $price->size
+                                    ? [
+                                        'id' => (int) $price
+                                            ->size
+                                            ->id,
 
-                                            'name' =>
-                                                (string) $price
-                                                    ->size
-                                                    ->size_name,
+                                        'name' => (string) $price
+                                            ->size
+                                            ->size_name,
 
-                                            'portion' =>
-                                                (int) $price
-                                                    ->size
-                                                    ->portion,
-                                        ]
-                                        : null,
-                            ]
-                        )
-                        ->values()
-                        ->all()
-                ),
+                                        'portion' => (int) $price
+                                            ->size
+                                            ->portion,
+                                    ]
+                                    : null,
+                        ]
+                    )
+                    ->values()
+                    ->all()
+            ),
 
             'usage' => [
-                'cart_items' =>
-                    $cartItems,
+            'cart_items' => $cartItems,
 
-                'order_items' =>
-                    $orderItems,
+            'order_items' => $orderItems,
 
-                'total' =>
-                    $cartItems +
-                    $orderItems,
+            'total' => $cartItems +
+                $orderItems,
             ],
 
             'can_delete' => (bool) (
                 $this->can_delete ?? false
             ),
 
-            'can_activate' =>
-                $this->promotion_type ===
+            'can_activate' => $this->promotion_type ===
                     Promotion::TYPE_FIXED_COMBO
                 || $this
                     ->sizePrices

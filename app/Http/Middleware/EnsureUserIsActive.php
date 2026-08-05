@@ -20,8 +20,7 @@ final class EnsureUserIsActive
         if ($user === null) {
             return new JsonResponse([
                 'success' => false,
-                'message' =>
-                    'Debes iniciar sesión para acceder a este recurso.',
+                'message' => 'Debes iniciar sesión para acceder a este recurso.',
                 'code' => 'UNAUTHENTICATED',
             ], Response::HTTP_UNAUTHORIZED);
         }
@@ -34,8 +33,7 @@ final class EnsureUserIsActive
 
             return new JsonResponse([
                 'success' => false,
-                'message' =>
-                    'Tu cuenta se encuentra bloqueada. Comunícate con el administrador.',
+                'message' => 'Tu cuenta se encuentra bloqueada. Comunícate con el administrador.',
                 'code' => 'USER_INACTIVE',
             ], Response::HTTP_FORBIDDEN);
         }

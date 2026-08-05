@@ -19,33 +19,27 @@ uses(RefreshDatabase::class);
 function cashRegisterCatalog(): array
 {
     return [
-        'delivered_status_id' =>
-            (int) OrderStatus::query()
-                ->firstOrCreate([
-                    'status_name' =>
-                        'delivered',
-                ])
-                ->id,
+        'delivered_status_id' => (int) OrderStatus::query()
+            ->firstOrCreate([
+                'status_name' => 'delivered',
+            ])
+            ->id,
 
-        'delivery_type_id' =>
-            (int) DeliveryType::query()
-                ->firstOrCreate([
-                    'delivery_type_name' =>
-                        'pickup',
-                ])
-                ->id,
+        'delivery_type_id' => (int) DeliveryType::query()
+            ->firstOrCreate([
+                'delivery_type_name' => 'pickup',
+            ])
+            ->id,
 
-        'cash_method_id' =>
-            (int) PaymentMethod::query()
-                ->firstOrCreate(
-                    ['name' => 'cash'],
-                    [
-                        'description' =>
-                            'Efectivo',
-                        'active' => true,
-                    ],
-                )
-                ->id,
+        'cash_method_id' => (int) PaymentMethod::query()
+            ->firstOrCreate(
+                ['name' => 'cash'],
+                [
+                    'description' => 'Efectivo',
+                    'active' => true,
+                ],
+            )
+            ->id,
     ];
 }
 
@@ -53,7 +47,6 @@ it(
     'requires authentication to access the cash register',
     function (): void {
         /** @var TestCase $this */
-
         $this
             ->getJson(
                 '/api/v1/admin/cash-register/current'
@@ -66,7 +59,6 @@ it(
     'opens a cash session',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -76,11 +68,9 @@ it(
             ->postJson(
                 '/api/v1/admin/cash-register/open',
                 [
-                    'opening_amount' =>
-                        50,
+                    'opening_amount' => 50,
 
-                    'opening_note' =>
-                        'Inicio del turno',
+                    'opening_note' => 'Inicio del turno',
                 ],
             )
             ->assertCreated()
@@ -96,14 +86,11 @@ it(
         $this->assertDatabaseHas(
             'cash_sessions',
             [
-                'opened_by' =>
-                    $admin->id,
+                'opened_by' => $admin->id,
 
-                'status' =>
-                    CashSessionStatus::Open->value,
+                'status' => CashSessionStatus::Open->value,
 
-                'opening_amount' =>
-                    '50.00',
+                'opening_amount' => '50.00',
             ],
         );
     },
@@ -113,7 +100,6 @@ it(
     'does not allow two open cash sessions',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -147,7 +133,6 @@ it(
     'closes the cash session using delivered cash orders',
     function (): void {
         /** @var TestCase $this */
-
         CarbonImmutable::setTestNow(
             '2026-08-01 17:00:00'
         );
@@ -177,53 +162,39 @@ it(
         );
 
         $order = Order::query()->create([
-            'order_number' =>
-                'CH-CASH-SESSION-001',
+            'order_number' => 'CH-CASH-SESSION-001',
 
-            'user_id' =>
-                $customer->id,
+            'user_id' => $customer->id,
 
-            'ordered_at' =>
-                '2026-08-01 17:30:00',
+            'ordered_at' => '2026-08-01 17:30:00',
 
-            'subtotal' =>
-                '30.00',
+            'subtotal' => '30.00',
 
-            'delivery_fee' =>
-                '0.00',
+            'delivery_fee' => '0.00',
 
-            'total' =>
-                '30.00',
+            'total' => '30.00',
 
-            'delivery_type_id' =>
-                $catalog['delivery_type_id'],
+            'delivery_type_id' => $catalog['delivery_type_id'],
 
-            'payment_method_id' =>
-                $catalog['cash_method_id'],
+            'payment_method_id' => $catalog['cash_method_id'],
 
-            'order_status_id' =>
-                $catalog[
+            'order_status_id' => $catalog[
                     'delivered_status_id'
                 ],
         ]);
 
         OrderStatusChange::query()->create([
-            'order_id' =>
-                $order->id,
+            'order_id' => $order->id,
 
-            'from_order_status_id' =>
-                null,
+            'from_order_status_id' => null,
 
-            'to_order_status_id' =>
-                $catalog[
+            'to_order_status_id' => $catalog[
                     'delivered_status_id'
                 ],
 
-            'changed_by_user_id' =>
-                $admin->id,
+            'changed_by_user_id' => $admin->id,
 
-            'changed_at' =>
-                '2026-08-01 18:00:00',
+            'changed_at' => '2026-08-01 18:00:00',
         ]);
 
         CarbonImmutable::setTestNow(
@@ -235,11 +206,9 @@ it(
             ->postJson(
                 "/api/v1/admin/cash-register/{$uuid}/close",
                 [
-                    'counted_cash' =>
-                        79,
+                    'counted_cash' => 79,
 
-                    'closing_note' =>
-                        'Falta un dólar',
+                    'closing_note' => 'Falta un dólar',
                 ],
             )
             ->assertOk()
@@ -268,26 +237,20 @@ it(
     'returns current session and cash history',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
 
         CashSession::query()->create([
-            'uuid' =>
-                (string) \Illuminate\Support\Str::uuid(),
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
 
-            'opened_by' =>
-                $admin->id,
+            'opened_by' => $admin->id,
 
-            'status' =>
-                CashSessionStatus::Open,
+            'status' => CashSessionStatus::Open,
 
-            'opening_amount' =>
-                '25.00',
+            'opening_amount' => '25.00',
 
-            'opened_at' =>
-                now(),
+            'opened_at' => now(),
         ]);
 
         $this

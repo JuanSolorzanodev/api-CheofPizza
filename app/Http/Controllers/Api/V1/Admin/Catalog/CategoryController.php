@@ -18,13 +18,11 @@ final class CategoryController
         AdminCatalogService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                AdminCategoryResource::collection(
-                    $service->categories()
-                ),
+            data: AdminCategoryResource::collection(
+                $service->categories()
+            ),
 
-            message:
-                'Categorías recuperadas correctamente.'
+            message: 'Categorías recuperadas correctamente.'
         );
     }
 
@@ -38,13 +36,11 @@ final class CategoryController
             );
 
         return ApiResponse::success(
-            data:
-                new AdminCategoryResource(
-                    $category
-                ),
+            data: new AdminCategoryResource(
+                $category
+            ),
 
-            message:
-                'Categoría creada correctamente.',
+            message: 'Categoría creada correctamente.',
 
             status: 201
         );
@@ -55,15 +51,13 @@ final class CategoryController
         AdminCatalogService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new AdminCategoryResource(
-                    $service->category(
-                        $category
-                    )
-                ),
+            data: new AdminCategoryResource(
+                $service->category(
+                    $category
+                )
+            ),
 
-            message:
-                'Categoría recuperada correctamente.'
+            message: 'Categoría recuperada correctamente.'
         );
     }
 
@@ -79,13 +73,11 @@ final class CategoryController
             );
 
         return ApiResponse::success(
-            data:
-                new AdminCategoryResource(
-                    $category
-                ),
+            data: new AdminCategoryResource(
+                $category
+            ),
 
-            message:
-                'Categoría actualizada correctamente.'
+            message: 'Categoría actualizada correctamente.'
         );
     }
 
@@ -99,8 +91,7 @@ final class CategoryController
 
         return ApiResponse::success(
             data: null,
-            message:
-                'Categoría eliminada correctamente.'
+            message: 'Categoría eliminada correctamente.'
         );
     }
 }

@@ -21,8 +21,7 @@ final class TrainingWorkflowService
     public function __construct(
         private readonly MlTrainingDatasetService $datasetService,
         private readonly MachineLearningClientContract $client,
-    ) {
-    }
+    ) {}
 
     /**
      * Consulta el registro persistente del servicio FastAPI.
@@ -38,8 +37,7 @@ final class TrainingWorkflowService
      * Construye el dataset consolidado y solicita una
      * comparación remota sin persistir una ejecución.
      *
-     * @param array<string, mixed> $options
-     *
+     * @param  array<string, mixed>  $options
      * @return array{
      *     dataset: array<string, mixed>,
      *     preview: array<string, mixed>
@@ -59,24 +57,18 @@ final class TrainingWorkflowService
 
         return [
             'dataset' => [
-                'schema_version' =>
-                    $dataset['schema_version'],
+                'schema_version' => $dataset['schema_version'],
 
-                'generated_at' =>
-                    $dataset['generated_at'],
+                'generated_at' => $dataset['generated_at'],
 
-                'timezone' =>
-                    $dataset['timezone'],
+                'timezone' => $dataset['timezone'],
 
-                'maturity' =>
-                    $dataset['maturity'],
+                'maturity' => $dataset['maturity'],
 
-                'summary' =>
-                    $dataset['summary'],
+                'summary' => $dataset['summary'],
             ],
 
-            'preview' =>
-                $preview,
+            'preview' => $preview,
         ];
     }
 
@@ -84,7 +76,7 @@ final class TrainingWorkflowService
      * Construye un artefacto candidato en FastAPI
      * y persiste su trazabilidad en Laravel.
      *
-     * @param array<string, mixed> $options
+     * @param  array<string, mixed>  $options
      */
     public function build(
         array $options,
@@ -95,43 +87,35 @@ final class TrainingWorkflowService
         );
 
         $run = MlTrainingRun::query()->create([
-            'uuid' =>
-                (string) Str::uuid(),
+            'uuid' => (string) Str::uuid(),
 
-            'dataset_hash' =>
-                $this->datasetHash(
-                    $dataset,
-                ),
+            'dataset_hash' => $this->datasetHash(
+                $dataset,
+            ),
 
-            'status' =>
-                MlTrainingRun::STATUS_PROCESSING,
+            'status' => MlTrainingRun::STATUS_PROCESSING,
 
-            'schema_version' =>
-                (string) $dataset[
+            'schema_version' => (string) $dataset[
                     'schema_version'
                 ],
 
-            'received_records' =>
-                (int) (
-                    $dataset[
-                        'summary'
-                    ][
-                        'records'
-                    ] ?? 0
-                ),
-
-            'request_options' =>
-                $this->normalizeOptions(
-                    $options,
-                ),
-
-            'dataset_summary' =>
+            'received_records' => (int) (
                 $dataset[
+                    'summary'
+                ][
+                    'records'
+                ] ?? 0
+            ),
+
+            'request_options' => $this->normalizeOptions(
+                $options,
+            ),
+
+            'dataset_summary' => $dataset[
                     'summary'
                 ],
 
-            'created_by' =>
-                $admin->getKey(),
+            'created_by' => $admin->getKey(),
         ]);
 
         try {
@@ -146,100 +130,79 @@ final class TrainingWorkflowService
                     $remote,
                 ): MlTrainingRun {
                     $run->forceFill([
-                        'status' =>
-                            MlTrainingRun::STATUS_BUILT,
+                        'status' => MlTrainingRun::STATUS_BUILT,
 
-                        'artifact_id' =>
-                            (string) $remote[
+                        'artifact_id' => (string) $remote[
                                 'artifact_id'
                             ],
 
-                        'version' =>
-                            (string) $remote[
+                        'version' => (string) $remote[
                                 'version'
                             ],
 
-                        'algorithm' =>
-                            (string) $remote[
+                        'algorithm' => (string) $remote[
                                 'algorithm'
                             ],
 
-                        'algorithm_label' =>
-                            (string) $remote[
+                        'algorithm_label' => (string) $remote[
                                 'algorithm_label'
                             ],
 
-                        'trained_from' =>
-                            $remote[
+                        'trained_from' => $remote[
                                 'trained_from'
                             ],
 
-                        'trained_until' =>
-                            $remote[
+                        'trained_until' => $remote[
                                 'trained_until'
                             ],
 
-                        'received_records' =>
-                            (int) $remote[
+                        'received_records' => (int) $remote[
                                 'received_records'
                             ],
 
-                        'training_records' =>
-                            (int) $remote[
+                        'training_records' => (int) $remote[
                                 'training_records'
                             ],
 
-                        'mean_mae' =>
-                            (float) $remote[
+                        'mean_mae' => (float) $remote[
                                 'mean_mae'
                             ],
 
-                        'mean_rmse' =>
-                            (float) $remote[
+                        'mean_rmse' => (float) $remote[
                                 'mean_rmse'
                             ],
 
-                        'targets' =>
-                            $remote[
+                        'targets' => $remote[
                                 'targets'
                             ],
 
-                        'derived_targets' =>
-                            $remote[
+                        'derived_targets' => $remote[
                                 'derived_targets'
                             ],
 
-                        'features' =>
-                            $remote[
+                        'features' => $remote[
                                 'features'
                             ],
 
-                        'metrics' =>
-                            $remote[
+                        'metrics' => $remote[
                                 'metrics'
                             ],
 
-                        'warnings' =>
-                            $remote[
+                        'warnings' => $remote[
                                 'warnings'
                             ] ?? [],
 
                         'remote_response' => [
-                            'build' =>
-                                $remote,
+                            'build' => $remote,
                         ],
 
-                        'built_at' =>
-                            now(),
+                        'built_at' => now(),
 
-                        'error_message' =>
-                            null,
+                        'error_message' => null,
 
-                        'remote_status' =>
-                            null,
+                        'remote_status' => null,
 
-                        'failed_at' =>
-                            null,
+                        'failed_at' => null,
                     ])->save();
 
                     return $run->fresh([
@@ -252,22 +215,18 @@ final class TrainingWorkflowService
         ) {
             $this->markFailed(
                 run: $run,
-                message:
-                    $exception->getMessage(),
+                message: $exception->getMessage(),
 
-                remoteStatus:
-                    $exception->remoteStatus(),
+                remoteStatus: $exception->remoteStatus(),
 
-                remotePayload:
-                    $exception->remotePayload(),
+                remotePayload: $exception->remotePayload(),
             );
 
             throw $exception;
         } catch (Throwable $exception) {
             $this->markFailed(
                 run: $run,
-                message:
-                    'No fue posible completar la construcción del candidato.',
+                message: 'No fue posible completar la construcción del candidato.',
             );
 
             throw $exception;
@@ -291,7 +250,7 @@ final class TrainingWorkflowService
             );
         }
 
-        if (!in_array(
+        if (! in_array(
             $run->status,
             [
                 MlTrainingRun::STATUS_BUILT,
@@ -324,14 +283,11 @@ final class TrainingWorkflowService
 
                 foreach ($previouslyActive as $previousRun) {
                     $previousRun->forceFill([
-                        'status' =>
-                            MlTrainingRun::STATUS_ROLLED_BACK,
+                        'status' => MlTrainingRun::STATUS_ROLLED_BACK,
 
-                        'is_active' =>
-                            false,
+                        'is_active' => false,
 
-                        'rolled_back_at' =>
-                            $activatedAt,
+                        'rolled_back_at' => $activatedAt,
                     ])->save();
                 }
 
@@ -346,20 +302,15 @@ final class TrainingWorkflowService
                 ] = $remote;
 
                 $run->forceFill([
-                    'status' =>
-                        MlTrainingRun::STATUS_ACTIVATED,
+                    'status' => MlTrainingRun::STATUS_ACTIVATED,
 
-                    'is_active' =>
-                        true,
+                    'is_active' => true,
 
-                    'activated_at' =>
-                        $activatedAt,
+                    'activated_at' => $activatedAt,
 
-                    'rolled_back_at' =>
-                        null,
+                    'rolled_back_at' => null,
 
-                    'remote_response' =>
-                        $responseHistory,
+                    'remote_response' => $responseHistory,
                 ])->save();
 
                 return $run->fresh([
@@ -369,11 +320,9 @@ final class TrainingWorkflowService
         );
 
         return [
-            'remote' =>
-                $remote,
+            'remote' => $remote,
 
-            'training_run' =>
-                $updatedRun,
+            'training_run' => $updatedRun,
         ];
     }
 
@@ -421,22 +370,18 @@ final class TrainingWorkflowService
                     ] = $remote;
 
                     $activeRun->forceFill([
-                        'status' =>
-                            MlTrainingRun::STATUS_ROLLED_BACK,
+                        'status' => MlTrainingRun::STATUS_ROLLED_BACK,
 
-                        'is_active' =>
-                            false,
+                        'is_active' => false,
 
-                        'rolled_back_at' =>
-                            $changedAt,
+                        'rolled_back_at' => $changedAt,
 
-                        'remote_response' =>
-                            $history,
+                        'remote_response' => $history,
                     ])->save();
                 }
 
                 if (
-                    !is_string($activeArtifactId)
+                    ! is_string($activeArtifactId)
                     || $activeArtifactId === ''
                     || $activeArtifactId
                         === 'legacy-calendar-model'
@@ -467,20 +412,15 @@ final class TrainingWorkflowService
                 ] = $remote;
 
                 $restoredRun->forceFill([
-                    'status' =>
-                        MlTrainingRun::STATUS_ACTIVATED,
+                    'status' => MlTrainingRun::STATUS_ACTIVATED,
 
-                    'is_active' =>
-                        true,
+                    'is_active' => true,
 
-                    'activated_at' =>
-                        $changedAt,
+                    'activated_at' => $changedAt,
 
-                    'rolled_back_at' =>
-                        null,
+                    'rolled_back_at' => null,
 
-                    'remote_response' =>
-                        $history,
+                    'remote_response' => $history,
                 ])->save();
 
                 return $restoredRun->fresh([
@@ -490,17 +430,14 @@ final class TrainingWorkflowService
         );
 
         return [
-            'remote' =>
-                $remote,
+            'remote' => $remote,
 
-            'training_run' =>
-                $restoredRun,
+            'training_run' => $restoredRun,
         ];
     }
 
     /**
-     * @param array<string, mixed> $options
-     *
+     * @param  array<string, mixed>  $options
      * @return array<string, mixed>
      */
     private function buildDataset(
@@ -511,31 +448,26 @@ final class TrainingWorkflowService
         );
 
         return $this->datasetService->build(
-            dateFrom:
-                $normalized[
+            dateFrom: $normalized[
                     'date_from'
                 ],
 
-            dateTo:
-                $normalized[
+            dateTo: $normalized[
                     'date_to'
                 ],
 
-            limit:
-                $normalized[
+            limit: $normalized[
                     'limit'
                 ],
 
-            includeEmptyDays:
-                $normalized[
+            includeEmptyDays: $normalized[
                     'include_empty_days'
                 ],
         );
     }
 
     /**
-     * @param array<string, mixed> $options
-     *
+     * @param  array<string, mixed>  $options
      * @return array{
      *     date_from: string|null,
      *     date_to: string|null,
@@ -547,47 +479,43 @@ final class TrainingWorkflowService
         array $options,
     ): array {
         return [
-            'date_from' =>
-                isset($options['date_from'])
+            'date_from' => isset($options['date_from'])
                 && is_string(
                     $options['date_from'],
                 )
                     ? $options['date_from']
                     : null,
 
-            'date_to' =>
-                isset($options['date_to'])
+            'date_to' => isset($options['date_to'])
                 && is_string(
                     $options['date_to'],
                 )
                     ? $options['date_to']
                     : null,
 
-            'limit' =>
-                max(
-                    1,
-                    min(
-                        1000,
-                        (int) (
-                            $options['limit']
-                            ?? 365
-                        ),
+            'limit' => max(
+                1,
+                min(
+                    1000,
+                    (int) (
+                        $options['limit']
+                        ?? 365
                     ),
                 ),
+            ),
 
-            'include_empty_days' =>
-                filter_var(
-                    $options[
-                        'include_empty_days'
-                    ] ?? true,
-                    FILTER_VALIDATE_BOOL,
-                    FILTER_NULL_ON_FAILURE,
-                ) ?? true,
+            'include_empty_days' => filter_var(
+                $options[
+                    'include_empty_days'
+                ] ?? true,
+                FILTER_VALIDATE_BOOL,
+                FILTER_NULL_ON_FAILURE,
+            ) ?? true,
         ];
     }
 
     /**
-     * @param array<string, mixed> $dataset
+     * @param  array<string, mixed>  $dataset
      */
     private function datasetHash(
         array $dataset,
@@ -601,11 +529,9 @@ final class TrainingWorkflowService
             );
         } catch (JsonException $exception) {
             throw new MachineLearningServiceException(
-                message:
-                    'No fue posible serializar el dataset de entrenamiento.',
+                message: 'No fue posible serializar el dataset de entrenamiento.',
 
-                previous:
-                    $exception,
+                previous: $exception,
             );
         }
 
@@ -616,7 +542,7 @@ final class TrainingWorkflowService
     }
 
     /**
-     * @param array<string, mixed>|null $remotePayload
+     * @param  array<string, mixed>|null  $remotePayload
      */
     private function markFailed(
         MlTrainingRun $run,
@@ -625,22 +551,17 @@ final class TrainingWorkflowService
         ?array $remotePayload = null,
     ): void {
         $run->forceFill([
-            'status' =>
-                MlTrainingRun::STATUS_FAILED,
+            'status' => MlTrainingRun::STATUS_FAILED,
 
-            'error_message' =>
-                $message,
+            'error_message' => $message,
 
-            'remote_status' =>
-                $remoteStatus,
+            'remote_status' => $remoteStatus,
 
             'remote_response' => [
-                'error' =>
-                    $remotePayload,
+                'error' => $remotePayload,
             ],
 
-            'failed_at' =>
-                now(),
+            'failed_at' => now(),
         ])->save();
     }
 }

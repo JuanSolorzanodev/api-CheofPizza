@@ -49,69 +49,50 @@ final class DailySalesFeatureService
                     )->count();
 
                 $features = [
-                    'total_pizzas_sold' =>
-                    0,
+                    'total_pizzas_sold' => 0,
 
-                    'mini_sales' =>
-                    0,
+                    'mini_sales' => 0,
 
-                    'small_sales' =>
-                    0,
+                    'small_sales' => 0,
 
-                    'medium_sales' =>
-                    0,
+                    'medium_sales' => 0,
 
-                    'family_sales' =>
-                    0,
+                    'family_sales' => 0,
 
-                    'giant_sales' =>
-                    0,
+                    'giant_sales' => 0,
 
-                    'basic_sales' =>
-                    0,
+                    'basic_sales' => 0,
 
-                    'special_sales' =>
-                    0,
+                    'special_sales' => 0,
 
-                    'promotion_sales' =>
-                    0,
+                    'promotion_sales' => 0,
 
-                    'regular_sales' =>
-                    0,
+                    'regular_sales' => 0,
 
-                    'delivered_orders' =>
-                    $deliveredOrders->count(),
+                    'delivered_orders' => $deliveredOrders->count(),
 
-                    'cancelled_orders' =>
-                    $cancelledOrders,
+                    'cancelled_orders' => $cancelledOrders,
 
-                    'net_sales' =>
-                    round(
+                    'net_sales' => round(
                         $deliveredOrders->sum(
-                            static fn(
+                            static fn (
                                 Order $order
-                            ): float =>
-                            (float) $order->total,
+                            ): float => (float) $order->total,
                         ),
                         2,
                     ),
 
-                    'pickup_orders' =>
-                    0,
+                    'pickup_orders' => 0,
 
-                    'delivery_orders' =>
-                    0,
+                    'delivery_orders' => 0,
 
-                    'consolidated_at' =>
-                    now(),
+                    'consolidated_at' => now(),
 
-                    'source' =>
-                    'laravel_sales',
+                    'source' => 'laravel_sales',
                 ];
 
                 foreach (
-                    $deliveredOrders
-                    as $order
+                    $deliveredOrders as $order
                 ) {
                     $this->incrementDeliveryType(
                         features: $features,
@@ -119,8 +100,7 @@ final class DailySalesFeatureService
                     );
 
                     foreach (
-                        $order->orderItems
-                        as $orderItem
+                        $order->orderItems as $orderItem
                     ) {
                         $quantity = max(
                             0,
@@ -137,8 +117,8 @@ final class DailySalesFeatureService
                         ) {
                             $promotionPizzaCount =
                                 $orderItem
-                                ->orderPromotionItems
-                                ->count();
+                                    ->orderPromotionItems
+                                    ->count();
 
                             $physicalUnits =
                                 $promotionPizzaCount
@@ -209,8 +189,7 @@ final class DailySalesFeatureService
                 return MlDailyFeature::query()
                     ->updateOrCreate(
                         [
-                            'date' =>
-                            $businessDate
+                            'date' => $businessDate
                                 ->toDateString(),
                         ],
                         $features,
@@ -324,7 +303,7 @@ final class DailySalesFeatureService
     }
 
     /**
-     * @param array<string, int|float|string|null> $features
+     * @param  array<string, int|float|string|null>  $features
      */
     private function incrementSize(
         array &$features,
@@ -335,27 +314,21 @@ final class DailySalesFeatureService
             $sizeName,
         )) {
             'personal',
-            'mini' =>
-            'mini_sales',
+            'mini' => 'mini_sales',
 
             'pequena',
-            'small' =>
-            'small_sales',
+            'small' => 'small_sales',
 
             'mediana',
-            'medium' =>
-            'medium_sales',
+            'medium' => 'medium_sales',
 
             'familiar',
-            'family' =>
-            'family_sales',
+            'family' => 'family_sales',
 
             'gigante',
-            'giant' =>
-            'giant_sales',
+            'giant' => 'giant_sales',
 
-            default =>
-            null,
+            default => null,
         };
 
         if ($key === null) {
@@ -371,7 +344,7 @@ final class DailySalesFeatureService
     }
 
     /**
-     * @param array<string, int|float|string|null> $features
+     * @param  array<string, int|float|string|null>  $features
      */
     private function incrementCategory(
         array &$features,
@@ -385,7 +358,7 @@ final class DailySalesFeatureService
                 $firstCategory,
             );
 
-        if (!$isHalfAndHalf) {
+        if (! $isHalfAndHalf) {
             if ($firstKey !== null) {
                 $features[$firstKey] +=
                     $units;
@@ -435,21 +408,18 @@ final class DailySalesFeatureService
             'sencillas',
             'basic',
             'basica',
-            'basicas' =>
-            'basic_sales',
+            'basicas' => 'basic_sales',
 
             'especial',
             'especiales',
-            'special' =>
-            'special_sales',
+            'special' => 'special_sales',
 
-            default =>
-            null,
+            default => null,
         };
     }
 
     /**
-     * @param array<string, int|float|string|null> $features
+     * @param  array<string, int|float|string|null>  $features
      */
     private function incrementDeliveryType(
         array &$features,
@@ -466,21 +436,18 @@ final class DailySalesFeatureService
             'pickup',
             'retiro',
             'retirar',
-            'local' =>
-            $features['pickup_orders']++,
+            'local' => $features['pickup_orders']++,
 
             'delivery',
             'domicilio',
-            'entrega a domicilio' =>
-            $features['delivery_orders']++,
+            'entrega a domicilio' => $features['delivery_orders']++,
 
-            default =>
-            null,
+            default => null,
         };
     }
 
     /**
-     * @param array<string, int|float|string|null> $features
+     * @param  array<string, int|float|string|null>  $features
      */
     private function assertSizeTotalsMatch(
         array $features,

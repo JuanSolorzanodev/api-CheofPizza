@@ -24,13 +24,11 @@ final class CashRegisterController
         $session = $service->current();
 
         return ApiResponse::success(
-            data:
-                $session !== null
+            data: $session !== null
                     ? new CashSessionResource($session)
                     : null,
 
-            message:
-                $session !== null
+            message: $session !== null
                     ? 'Caja abierta recuperada correctamente.'
                     : 'No existe una caja abierta.',
         );
@@ -44,16 +42,14 @@ final class CashRegisterController
         $admin = $request->user();
 
         return ApiResponse::success(
-            data:
-                new CashSessionResource(
-                    $service->open(
-                        admin: $admin,
-                        data: $request->validated(),
-                    )
-                ),
+            data: new CashSessionResource(
+                $service->open(
+                    admin: $admin,
+                    data: $request->validated(),
+                )
+            ),
 
-            message:
-                'Caja abierta correctamente.',
+            message: 'Caja abierta correctamente.',
 
             status: 201,
         );
@@ -68,17 +64,15 @@ final class CashRegisterController
         $admin = $request->user();
 
         return ApiResponse::success(
-            data:
-                new CashMovementResource(
-                    $service->addMovement(
-                        session: $cashSession,
-                        admin: $admin,
-                        data: $request->validated(),
-                    )
-                ),
+            data: new CashMovementResource(
+                $service->addMovement(
+                    session: $cashSession,
+                    admin: $admin,
+                    data: $request->validated(),
+                )
+            ),
 
-            message:
-                'Movimiento de caja registrado correctamente.',
+            message: 'Movimiento de caja registrado correctamente.',
 
             status: 201,
         );
@@ -106,32 +100,24 @@ final class CashRegisterController
         );
 
         return ApiResponse::success(
-            data:
-                CashMovementResource::collection(
-                    $paginator->items()
-                ),
+            data: CashMovementResource::collection(
+                $paginator->items()
+            ),
 
-            message:
-                'Movimientos de caja recuperados correctamente.',
+            message: 'Movimientos de caja recuperados correctamente.',
 
             meta: [
-                'current_page' =>
-                    $paginator->currentPage(),
+                'current_page' => $paginator->currentPage(),
 
-                'per_page' =>
-                    $paginator->perPage(),
+                'per_page' => $paginator->perPage(),
 
-                'last_page' =>
-                    $paginator->lastPage(),
+                'last_page' => $paginator->lastPage(),
 
-                'total' =>
-                    $paginator->total(),
+                'total' => $paginator->total(),
 
-                'from' =>
-                    $paginator->firstItem(),
+                'from' => $paginator->firstItem(),
 
-                'to' =>
-                    $paginator->lastItem(),
+                'to' => $paginator->lastItem(),
             ],
         );
     }
@@ -145,17 +131,15 @@ final class CashRegisterController
         $admin = $request->user();
 
         return ApiResponse::success(
-            data:
-                new CashSessionResource(
-                    $service->close(
-                        session: $cashSession,
-                        admin: $admin,
-                        data: $request->validated(),
-                    )
-                ),
+            data: new CashSessionResource(
+                $service->close(
+                    session: $cashSession,
+                    admin: $admin,
+                    data: $request->validated(),
+                )
+            ),
 
-            message:
-                'Caja cerrada correctamente.',
+            message: 'Caja cerrada correctamente.',
         );
     }
 
@@ -166,49 +150,36 @@ final class CashRegisterController
         $validated = $request->validated();
 
         $paginator = $service->history([
-            'date_from' =>
-                $validated['date_from'] ?? null,
+            'date_from' => $validated['date_from'] ?? null,
 
-            'date_to' =>
-                $validated['date_to'] ?? null,
+            'date_to' => $validated['date_to'] ?? null,
 
-            'status' =>
-                $validated['status'] ?? null,
+            'status' => $validated['status'] ?? null,
 
-            'page' =>
-                (int) $validated['page'],
+            'page' => (int) $validated['page'],
 
-            'per_page' =>
-                (int) $validated['per_page'],
+            'per_page' => (int) $validated['per_page'],
         ]);
 
         return ApiResponse::success(
-            data:
-                CashSessionResource::collection(
-                    $paginator->items()
-                ),
+            data: CashSessionResource::collection(
+                $paginator->items()
+            ),
 
-            message:
-                'Historial de caja recuperado correctamente.',
+            message: 'Historial de caja recuperado correctamente.',
 
             meta: [
-                'current_page' =>
-                    $paginator->currentPage(),
+                'current_page' => $paginator->currentPage(),
 
-                'per_page' =>
-                    $paginator->perPage(),
+                'per_page' => $paginator->perPage(),
 
-                'last_page' =>
-                    $paginator->lastPage(),
+                'last_page' => $paginator->lastPage(),
 
-                'total' =>
-                    $paginator->total(),
+                'total' => $paginator->total(),
 
-                'from' =>
-                    $paginator->firstItem(),
+                'from' => $paginator->firstItem(),
 
-                'to' =>
-                    $paginator->lastItem(),
+                'to' => $paginator->lastItem(),
             ],
         );
     }

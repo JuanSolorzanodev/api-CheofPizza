@@ -49,10 +49,8 @@ final class PromotionSeeder extends Seeder
                 $this->createCombo(
                     slug: '2-medianas-por-15',
                     name: '2 medianas por $15',
-                    description:
-                        'Incluye una pizza Sencilla y una pizza Especial tamaño Mediana.',
-                    banner:
-                        'https://res.cloudinary.com/dertc9kiq/image/upload/v1766279154/cheofbanner2_acgkhf.png',
+                    description: 'Incluye una pizza Sencilla y una pizza Especial tamaño Mediana.',
+                    banner: 'https://res.cloudinary.com/dertc9kiq/image/upload/v1766279154/cheofbanner2_acgkhf.png',
                     price: 15.00,
                     sizeId: (int) $mediana->id,
                     sencillaId: (int) $sencillas->id,
@@ -62,10 +60,8 @@ final class PromotionSeeder extends Seeder
                 $this->createCombo(
                     slug: '2-familiares-por-20',
                     name: '2 familiares por $20',
-                    description:
-                        'Incluye una pizza Sencilla y una pizza Especial tamaño Familiar.',
-                    banner:
-                        'https://res.cloudinary.com/dertc9kiq/image/upload/v1766279154/cheofbanner_jn6lak.png',
+                    description: 'Incluye una pizza Sencilla y una pizza Especial tamaño Familiar.',
+                    banner: 'https://res.cloudinary.com/dertc9kiq/image/upload/v1766279154/cheofbanner_jn6lak.png',
                     price: 20.00,
                     sizeId: (int) $familiar->id,
                     sencillaId: (int) $sencillas->id,
@@ -75,46 +71,36 @@ final class PromotionSeeder extends Seeder
                 $horaLoca = Promotion::query()
                     ->updateOrCreate(
                         [
-                            'slug' =>
-                                'hora-loca',
+                            'slug' => 'hora-loca',
                         ],
                         [
-                            'promotion_name' =>
-                                'Hora Loca',
+                            'promotion_name' => 'Hora Loca',
 
-                            'description' =>
-                                'Durante la Hora Loca elige cualquier pizza: Mediana por $5 o Familiar por $10.',
+                            'description' => 'Durante la Hora Loca elige cualquier pizza: Mediana por $5 o Familiar por $10.',
 
-                            'banner_image_url' =>
-                                null,
+                            'banner_image_url' => null,
 
-                            'promotion_type' =>
-                                Promotion::TYPE_SIZE_FIXED_PRICE,
+                            'promotion_type' => Promotion::TYPE_SIZE_FIXED_PRICE,
 
-                            'selection_quantity' =>
-                                1,
+                            'selection_quantity' => 1,
 
                             /*
                              * Para esta modalidad el precio
                              * real se obtiene de
                              * promotion_size_prices.
                              */
-                            'promotion_price' =>
-                                0,
+                            'promotion_price' => 0,
 
                             /*
                              * Se deja inicialmente fuera de
                              * vigencia. Desde el panel se
                              * programará el día y horario.
                              */
-                            'starts_at' =>
-                                now(),
+                            'starts_at' => now(),
 
-                            'ends_at' =>
-                                now(),
+                            'ends_at' => now(),
 
-                            'is_active' =>
-                                false,
+                            'is_active' => false,
                         ],
                     );
 
@@ -125,30 +111,24 @@ final class PromotionSeeder extends Seeder
                 PromotionSizePrice::query()
                     ->updateOrCreate(
                         [
-                            'promotion_id' =>
-                                $horaLoca->id,
+                            'promotion_id' => $horaLoca->id,
 
-                            'size_id' =>
-                                $mediana->id,
+                            'size_id' => $mediana->id,
                         ],
                         [
-                            'fixed_price' =>
-                                5.00,
+                            'fixed_price' => 5.00,
                         ],
                     );
 
                 PromotionSizePrice::query()
                     ->updateOrCreate(
                         [
-                            'promotion_id' =>
-                                $horaLoca->id,
+                            'promotion_id' => $horaLoca->id,
 
-                            'size_id' =>
-                                $familiar->id,
+                            'size_id' => $familiar->id,
                         ],
                         [
-                            'fixed_price' =>
-                                10.00,
+                            'fixed_price' => 10.00,
                         ],
                     );
 
@@ -185,23 +165,17 @@ final class PromotionSeeder extends Seeder
                     'slug' => $slug,
                 ],
                 [
-                    'promotion_name' =>
-                        $name,
+                    'promotion_name' => $name,
 
-                    'description' =>
-                        $description,
+                    'description' => $description,
 
-                    'banner_image_url' =>
-                        $banner,
+                    'banner_image_url' => $banner,
 
-                    'promotion_type' =>
-                        Promotion::TYPE_FIXED_COMBO,
+                    'promotion_type' => Promotion::TYPE_FIXED_COMBO,
 
-                    'selection_quantity' =>
-                        2,
+                    'selection_quantity' => 2,
 
-                    'promotion_price' =>
-                        $price,
+                    'promotion_price' => $price,
 
                     /*
                      * Estas promociones se mantienen
@@ -209,16 +183,13 @@ final class PromotionSeeder extends Seeder
                      * amplio. Después se administrarán
                      * desde el panel.
                      */
-                    'starts_at' =>
-                        now()->startOfDay(),
+                    'starts_at' => now()->startOfDay(),
 
-                    'ends_at' =>
-                        now()
-                            ->addYears(2)
-                            ->endOfDay(),
+                    'ends_at' => now()
+                        ->addYears(2)
+                        ->endOfDay(),
 
-                    'is_active' =>
-                        true,
+                    'is_active' => true,
                 ],
             );
 
@@ -229,36 +200,28 @@ final class PromotionSeeder extends Seeder
         PromotionDetail::query()
             ->updateOrCreate(
                 [
-                    'promotion_id' =>
-                        $promotion->id,
+                    'promotion_id' => $promotion->id,
 
-                    'category_id' =>
-                        $sencillaId,
+                    'category_id' => $sencillaId,
 
-                    'size_id' =>
-                        $sizeId,
+                    'size_id' => $sizeId,
                 ],
                 [
-                    'required_quantity' =>
-                        1,
+                    'required_quantity' => 1,
                 ],
             );
 
         PromotionDetail::query()
             ->updateOrCreate(
                 [
-                    'promotion_id' =>
-                        $promotion->id,
+                    'promotion_id' => $promotion->id,
 
-                    'category_id' =>
-                        $especialId,
+                    'category_id' => $especialId,
 
-                    'size_id' =>
-                        $sizeId,
+                    'size_id' => $sizeId,
                 ],
                 [
-                    'required_quantity' =>
-                        1,
+                    'required_quantity' => 1,
                 ],
             );
 

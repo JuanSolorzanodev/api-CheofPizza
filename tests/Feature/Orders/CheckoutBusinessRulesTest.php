@@ -39,8 +39,7 @@ function createCheckoutBusinessRulesFixture(
     ]);
 
     foreach (
-        ['pickup', 'delivery']
-        as $deliveryType
+        ['pickup', 'delivery'] as $deliveryType
     ) {
         DeliveryType::query()->firstOrCreate([
             'delivery_type_name' => $deliveryType,
@@ -52,16 +51,14 @@ function createCheckoutBusinessRulesFixture(
     ]);
 
     foreach (
-        ['cash', 'transfer', 'card']
-        as $paymentMethod
+        ['cash', 'transfer', 'card'] as $paymentMethod
     ) {
         PaymentMethod::query()->firstOrCreate(
             [
                 'name' => $paymentMethod,
             ],
             [
-                'description' =>
-                    "Método {$paymentMethod}",
+                'description' => "Método {$paymentMethod}",
 
                 'active' => true,
             ],
@@ -69,82 +66,59 @@ function createCheckoutBusinessRulesFixture(
     }
 
     $category = Category::query()->create([
-        'category_name' =>
-            'Sencillas reglas checkout',
+        'category_name' => 'Sencillas reglas checkout',
 
-        'description' =>
-            'Categoría para pruebas',
+        'description' => 'Categoría para pruebas',
     ]);
 
     $pizza = Pizza::query()->create([
-        'category_id' =>
-            $category->id,
+        'category_id' => $category->id,
 
-        'pizza_name' =>
-            'Americana reglas checkout',
+        'pizza_name' => 'Americana reglas checkout',
 
-        'description' =>
-            'Pizza para pruebas',
+        'description' => 'Pizza para pruebas',
 
-        'image_url' =>
-            null,
+        'image_url' => null,
 
-        'is_visible' =>
-            true,
+        'is_visible' => true,
     ]);
 
     $size = Size::query()->create([
-        'size_name' =>
-            'Pequeña reglas checkout',
+        'size_name' => 'Pequeña reglas checkout',
 
-        'portion' =>
-            4,
+        'portion' => 4,
     ]);
 
     $cart = Cart::query()->create([
-        'user_id' =>
-            $user->id,
+        'user_id' => $user->id,
 
-        'cart_status_id' =>
-            $activeCartStatus->id,
+        'cart_status_id' => $activeCartStatus->id,
 
-        'session_id' =>
-            null,
+        'session_id' => null,
 
-        'total' =>
-            $subtotal,
+        'total' => $subtotal,
     ]);
 
     CartItem::query()->create([
-        'cart_id' =>
-            $cart->id,
+        'cart_id' => $cart->id,
 
-        'item_type' =>
-            'pizza',
+        'item_type' => 'pizza',
 
-        'pizza_id' =>
-            $pizza->id,
+        'pizza_id' => $pizza->id,
 
-        'pizza_id_second' =>
-            null,
+        'pizza_id_second' => null,
 
-        'promotion_id' =>
-            null,
+        'promotion_id' => null,
 
-        'size_id' =>
-            $size->id,
+        'size_id' => $size->id,
 
-        'is_half_and_half' =>
-            false,
+        'is_half_and_half' => false,
 
-        'quantity' =>
-            1,
+        'quantity' => 1,
 
-        'unit_price' =>
-            $subtotal,
+        'unit_price' => $subtotal,
 
-        'subtotal' =>
-            $subtotal,
+        'subtotal' => $subtotal,
     ]);
 
     return [
@@ -154,7 +128,7 @@ function createCheckoutBusinessRulesFixture(
 }
 
 /**
- * @param array<string, mixed> $overrides
+ * @param  array<string, mixed>  $overrides
  */
 function configureCheckoutBusinessRules(
     array $overrides = [],
@@ -162,32 +136,23 @@ function configureCheckoutBusinessRules(
     $settings = [
         ...BusinessSetting::defaultValues(),
 
-        'accepts_orders' =>
-            true,
+        'accepts_orders' => true,
 
-        'closed_message' =>
-            'La tienda está cerrada temporalmente.',
+        'closed_message' => 'La tienda está cerrada temporalmente.',
 
-        'pickup_enabled' =>
-            true,
+        'pickup_enabled' => true,
 
-        'delivery_enabled' =>
-            true,
+        'delivery_enabled' => true,
 
-        'delivery_fee' =>
-            '1.50',
+        'delivery_fee' => '1.50',
 
-        'minimum_order' =>
-            '0.00',
+        'minimum_order' => '0.00',
 
-        'paypal_enabled' =>
-            true,
+        'paypal_enabled' => true,
 
-        'transfer_enabled' =>
-            true,
+        'transfer_enabled' => true,
 
-        'cash_enabled' =>
-            true,
+        'cash_enabled' => true,
     ];
 
     $setting = BusinessSetting::query()
@@ -215,27 +180,21 @@ function deliveryCheckoutPayload(
     return [
         'delivery_type' => 'delivery',
 
-        'payment_method' =>
-            $paymentMethod,
+        'payment_method' => $paymentMethod,
 
-        'address' =>
-            'Dirección de prueba',
+        'address' => 'Dirección de prueba',
 
         'delivery_location' => [
             'lat' => -2.170998,
             'lng' => -79.922359,
-            'formatted_address' =>
-                'Dirección de prueba',
+            'formatted_address' => 'Dirección de prueba',
 
-            'reference' =>
-                'Casa color blanco',
+            'reference' => 'Casa color blanco',
 
-            'maps_url' =>
-                'https://www.google.com/maps?q=-2.170998,-79.922359',
+            'maps_url' => 'https://www.google.com/maps?q=-2.170998,-79.922359',
         ],
 
-        'notes' =>
-            'Pedido de prueba',
+        'notes' => 'Pedido de prueba',
     ];
 }
 
@@ -244,15 +203,13 @@ describe('Reglas comerciales del checkout', function (): void {
         'bloquea pedidos cuando la tienda está cerrada',
         function (): void {
             /** @var TestCase $this */
-
             [
                 'user' => $user,
             ] = createCheckoutBusinessRulesFixture();
 
             configureCheckoutBusinessRules([
                 'accepts_orders' => false,
-                'closed_message' =>
-                    'Volvemos a atender mañana.',
+                'closed_message' => 'Volvemos a atender mañana.',
             ]);
 
             $this
@@ -279,7 +236,6 @@ describe('Reglas comerciales del checkout', function (): void {
         'rechaza pedidos inferiores al mínimo',
         function (): void {
             /** @var TestCase $this */
-
             [
                 'user' => $user,
             ] = createCheckoutBusinessRulesFixture(
@@ -314,7 +270,6 @@ describe('Reglas comerciales del checkout', function (): void {
         'bloquea retiro cuando está deshabilitado',
         function (): void {
             /** @var TestCase $this */
-
             [
                 'user' => $user,
             ] = createCheckoutBusinessRulesFixture();
@@ -343,7 +298,6 @@ describe('Reglas comerciales del checkout', function (): void {
         'bloquea delivery cuando está deshabilitado',
         function (): void {
             /** @var TestCase $this */
-
             [
                 'user' => $user,
             ] = createCheckoutBusinessRulesFixture();
@@ -369,7 +323,6 @@ describe('Reglas comerciales del checkout', function (): void {
         'bloquea efectivo cuando está deshabilitado',
         function (): void {
             /** @var TestCase $this */
-
             [
                 'user' => $user,
             ] = createCheckoutBusinessRulesFixture();
@@ -398,7 +351,6 @@ describe('Reglas comerciales del checkout', function (): void {
         'bloquea transferencia cuando está deshabilitada',
         function (): void {
             /** @var TestCase $this */
-
             [
                 'user' => $user,
             ] = createCheckoutBusinessRulesFixture();
@@ -427,7 +379,6 @@ describe('Reglas comerciales del checkout', function (): void {
         'aplica la tarifa al delivery',
         function (): void {
             /** @var TestCase $this */
-
             [
                 'user' => $user,
             ] = createCheckoutBusinessRulesFixture(
@@ -475,7 +426,6 @@ describe('Reglas comerciales del checkout', function (): void {
         'no aplica tarifa al retiro',
         function (): void {
             /** @var TestCase $this */
-
             [
                 'user' => $user,
             ] = createCheckoutBusinessRulesFixture(

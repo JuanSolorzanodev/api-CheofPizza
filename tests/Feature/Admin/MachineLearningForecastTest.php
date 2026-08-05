@@ -173,7 +173,6 @@ it(
     'requires authentication to access machine learning admin endpoints',
     function (): void {
         /** @var TestCase $this */
-
         $this
             ->getJson(
                 '/api/v1/admin/machine-learning/latest',
@@ -186,7 +185,6 @@ it(
     'forbids customers from importing forecasts',
     function (): void {
         /** @var TestCase $this */
-
         $customer = User::factory()
             ->customer()
             ->create();
@@ -208,7 +206,6 @@ it(
     'allows an administrator to import the colab forecast',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -283,7 +280,6 @@ it(
     'does not duplicate the same imported json',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -328,7 +324,6 @@ it(
     'rejects totals that do not match the sum of pizza sizes',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -362,7 +357,6 @@ it(
     'returns the active forecast',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -414,7 +408,6 @@ it(
     'returns machine learning run history',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -458,7 +451,6 @@ it(
     'returns a machine learning run by uuid',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -508,7 +500,6 @@ it(
     'keeps the existing active model when a new model has a worse mae',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -569,7 +560,6 @@ it(
     'activates a new model when its mae improves',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -630,7 +620,6 @@ it(
     'rejects a prediction date that is not after the training period',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -664,7 +653,6 @@ it(
     'rejects a forecast days value that differs from prediction count',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();

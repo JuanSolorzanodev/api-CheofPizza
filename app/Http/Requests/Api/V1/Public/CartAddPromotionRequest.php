@@ -26,7 +26,7 @@ final class CartAddPromotionRequest extends FormRequest
 
         if (
             (
-                !is_array($selectedItems) ||
+                ! is_array($selectedItems) ||
                 $selectedItems === []
             ) &&
             is_array(
@@ -44,11 +44,9 @@ final class CartAddPromotionRequest extends FormRequest
                     static fn (
                         mixed $pizzaId
                     ): array => [
-                        'pizza_id' =>
-                            (int) $pizzaId,
+                        'pizza_id' => (int) $pizzaId,
 
-                        'customizations' =>
-                            [],
+                        'customizations' => [],
                     ]
                 )
                 ->values()
@@ -60,20 +58,17 @@ final class CartAddPromotionRequest extends FormRequest
         );
 
         $this->merge([
-            'quantity' =>
-                max(
-                    1,
-                    min(10, $quantity)
-                ),
+            'quantity' => max(
+                1,
+                min(10, $quantity)
+            ),
 
-            'size_id' =>
-                $sizeId !== null &&
+            'size_id' => $sizeId !== null &&
                 $sizeId !== ''
                     ? (int) $sizeId
                     : null,
 
-            'selected_items' =>
-                is_array($selectedItems)
+            'selected_items' => is_array($selectedItems)
                     ? $selectedItems
                     : [],
         ]);
@@ -172,14 +167,11 @@ final class CartAddPromotionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'size_id.exists' =>
-                'El tamaño seleccionado no existe.',
+            'size_id.exists' => 'El tamaño seleccionado no existe.',
 
-            'selected_items.required' =>
-                'Debes seleccionar las pizzas de la promoción.',
+            'selected_items.required' => 'Debes seleccionar las pizzas de la promoción.',
 
-            'selected_items.*.customizations.*.action.in' =>
-                'La acción de personalización debe ser extra o remove.',
+            'selected_items.*.customizations.*.action.in' => 'La acción de personalización debe ser extra o remove.',
         ];
     }
 }

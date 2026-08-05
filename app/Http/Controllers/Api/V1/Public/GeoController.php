@@ -35,7 +35,7 @@ class GeoController
         $cacheKey = "geo:reverse:{$latKey},{$lngKey}";
 
         $ttlSuccess = now()->addDays(30);
-        $ttlFail    = now()->addMinutes(5);
+        $ttlFail = now()->addMinutes(5);
 
         $fallback = [
             'formatted_address' => null,
@@ -85,14 +85,16 @@ class GeoController
                     $status = $response->getStatusCode();
                     if ($status < 200 || $status >= 300) {
                         Cache::put($cacheKey, $fallback, $ttlFail);
+
                         return response()->json(['data' => $fallback]);
                     }
 
                     $body = $response->getBody()->getContents();
                     $json = json_decode($body, true);
 
-                    if (!is_array($json)) {
+                    if (! is_array($json)) {
                         Cache::put($cacheKey, $fallback, $ttlFail);
+
                         return response()->json(['data' => $fallback]);
                     }
 
@@ -102,6 +104,7 @@ class GeoController
                     ];
 
                     Cache::put($cacheKey, $data, $ttlSuccess);
+
                     return response()->json(['data' => $data]);
                 } catch (GuzzleException $e) {
                     $lastException = $e;
@@ -112,10 +115,12 @@ class GeoController
 
             // si fallaron todos los intentos
             Cache::put($cacheKey, $fallback, $ttlFail);
+
             return response()->json(['data' => $fallback]);
 
         } catch (Throwable $e) {
             Cache::put($cacheKey, $fallback, $ttlFail);
+
             return response()->json(['data' => $fallback]);
         }
     }

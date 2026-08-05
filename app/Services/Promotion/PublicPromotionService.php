@@ -113,8 +113,7 @@ final class PublicPromotionService
     }
 
     /**
-     * @param array<int, array<string, mixed>> $selectedItems
-     *
+     * @param  array<int, array<string, mixed>>  $selectedItems
      * @return array{
      *     size_id: int,
      *     base_price: float,
@@ -137,33 +136,29 @@ final class PublicPromotionService
         return match (
             $promotion->promotion_type
         ) {
-            Promotion::TYPE_FIXED_COMBO =>
-                $this->validateFixedCombo(
-                    $promotion,
-                    $selectedItems
-                ),
+            Promotion::TYPE_FIXED_COMBO => $this->validateFixedCombo(
+                $promotion,
+                $selectedItems
+            ),
 
-            Promotion::TYPE_SIZE_FIXED_PRICE =>
-                $this->validateSizeFixedPrice(
-                    $promotion,
-                    $selectedItems,
-                    $requestedSizeId
-                ),
+            Promotion::TYPE_SIZE_FIXED_PRICE => $this->validateSizeFixedPrice(
+                $promotion,
+                $selectedItems,
+                $requestedSizeId
+            ),
 
-            default =>
-                throw ValidationException::withMessages([
-                    'promotion_id' => [
-                        'El tipo de promoción no es compatible.',
-                    ],
-                ]),
+            default => throw ValidationException::withMessages([
+                'promotion_id' => [
+                    'El tipo de promoción no es compatible.',
+                ],
+            ]),
         };
     }
 
     /**
      * Compatibilidad con código anterior.
      *
-     * @param array<int, int> $selectedPizzaIds
-     *
+     * @param  array<int, int>  $selectedPizzaIds
      * @return array<string, mixed>
      */
     public function validateSelectedPizzasForPromotion(
@@ -177,11 +172,9 @@ final class PublicPromotionService
                 static fn (
                     mixed $pizzaId
                 ): array => [
-                    'pizza_id' =>
-                        (int) $pizzaId,
+                    'pizza_id' => (int) $pizzaId,
 
-                    'customizations' =>
-                        [],
+                    'customizations' => [],
                 ]
             )
             ->values()
@@ -194,23 +187,20 @@ final class PublicPromotionService
             );
 
         return [
-            'size_id' =>
-                $validated['size_id'],
+            'size_id' => $validated['size_id'],
 
-            'selected_pizzas' =>
-                collect(
-                    $validated[
-                        'selected_items'
-                    ]
-                )
-                    ->pluck('pizza')
-                    ->values(),
+            'selected_pizzas' => collect(
+                $validated[
+                    'selected_items'
+                ]
+            )
+                ->pluck('pizza')
+                ->values(),
         ];
     }
 
     /**
-     * @param array<int, array<string, mixed>> $selectedItems
-     *
+     * @param  array<int, array<string, mixed>>  $selectedItems
      * @return array<string, mixed>
      */
     private function validateFixedCombo(
@@ -270,10 +260,9 @@ final class PublicPromotionService
             ->map(
                 static fn (
                     Collection $rows
-                ): int =>
-                    (int) $rows->sum(
-                        'required_quantity'
-                    )
+                ): int => (int) $rows->sum(
+                    'required_quantity'
+                )
             );
 
         $selectedByCategory = collect(
@@ -300,8 +289,7 @@ final class PublicPromotionService
             ->countBy();
 
         foreach (
-            $expectedByCategory
-            as $categoryId => $expectedQty
+            $expectedByCategory as $categoryId => $expectedQty
         ) {
             $selectedQty =
                 (int) (
@@ -336,18 +324,15 @@ final class PublicPromotionService
 
         return $this->normalizeSelection(
             selectedItems: $selectedItems,
-            selectedPizzas:
-                $selectedPizzas,
+            selectedPizzas: $selectedPizzas,
             sizeId: $sizeId,
-            basePrice:
-                (float) $promotion
-                    ->promotion_price
+            basePrice: (float) $promotion
+                ->promotion_price
         );
     }
 
     /**
-     * @param array<int, array<string, mixed>> $selectedItems
-     *
+     * @param  array<int, array<string, mixed>>  $selectedItems
      * @return array<string, mixed>
      */
     private function validateSizeFixedPrice(
@@ -407,19 +392,15 @@ final class PublicPromotionService
 
         return $this->normalizeSelection(
             selectedItems: $selectedItems,
-            selectedPizzas:
-                $selectedPizzas,
-            sizeId:
-                $requestedSizeId,
-            basePrice:
-                (float) $sizePrice
-                    ->fixed_price
+            selectedPizzas: $selectedPizzas,
+            sizeId: $requestedSizeId,
+            basePrice: (float) $sizePrice
+                ->fixed_price
         );
     }
 
     /**
-     * @param array<int, array<string, mixed>> $selectedItems
-     *
+     * @param  array<int, array<string, mixed>>  $selectedItems
      * @return Collection<int, Pizza>
      */
     private function loadSelectedPizzas(
@@ -432,8 +413,7 @@ final class PublicPromotionService
             ->map(
                 static fn (
                     mixed $id
-                ): int =>
-                    (int) $id
+                ): int => (int) $id
             )
             ->values()
             ->all();
@@ -475,9 +455,8 @@ final class PublicPromotionService
     }
 
     /**
-     * @param array<int, array<string, mixed>> $selectedItems
-     * @param Collection<int, Pizza> $selectedPizzas
-     *
+     * @param  array<int, array<string, mixed>>  $selectedItems
+     * @param  Collection<int, Pizza>  $selectedPizzas
      * @return array<string, mixed>
      */
     private function normalizeSelection(
@@ -500,21 +479,19 @@ final class PublicPromotionService
             ->flatMap(
                 static fn (
                     array $item
-                ): Collection =>
-                    collect(
-                        $item[
-                            'customizations'
-                        ] ?? []
-                    )->pluck(
-                        'ingredient_id'
-                    )
+                ): Collection => collect(
+                    $item[
+                        'customizations'
+                    ] ?? []
+                )->pluck(
+                    'ingredient_id'
+                )
             )
             ->filter()
             ->map(
                 static fn (
                     mixed $id
-                ): int =>
-                    (int) $id
+                ): int => (int) $id
             )
             ->unique()
             ->values();
@@ -522,14 +499,12 @@ final class PublicPromotionService
         $ingredients =
             Ingredient::query()
                 ->with([
-                    'sizes' =>
-                        static fn (
-                            $query
-                        ) =>
-                            $query->where(
-                                'sizes.id',
-                                $sizeId
-                            ),
+                    'sizes' => static fn (
+                        $query
+                    ) => $query->where(
+                        'sizes.id',
+                        $sizeId
+                    ),
                 ])
                 ->whereIn(
                     'id',
@@ -578,13 +553,11 @@ final class PublicPromotionService
                                 static fn (
                                     $ingredient
                                 ): array => [
-                                    'id' =>
-                                        (int) $ingredient
-                                            ->id,
+                                    'id' => (int) $ingredient
+                                        ->id,
 
-                                    'name' =>
-                                        (string) $ingredient
-                                            ->ingredient_name,
+                                    'name' => (string) $ingredient
+                                        ->ingredient_name,
                                 ]
                             )
                             ->values();
@@ -626,7 +599,7 @@ final class PublicPromotionService
                                         );
 
                                     if (
-                                        !in_array(
+                                        ! in_array(
                                             $action,
                                             [
                                                 'extra',
@@ -643,7 +616,7 @@ final class PublicPromotionService
                                     }
 
                                     if (
-                                        !$ingredients->has(
+                                        ! $ingredients->has(
                                             $ingredientId
                                         )
                                     ) {
@@ -675,7 +648,7 @@ final class PublicPromotionService
                                         'remove'
                                     ) {
                                         if (
-                                            !$isBaseIngredient
+                                            ! $isBaseIngredient
                                         ) {
                                             throw ValidationException::withMessages([
                                                 "selected_items.{$index}.customizations" => [
@@ -702,7 +675,7 @@ final class PublicPromotionService
                                         'extra'
                                     ) {
                                         if (
-                                            !$builderRules[
+                                            ! $builderRules[
                                                 'allows_extras'
                                             ]
                                         ) {
@@ -715,7 +688,7 @@ final class PublicPromotionService
 
                                         if (
                                             $isBaseIngredient &&
-                                            !$builderRules[
+                                            ! $builderRules[
                                                 'allow_duplicate_ingredients_as_extra'
                                             ]
                                         ) {
@@ -728,14 +701,11 @@ final class PublicPromotionService
                                     }
 
                                     return [
-                                        'action' =>
-                                            $action,
+                                        'action' => $action,
 
-                                        'ingredient_id' =>
-                                            $ingredientId,
+                                        'ingredient_id' => $ingredientId,
 
-                                        'applies_to' =>
-                                            'ALL',
+                                        'applies_to' => 'ALL',
                                     ];
                                 }
                             )
@@ -746,8 +716,7 @@ final class PublicPromotionService
                             ->groupBy(
                                 static fn (
                                     array $row
-                                ): string =>
-                                    $row['action']
+                                ): string => $row['action']
                                     .'|'.
                                     $row[
                                         'ingredient_id'
@@ -756,8 +725,7 @@ final class PublicPromotionService
                             ->filter(
                                 static fn (
                                     Collection $rows
-                                ): bool =>
-                                    $rows->count() > 1
+                                ): bool => $rows->count() > 1
                             );
 
                     if (
@@ -793,43 +761,37 @@ final class PublicPromotionService
                     }
 
                     return [
-                        'pizza' =>
-                            $pizza,
+                        'pizza' => $pizza,
 
-                        'customizations' =>
-                            $customizations
-                                ->sortBy([
-                                    [
-                                        'action',
-                                        'asc',
-                                    ],
-                                    [
-                                        'ingredient_id',
-                                        'asc',
-                                    ],
-                                ])
-                                ->values()
-                                ->all(),
+                        'customizations' => $customizations
+                            ->sortBy([
+                                [
+                                    'action',
+                                    'asc',
+                                ],
+                                [
+                                    'ingredient_id',
+                                    'asc',
+                                ],
+                            ])
+                            ->values()
+                            ->all(),
                     ];
                 }
             )
             ->values();
 
         return [
-            'size_id' =>
-                $sizeId,
+            'size_id' => $sizeId,
 
-            'base_price' =>
-                round(
-                    $basePrice,
-                    2
-                ),
+            'base_price' => round(
+                $basePrice,
+                2
+            ),
 
-            'selected_items' =>
-                $normalizedItems->all(),
+            'selected_items' => $normalizedItems->all(),
 
-            'builder_rules' =>
-                $builderRules,
+            'builder_rules' => $builderRules,
         ];
     }
 
@@ -839,17 +801,13 @@ final class PublicPromotionService
     private function builderRules(): array
     {
         return [
-            'allows_extras' =>
-                true,
+            'allows_extras' => true,
 
-            'allows_remove_ingredients' =>
-                true,
+            'allows_remove_ingredients' => true,
 
-            'max_extras_per_pizza' =>
-                8,
+            'max_extras_per_pizza' => 8,
 
-            'allow_duplicate_ingredients_as_extra' =>
-                false,
+            'allow_duplicate_ingredients_as_extra' => false,
         ];
     }
 
@@ -859,35 +817,31 @@ final class PublicPromotionService
     private function publicRelations(): array
     {
         return [
-            'promotionDetails' =>
-                static fn (
-                    $query
-                ) =>
-                    $query
-                        ->orderBy('id')
-                        ->with([
-                            'category',
-                            'size',
-                        ]),
+            'promotionDetails' => static fn (
+                $query
+            ) => $query
+                ->orderBy('id')
+                ->with([
+                'category',
+                'size',
+            ]),
 
-            'sizePrices' =>
-                static fn (
-                    $query
-                ) =>
-                    $query
-                        ->with('size')
-                        ->join(
-                            'sizes',
-                            'sizes.id',
-                            '=',
-                            'promotion_size_prices.size_id'
-                        )
-                        ->select(
-                            'promotion_size_prices.*'
-                        )
-                        ->orderBy(
-                            'sizes.portion'
-                        ),
+            'sizePrices' => static fn (
+                $query
+            ) => $query
+                ->with('size')
+                ->join(
+                    'sizes',
+                    'sizes.id',
+                    '=',
+                    'promotion_size_prices.size_id'
+                )
+                ->select(
+                    'promotion_size_prices.*'
+                )
+                ->orderBy(
+                    'sizes.portion'
+                ),
         ];
     }
 
@@ -937,11 +891,10 @@ final class PublicPromotionService
         )->contains(
             static fn (
                 string $token
-            ): bool =>
-                str_contains(
-                    $normalized,
-                    $token
-                )
+            ): bool => str_contains(
+                $normalized,
+                $token
+            )
         );
 
         $hasTomato = collect(
@@ -951,11 +904,10 @@ final class PublicPromotionService
         )->contains(
             static fn (
                 string $token
-            ): bool =>
-                str_contains(
-                    $normalized,
-                    $token
-                )
+            ): bool => str_contains(
+                $normalized,
+                $token
+            )
         );
 
         $hasSauceWord = collect(
@@ -965,11 +917,10 @@ final class PublicPromotionService
         )->contains(
             static fn (
                 string $token
-            ): bool =>
-                str_contains(
-                    $normalized,
-                    $token
-                )
+            ): bool => str_contains(
+                $normalized,
+                $token
+            )
         );
 
         return

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\MachineLearning;
 
+use App\Contracts\MachineLearning\MachineLearningClientContract;
 use App\Exceptions\MachineLearningServiceException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
-use App\Contracts\MachineLearning\MachineLearningClientContract;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Throwable;
@@ -16,6 +16,7 @@ use Throwable;
 final class MachineLearningClient implements MachineLearningClientContract
 {
     private const METHOD_GET = 'get';
+
     private const METHOD_POST = 'post';
 
     /**
@@ -68,7 +69,7 @@ final class MachineLearningClient implements MachineLearningClientContract
      * Valida el contrato y consistencia del dataset
      * sin ejecutar entrenamiento.
      *
-     * @param array<string, mixed> $dataset
+     * @param  array<string, mixed>  $dataset
      * @return array<string, mixed>
      */
     public function validateTrainingDataset(
@@ -86,7 +87,7 @@ final class MachineLearningClient implements MachineLearningClientContract
      * Compara los algoritmos candidatos mediante
      * validación temporal sin guardar artefactos.
      *
-     * @param array<string, mixed> $dataset
+     * @param  array<string, mixed>  $dataset
      * @return array<string, mixed>
      */
     public function previewTraining(
@@ -106,7 +107,7 @@ final class MachineLearningClient implements MachineLearningClientContract
      *
      * Esta operación no activa automáticamente el modelo.
      *
-     * @param array<string, mixed> $dataset
+     * @param  array<string, mixed>  $dataset
      * @return array<string, mixed>
      */
     public function buildTrainingArtifact(
@@ -164,7 +165,7 @@ final class MachineLearningClient implements MachineLearningClientContract
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function send(
@@ -179,55 +180,44 @@ final class MachineLearningClient implements MachineLearningClientContract
             );
 
             $response = match ($method) {
-                self::METHOD_GET =>
-                    $request->get(
-                        $endpoint,
-                    ),
+                self::METHOD_GET => $request->get(
+                    $endpoint,
+                ),
 
-                self::METHOD_POST =>
-                    $request->post(
-                        $endpoint,
-                        $payload,
-                    ),
+                self::METHOD_POST => $request->post(
+                    $endpoint,
+                    $payload,
+                ),
 
-                default =>
-                    throw new MachineLearningServiceException(
-                        'Método HTTP no soportado para el servicio predictivo.',
-                    ),
+                default => throw new MachineLearningServiceException(
+                    'Método HTTP no soportado para el servicio predictivo.',
+                ),
             };
         } catch (ConnectionException $exception) {
             throw new MachineLearningServiceException(
-                message:
-                    'No fue posible establecer conexión con el servicio predictivo.',
+                message: 'No fue posible establecer conexión con el servicio predictivo.',
 
-                previous:
-                    $exception,
+                previous: $exception,
             );
         } catch (RequestException $exception) {
             throw new MachineLearningServiceException(
-                message:
-                    'La comunicación con el servicio predictivo fue interrumpida.',
+                message: 'La comunicación con el servicio predictivo fue interrumpida.',
 
-                remoteStatus:
-                    $exception->response?->status(),
+                remoteStatus: $exception->response?->status(),
 
-                remotePayload:
-                    $this->responsePayload(
-                        $exception->response,
-                    ),
+                remotePayload: $this->responsePayload(
+                    $exception->response,
+                ),
 
-                previous:
-                    $exception,
+                previous: $exception,
             );
         } catch (MachineLearningServiceException $exception) {
             throw $exception;
         } catch (Throwable $exception) {
             throw new MachineLearningServiceException(
-                message:
-                    'Ocurrió un error inesperado al consultar el servicio predictivo.',
+                message: 'Ocurrió un error inesperado al consultar el servicio predictivo.',
 
-                previous:
-                    $exception,
+                previous: $exception,
             );
         }
 
@@ -312,32 +302,28 @@ final class MachineLearningClient implements MachineLearningClientContract
                 ),
             )
             ->retry(
-                times:
-                    max(
-                        1,
-                        $retryTimes,
-                    ),
+                times: max(
+                    1,
+                    $retryTimes,
+                ),
 
-                sleepMilliseconds:
-                    max(
-                        0,
-                        $retrySleepMilliseconds,
-                    ),
+                sleepMilliseconds: max(
+                    0,
+                    $retrySleepMilliseconds,
+                ),
 
-                when:
-                    static function (
-                        Throwable $exception,
-                        PendingRequest $request,
-                    ): bool {
-                        unset(
-                            $request,
-                        );
+                when: static function (
+                    Throwable $exception,
+                    PendingRequest $request,
+                ): bool {
+                    unset(
+                        $request,
+                    );
 
-                        return $exception instanceof ConnectionException;
-                    },
+                    return $exception instanceof ConnectionException;
+                },
 
-                throw:
-                    false,
+                throw: false,
             );
     }
 
@@ -351,31 +337,26 @@ final class MachineLearningClient implements MachineLearningClientContract
             $response,
         );
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             $remoteMessage = $this->remoteMessage(
                 $payload,
             );
 
             throw new MachineLearningServiceException(
-                message:
-                    $remoteMessage
+                message: $remoteMessage
                     ?? 'El servicio predictivo respondió con un error.',
 
-                remoteStatus:
-                    $response->status(),
+                remoteStatus: $response->status(),
 
-                remotePayload:
-                    $payload,
+                remotePayload: $payload,
             );
         }
 
         if ($payload === null) {
             throw new MachineLearningServiceException(
-                message:
-                    'El servicio predictivo devolvió una respuesta inválida.',
+                message: 'El servicio predictivo devolvió una respuesta inválida.',
 
-                remoteStatus:
-                    $response->status(),
+                remoteStatus: $response->status(),
             );
         }
 
@@ -405,7 +386,7 @@ final class MachineLearningClient implements MachineLearningClientContract
      * Extrae un mensaje comprensible de los errores devueltos
      * por FastAPI, incluyendo validaciones Pydantic.
      *
-     * @param array<string, mixed>|null $payload
+     * @param  array<string, mixed>|null  $payload
      */
     private function remoteMessage(
         ?array $payload,
@@ -430,7 +411,7 @@ final class MachineLearningClient implements MachineLearningClientContract
             return $message;
         }
 
-        if (!is_array($detail)) {
+        if (! is_array($detail)) {
             return null;
         }
 
@@ -438,8 +419,7 @@ final class MachineLearningClient implements MachineLearningClientContract
             $detail,
         )
             ->filter(
-                static fn (mixed $error): bool =>
-                    is_array($error),
+                static fn (mixed $error): bool => is_array($error),
             )
             ->map(
                 static function (
@@ -449,8 +429,7 @@ final class MachineLearningClient implements MachineLearningClientContract
                         $error['loc'] ?? [],
                     )
                         ->map(
-                            static fn (mixed $segment): string =>
-                                (string) $segment,
+                            static fn (mixed $segment): string => (string) $segment,
                         )
                         ->implode(
                             '.',

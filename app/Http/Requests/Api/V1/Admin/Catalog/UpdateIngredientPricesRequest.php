@@ -45,25 +45,20 @@ final class UpdateIngredientPricesRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'prices' =>
-                'precios',
+            'prices' => 'precios',
 
-            'prices.*.size_id' =>
-                'tamaño',
+            'prices.*.size_id' => 'tamaño',
 
-            'prices.*.extra_price' =>
-                'precio extra',
+            'prices.*.extra_price' => 'precio extra',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'prices.*.size_id.distinct' =>
-                'No puedes repetir tamaños.',
+            'prices.*.size_id.distinct' => 'No puedes repetir tamaños.',
 
-            'prices.*.extra_price.min' =>
-                'El precio extra no puede ser negativo.',
+            'prices.*.extra_price.min' => 'El precio extra no puede ser negativo.',
         ];
     }
 }

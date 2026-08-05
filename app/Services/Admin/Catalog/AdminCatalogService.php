@@ -24,12 +24,11 @@ final class AdminCatalogService
                 'categorySizePrices',
             ])
             ->with([
-                'categorySizePrices' =>
-                    static function ($query): void {
-                        $query
-                            ->with('size')
-                            ->orderBy('size_id');
-                    },
+                'categorySizePrices' => static function ($query): void {
+                    $query
+                        ->with('size')
+                        ->orderBy('size_id');
+                },
             ])
             ->orderBy('category_name')
             ->get();
@@ -44,17 +43,16 @@ final class AdminCatalogService
                 'categorySizePrices',
             ])
             ->load([
-                'categorySizePrices' =>
-                    static function ($query): void {
-                        $query
-                            ->with('size')
-                            ->orderBy('size_id');
-                    },
+                'categorySizePrices' => static function ($query): void {
+                    $query
+                        ->with('size')
+                        ->orderBy('size_id');
+                },
             ]);
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function createCategory(
         array $data
@@ -63,16 +61,14 @@ final class AdminCatalogService
             function () use ($data): Category {
                 $category = Category::query()
                     ->create([
-                        'category_name' =>
-                            trim(
-                                (string) $data['name']
-                            ),
+                        'category_name' => trim(
+                            (string) $data['name']
+                        ),
 
-                        'description' =>
-                            $this->nullableText(
-                                $data['description']
-                                ?? null
-                            ),
+                        'description' => $this->nullableText(
+                            $data['description']
+                            ?? null
+                        ),
                     ]);
 
                 return $this->category(
@@ -83,7 +79,7 @@ final class AdminCatalogService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function updateCategory(
         Category $category,
@@ -95,16 +91,14 @@ final class AdminCatalogService
                 $data
             ): Category {
                 $category->forceFill([
-                    'category_name' =>
-                        trim(
-                            (string) $data['name']
-                        ),
+                    'category_name' => trim(
+                        (string) $data['name']
+                    ),
 
-                    'description' =>
-                        $this->nullableText(
-                            $data['description']
-                            ?? null
-                        ),
+                    'description' => $this->nullableText(
+                        $data['description']
+                        ?? null
+                    ),
                 ])->save();
 
                 return $this->category(
@@ -130,8 +124,7 @@ final class AdminCatalogService
             (int) $category->pizzas_count > 0
         ) {
             throw ValidationException::withMessages([
-                'category' =>
-                    'No puedes eliminar esta categoría porque tiene pizzas asociadas.',
+                'category' => 'No puedes eliminar esta categoría porque tiene pizzas asociadas.',
             ]);
         }
 
@@ -139,8 +132,7 @@ final class AdminCatalogService
             (int) $category->promotion_details_count > 0
         ) {
             throw ValidationException::withMessages([
-                'category' =>
-                    'No puedes eliminar esta categoría porque está utilizada en promociones.',
+                'category' => 'No puedes eliminar esta categoría porque está utilizada en promociones.',
             ]);
         }
 
@@ -148,8 +140,7 @@ final class AdminCatalogService
             (int) $category->sale_by_categories_count > 0
         ) {
             throw ValidationException::withMessages([
-                'category' =>
-                    'No puedes eliminar esta categoría porque tiene información histórica de ventas.',
+                'category' => 'No puedes eliminar esta categoría porque tiene información histórica de ventas.',
             ]);
         }
 
@@ -199,7 +190,7 @@ final class AdminCatalogService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function createSize(
         array $data
@@ -208,13 +199,11 @@ final class AdminCatalogService
             function () use ($data): Size {
                 $size = Size::query()
                     ->create([
-                        'size_name' =>
-                            trim(
-                                (string) $data['name']
-                            ),
+                        'size_name' => trim(
+                            (string) $data['name']
+                        ),
 
-                        'portion' =>
-                            (int) $data['portion'],
+                        'portion' => (int) $data['portion'],
                     ]);
 
                 return $this->size($size);
@@ -223,7 +212,7 @@ final class AdminCatalogService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function updateSize(
         Size $size,
@@ -235,13 +224,11 @@ final class AdminCatalogService
                 $data
             ): Size {
                 $size->forceFill([
-                    'size_name' =>
-                        trim(
-                            (string) $data['name']
-                        ),
+                    'size_name' => trim(
+                        (string) $data['name']
+                    ),
 
-                    'portion' =>
-                        (int) $data['portion'],
+                    'portion' => (int) $data['portion'],
                 ])->save();
 
                 return $this->size(
@@ -268,8 +255,7 @@ final class AdminCatalogService
             (int) $size->cart_items_count > 0
         ) {
             throw ValidationException::withMessages([
-                'size' =>
-                    'No puedes eliminar este tamaño porque está utilizado en uno o más carritos.',
+                'size' => 'No puedes eliminar este tamaño porque está utilizado en uno o más carritos.',
             ]);
         }
 
@@ -277,8 +263,7 @@ final class AdminCatalogService
             (int) $size->order_items_count > 0
         ) {
             throw ValidationException::withMessages([
-                'size' =>
-                    'No puedes eliminar este tamaño porque está utilizado en pedidos.',
+                'size' => 'No puedes eliminar este tamaño porque está utilizado en pedidos.',
             ]);
         }
 
@@ -287,8 +272,7 @@ final class AdminCatalogService
             (int) $size->pizza_sales_histories_count > 0
         ) {
             throw ValidationException::withMessages([
-                'size' =>
-                    'No puedes eliminar este tamaño porque tiene información histórica de ventas.',
+                'size' => 'No puedes eliminar este tamaño porque tiene información histórica de ventas.',
             ]);
         }
 
@@ -352,8 +336,7 @@ final class AdminCatalogService
      * Precio igual a cero:
      * elimina la relación.
      *
-     * @param array<int, array<string, mixed>> $prices
-     *
+     * @param  array<int, array<string, mixed>>  $prices
      * @return Collection<int, CategorySizePrice>
      *
      * @throws ValidationException
@@ -383,8 +366,7 @@ final class AdminCatalogService
 
                     if ($price < 0) {
                         throw ValidationException::withMessages([
-                            'prices' =>
-                                'Los precios no pueden ser negativos.',
+                            'prices' => 'Los precios no pueden ser negativos.',
                         ]);
                     }
 
@@ -406,15 +388,12 @@ final class AdminCatalogService
                     CategorySizePrice::query()
                         ->updateOrCreate(
                             [
-                                'category_id' =>
-                                    $categoryId,
+                                'category_id' => $categoryId,
 
-                                'size_id' =>
-                                    $sizeId,
+                                'size_id' => $sizeId,
                             ],
                             [
-                                'price' =>
-                                    $price,
+                                'price' => $price,
                             ]
                         );
                 }
@@ -425,7 +404,7 @@ final class AdminCatalogService
     }
 
     /**
-     * @param array<int, array<string, mixed>> $prices
+     * @param  array<int, array<string, mixed>>  $prices
      *
      * @throws ValidationException
      */
@@ -452,8 +431,7 @@ final class AdminCatalogService
 
             if (isset($seen[$key])) {
                 throw ValidationException::withMessages([
-                    "prices.{$index}" =>
-                        'La combinación de categoría y tamaño está repetida.',
+                    "prices.{$index}" => 'La combinación de categoría y tamaño está repetida.',
                 ]);
             }
 

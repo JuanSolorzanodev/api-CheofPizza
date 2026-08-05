@@ -17,13 +17,11 @@ final class IngredientPriceController
         AdminIngredientService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                AdminIngredientPriceResource::collection(
-                    $service->prices()
-                ),
+            data: AdminIngredientPriceResource::collection(
+                $service->prices()
+            ),
 
-            message:
-                'Precios extra recuperados correctamente.'
+            message: 'Precios extra recuperados correctamente.'
         );
     }
 
@@ -33,16 +31,14 @@ final class IngredientPriceController
         AdminIngredientService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                AdminIngredientPriceResource::collection(
-                    $service->updatePrices(
-                        $ingredient,
-                        $request->validated()
-                    )
-                ),
+            data: AdminIngredientPriceResource::collection(
+                $service->updatePrices(
+                    $ingredient,
+                    $request->validated()
+                )
+            ),
 
-            message:
-                'Precios extra actualizados correctamente.'
+            message: 'Precios extra actualizados correctamente.'
         );
     }
 }

@@ -132,14 +132,11 @@ return new class extends Migration
             }
 
             DB::table('delivery_types')->insert([
-                'delivery_type_name' =>
-                    $deliveryTypeName,
+                'delivery_type_name' => $deliveryTypeName,
 
-                'created_at' =>
-                    now(),
+                'created_at' => now(),
 
-                'updated_at' =>
-                    now(),
+                'updated_at' => now(),
             ]);
         }
     }
@@ -167,15 +164,12 @@ return new class extends Migration
         foreach ($paymentMethods as $paymentMethod) {
             DB::table('payment_methods')->updateOrInsert(
                 [
-                    'name' =>
-                        $paymentMethod['name'],
+                    'name' => $paymentMethod['name'],
                 ],
                 [
-                    'description' =>
-                        $paymentMethod['description'],
+                    'description' => $paymentMethod['description'],
 
-                    'active' =>
-                        $paymentMethod['active'],
+                    'active' => $paymentMethod['active'],
                 ],
             );
         }
@@ -212,11 +206,9 @@ return new class extends Migration
                 DB::table('personalization_actions')
                     ->where('id', $existingId)
                     ->update([
-                        'description' =>
-                            $action['description'],
+                        'description' => $action['description'],
 
-                        'updated_at' =>
-                            now(),
+                        'updated_at' => now(),
                     ]);
 
                 continue;
@@ -224,17 +216,13 @@ return new class extends Migration
 
             DB::table('personalization_actions')
                 ->insert([
-                    'action_name' =>
-                        $action['action_name'],
+                    'action_name' => $action['action_name'],
 
-                    'description' =>
-                        $action['description'],
+                    'description' => $action['description'],
 
-                    'created_at' =>
-                        now(),
+                    'created_at' => now(),
 
-                    'updated_at' =>
-                        now(),
+                    'updated_at' => now(),
                 ]);
         }
     }

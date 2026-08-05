@@ -16,8 +16,7 @@ final class OrdersController
 {
     public function __construct(
         private readonly OperatorOrderService $service,
-    ) {
-    }
+    ) {}
 
     public function index(
         OperatorOrderIndexRequest $request,
@@ -68,8 +67,7 @@ final class OrdersController
 
         $order = $this->service->changeStatus(
             orderId: $orderId,
-            destinationStatus:
-                $request->destinationStatus(),
+            destinationStatus: $request->destinationStatus(),
             note: $request->note(),
             changedByUserId: $userId,
         );
@@ -82,16 +80,14 @@ final class OrdersController
     public function queue(): JsonResponse
     {
         return response()->json([
-            'data' =>
-                $this->service->queueCounts(),
+            'data' => $this->service->queueCounts(),
         ]);
     }
 
     public function statuses(): JsonResponse
     {
         return response()->json([
-            'data' =>
-                $this->service->allStatuses(),
+            'data' => $this->service->allStatuses(),
         ]);
     }
 }

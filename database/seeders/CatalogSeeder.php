@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Category;
 use App\Models\CategorySizePrice;
 use App\Models\Ingredient;
@@ -11,6 +10,7 @@ use App\Models\IngredientType;
 use App\Models\Pizza;
 use App\Models\PizzaIngredient;
 use App\Models\Size;
+use Illuminate\Database\Seeder;
 
 class CatalogSeeder extends Seeder
 {
@@ -43,7 +43,7 @@ class CatalogSeeder extends Seeder
          * Pequeña 8, Mediana 10, Familiar 12, Gigante 14
          */
         $sizes = [
-            'Personal' =>4,
+            'Personal' => 4,
             'Pequeña' => 8,
             'Mediana' => 10,
             'Familiar' => 12,
@@ -65,7 +65,7 @@ class CatalogSeeder extends Seeder
          */
         $priceMatrix = [
             'Sencillas' => [
-                'Personal' =>2.00,
+                'Personal' => 2.00,
                 'Pequeña' => 5.00,
                 'Mediana' => 9.00,
                 'Familiar' => 12.00,
@@ -144,7 +144,7 @@ class CatalogSeeder extends Seeder
          * 6) Precios extra por ingrediente y tamaño (NO viene en el menú)
          */
         $extraBySize = [
-            'Personal' =>0.50,
+            'Personal' => 0.50,
             'Pequeña' => 1.00,
             'Mediana' => 1.50,
             'Familiar' => 2.00,
@@ -159,7 +159,6 @@ class CatalogSeeder extends Seeder
                 );
             }
         }
-
 
         /**
          * 8) Pizzas + ingredientes (según menús)
@@ -189,7 +188,7 @@ class CatalogSeeder extends Seeder
             [
                 'category_id' => $catSencillas->id,
                 'name' => 'Hawallana',
-                'ingredients' => ['Piña','Queso mosarela'],
+                'ingredients' => ['Piña', 'Queso mosarela'],
             ],
             [
                 'category_id' => $catSencillas->id,
@@ -246,7 +245,7 @@ class CatalogSeeder extends Seeder
         ];
 
         foreach ($pizzas as $p) {
-            $desc = implode(', ', $p['ingredients']) . '.';
+            $desc = implode(', ', $p['ingredients']).'.';
 
             $pizza = Pizza::updateOrCreate(
                 ['pizza_name' => $p['name']],
@@ -269,7 +268,7 @@ class CatalogSeeder extends Seeder
             foreach ($p['ingredients'] as $ingredientName) {
                 $ingredient = $ingredientModels[$ingredientName] ?? null;
 
-                if (!$ingredient) {
+                if (! $ingredient) {
                     continue;
                 }
 

@@ -18,13 +18,11 @@ final class IngredientTypeController
         AdminIngredientService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                AdminIngredientTypeResource::collection(
-                    $service->ingredientTypes()
-                ),
+            data: AdminIngredientTypeResource::collection(
+                $service->ingredientTypes()
+            ),
 
-            message:
-                'Tipos de ingredientes recuperados correctamente.'
+            message: 'Tipos de ingredientes recuperados correctamente.'
         );
     }
 
@@ -33,15 +31,13 @@ final class IngredientTypeController
         AdminIngredientService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new AdminIngredientTypeResource(
-                    $service->createIngredientType(
-                        $request->validated()
-                    )
-                ),
+            data: new AdminIngredientTypeResource(
+                $service->createIngredientType(
+                    $request->validated()
+                )
+            ),
 
-            message:
-                'Tipo de ingrediente creado correctamente.',
+            message: 'Tipo de ingrediente creado correctamente.',
 
             status: 201
         );
@@ -52,15 +48,13 @@ final class IngredientTypeController
         AdminIngredientService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new AdminIngredientTypeResource(
-                    $service->ingredientType(
-                        $ingredientType
-                    )
-                ),
+            data: new AdminIngredientTypeResource(
+                $service->ingredientType(
+                    $ingredientType
+                )
+            ),
 
-            message:
-                'Tipo de ingrediente recuperado correctamente.'
+            message: 'Tipo de ingrediente recuperado correctamente.'
         );
     }
 
@@ -70,16 +64,14 @@ final class IngredientTypeController
         AdminIngredientService $service
     ): JsonResponse {
         return ApiResponse::success(
-            data:
-                new AdminIngredientTypeResource(
-                    $service->updateIngredientType(
-                        $ingredientType,
-                        $request->validated()
-                    )
-                ),
+            data: new AdminIngredientTypeResource(
+                $service->updateIngredientType(
+                    $ingredientType,
+                    $request->validated()
+                )
+            ),
 
-            message:
-                'Tipo de ingrediente actualizado correctamente.'
+            message: 'Tipo de ingrediente actualizado correctamente.'
         );
     }
 
@@ -93,8 +85,7 @@ final class IngredientTypeController
 
         return ApiResponse::success(
             data: null,
-            message:
-                'Tipo de ingrediente eliminado correctamente.'
+            message: 'Tipo de ingrediente eliminado correctamente.'
         );
     }
 }

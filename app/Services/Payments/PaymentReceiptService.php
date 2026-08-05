@@ -129,44 +129,34 @@ final class PaymentReceiptService
                     $receipt =
                         PaymentReceipt::query()
                             ->create([
-                                'uuid' =>
-                                    $uuid,
+                                'uuid' => $uuid,
 
-                                'order_id' =>
-                                    (int) $order->id,
+                                'order_id' => (int) $order->id,
 
-                                'user_id' =>
-                                    (int) $user->id,
+                                'user_id' => (int) $user->id,
 
-                                'disk' =>
-                                    self::DISK,
+                                'disk' => self::DISK,
 
-                                'file_path' =>
-                                    $storedPath,
+                                'file_path' => $storedPath,
 
-                                'original_name' =>
-                                    Str::limit(
-                                        basename(
-                                            $file
-                                                ->getClientOriginalName(),
-                                        ),
-                                        255,
-                                        '',
+                                'original_name' => Str::limit(
+                                    basename(
+                                        $file
+                                            ->getClientOriginalName(),
                                     ),
+                                    255,
+                                    '',
+                                ),
 
-                                'mime_type' =>
-                                    (string) $file
-                                        ->getMimeType(),
+                                'mime_type' => (string) $file
+                                    ->getMimeType(),
 
-                                'file_size' =>
-                                    (int) $file
-                                        ->getSize(),
+                                'file_size' => (int) $file
+                                    ->getSize(),
 
-                                'status' =>
-                                    PaymentReceiptStatus::Pending,
+                                'status' => PaymentReceiptStatus::Pending,
 
-                                'submitted_at' =>
-                                    now(),
+                                'submitted_at' => now(),
                             ]);
 
                     return $receipt->load(
@@ -301,20 +291,15 @@ final class PaymentReceiptService
                 );
 
                 $receipt->forceFill([
-                    'status' =>
-                        PaymentReceiptStatus::Approved,
+                    'status' => PaymentReceiptStatus::Approved,
 
-                    'rejection_reason' =>
-                        null,
+                    'rejection_reason' => null,
 
-                    'reviewed_at' =>
-                        now(),
+                    'reviewed_at' => now(),
 
-                    'reviewed_by' =>
-                        (int) $reviewer->id,
+                    'reviewed_by' => (int) $reviewer->id,
 
-                    'expires_at' =>
-                        now()->addDays(90),
+                    'expires_at' => now()->addDays(90),
                 ])->save();
 
                 return $receipt->load([
@@ -352,20 +337,15 @@ final class PaymentReceiptService
                 );
 
                 $receipt->forceFill([
-                    'status' =>
-                        PaymentReceiptStatus::Rejected,
+                    'status' => PaymentReceiptStatus::Rejected,
 
-                    'rejection_reason' =>
-                        trim($reason),
+                    'rejection_reason' => trim($reason),
 
-                    'reviewed_at' =>
-                        now(),
+                    'reviewed_at' => now(),
 
-                    'reviewed_by' =>
-                        (int) $reviewer->id,
+                    'reviewed_by' => (int) $reviewer->id,
 
-                    'expires_at' =>
-                        now()->addDays(30),
+                    'expires_at' => now()->addDays(30),
                 ])->save();
 
                 return $receipt->load([
@@ -486,11 +466,9 @@ final class PaymentReceiptService
                         }
 
                         $receipt->forceFill([
-                            'file_path' =>
-                                null,
+                            'file_path' => null,
 
-                            'file_deleted_at' =>
-                                now(),
+                            'file_deleted_at' => now(),
                         ])->save();
 
                         $deleted++;

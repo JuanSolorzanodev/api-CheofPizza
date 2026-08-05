@@ -15,8 +15,7 @@ final class MachineLearningComparisonService
 {
     public function __construct(
         private readonly DailySalesFeatureService $dailySalesFeatureService,
-    ) {
-    }
+    ) {}
 
     /**
      * Compara las predicciones del modelo activo con las ventas
@@ -152,18 +151,16 @@ final class MachineLearningComparisonService
             ->keyBy(
                 static fn (
                     MlDailyFeature $feature,
-                ): string =>
-                    $feature
-                        ->date
-                        ->toDateString(),
+                ): string => $feature
+                    ->date
+                    ->toDateString(),
             );
 
         $days = [];
         $completedRows = [];
 
         foreach (
-            $predictions
-            as $prediction
+            $predictions as $prediction
         ) {
             $date = CarbonImmutable::parse(
                 $prediction->prediction_date,
@@ -173,16 +170,13 @@ final class MachineLearningComparisonService
             $status = match (true) {
                 $date->lessThan(
                     $today,
-                ) =>
-                    'completed',
+                ) => 'completed',
 
                 $date->equalTo(
                     $today,
-                ) =>
-                    'in_progress',
+                ) => 'in_progress',
 
-                default =>
-                    'pending',
+                default => 'pending',
             };
 
             $feature = $actualByDate->get(
@@ -224,107 +218,85 @@ final class MachineLearningComparisonService
                     ? null
                     : $this
                         ->accuracyPercentage(
-                            predicted:
-                                $predictedTotal,
+                            predicted: $predictedTotal,
 
-                            actual:
-                                $actualTotal,
+                            actual: $actualTotal,
                         );
 
             $row = [
-                'date' =>
-                    $date->toDateString(),
+                'date' => $date->toDateString(),
 
-                'day_of_week' =>
-                    $prediction
-                        ->day_of_week,
+                'day_of_week' => $prediction
+                    ->day_of_week,
 
-                'status' =>
-                    $status,
+                'status' => $status,
 
-                'predicted_total' =>
-                    $predictedTotal,
+                'predicted_total' => $predictedTotal,
 
-                'actual_total' =>
-                    $actualTotal,
+                'actual_total' => $actualTotal,
 
-                'difference' =>
-                    $difference,
+                'difference' => $difference,
 
-                'absolute_error' =>
-                    $absoluteError,
+                'absolute_error' => $absoluteError,
 
-                'accuracy_percentage' =>
-                    $accuracy,
+                'accuracy_percentage' => $accuracy,
 
                 'predicted_sizes' => [
-                    'mini' =>
-                        (int) $prediction
-                            ->mini_pizzas,
+                    'mini' => (int) $prediction
+                        ->mini_pizzas,
 
-                    'small' =>
-                        (int) $prediction
-                            ->small_pizzas,
+                    'small' => (int) $prediction
+                        ->small_pizzas,
 
-                    'medium' =>
-                        (int) $prediction
-                            ->medium_pizzas,
+                    'medium' => (int) $prediction
+                        ->medium_pizzas,
 
-                    'family' =>
-                        (int) $prediction
-                            ->family_pizzas,
+                    'family' => (int) $prediction
+                        ->family_pizzas,
 
-                    'giant' =>
-                        (int) $prediction
-                            ->giant_pizzas,
+                    'giant' => (int) $prediction
+                        ->giant_pizzas,
                 ],
 
-                'actual_sizes' =>
-                    $status === 'pending'
+                'actual_sizes' => $status === 'pending'
                         ? null
                         : [
-                            'mini' =>
-                                (int) (
-                                    $feature
-                                        ?->mini_sales
-                                    ?? 0
-                                ),
+                            'mini' => (int) (
+                                $feature
+                                    ?->mini_sales
+                                ?? 0
+                            ),
 
-                            'small' =>
-                                (int) (
-                                    $feature
-                                        ?->small_sales
-                                    ?? 0
-                                ),
+                            'small' => (int) (
+                                $feature
+                                    ?->small_sales
+                                ?? 0
+                            ),
 
-                            'medium' =>
-                                (int) (
-                                    $feature
-                                        ?->medium_sales
-                                    ?? 0
-                                ),
+                            'medium' => (int) (
+                                $feature
+                                    ?->medium_sales
+                                ?? 0
+                            ),
 
-                            'family' =>
-                                (int) (
-                                    $feature
-                                        ?->family_sales
-                                    ?? 0
-                                ),
+                            'family' => (int) (
+                                $feature
+                                    ?->family_sales
+                                ?? 0
+                            ),
 
-                            'giant' =>
-                                (int) (
-                                    $feature
-                                        ?->giant_sales
-                                    ?? 0
-                                ),
+                            'giant' => (int) (
+                                $feature
+                                    ?->giant_sales
+                                ?? 0
+                            ),
                         ],
 
                 /*
                  * Estos valores permiten relacionar la comparación
                  * predictiva con la analítica administrativa.
                  */
-                'actual_net_sales' =>
-                    $status === 'pending'
+                'actual_net_sales' => $status === 'pending'
                         ? null
                         : (float) (
                             $feature
@@ -332,8 +304,7 @@ final class MachineLearningComparisonService
                             ?? 0
                         ),
 
-                'delivered_orders' =>
-                    $status === 'pending'
+                'delivered_orders' => $status === 'pending'
                         ? null
                         : (int) (
                             $feature
@@ -359,44 +330,34 @@ final class MachineLearningComparisonService
 
         return [
             'period' => [
-                'date_from' =>
-                    $from->toDateString(),
+                'date_from' => $from->toDateString(),
 
-                'date_to' =>
-                    $to->toDateString(),
+                'date_to' => $to->toDateString(),
 
-                'timezone' =>
-                    $timezone,
+                'timezone' => $timezone,
 
-                'days' =>
-                    $from->diffInDays(
-                        $to,
-                    ) + 1,
+                'days' => $from->diffInDays(
+                    $to,
+                ) + 1,
             ],
 
-            'model' =>
-                $this->modelData(
-                    $run,
-                ),
+            'model' => $this->modelData(
+                $run,
+            ),
 
-            'summary' =>
-                $this->summary(
-                    allRows:
-                        $days,
+            'summary' => $this->summary(
+                allRows: $days,
 
-                    completedRows:
-                        $completedRows,
-                ),
+                completedRows: $completedRows,
+            ),
 
-            'days' =>
-                $days,
+            'days' => $days,
         ];
     }
 
     /**
-     * @param list<array<string, mixed>> $allRows
-     * @param list<array<string, mixed>> $completedRows
-     *
+     * @param  list<array<string, mixed>>  $allRows
+     * @param  list<array<string, mixed>>  $completedRows
      * @return array<string, int|float>
      */
     private function summary(
@@ -441,57 +402,46 @@ final class MachineLearningComparisonService
             );
 
         return [
-            'days_with_prediction' =>
-                count(
+            'days_with_prediction' => count(
+                $allRows,
+            ),
+
+            'days_compared' => $daysCompared,
+
+            'days_in_progress' => count(
+                array_filter(
                     $allRows,
+
+                    static fn (
+                        array $row,
+                    ): bool => $row['status']
+                        ===
+                        'in_progress',
                 ),
+            ),
 
-            'days_compared' =>
-                $daysCompared,
+            'days_pending' => count(
+                array_filter(
+                    $allRows,
 
-            'days_in_progress' =>
-                count(
-                    array_filter(
-                        $allRows,
-
-                        static fn (
-                            array $row,
-                        ): bool =>
-                            $row['status']
-                            ===
-                            'in_progress',
-                    ),
+                    static fn (
+                        array $row,
+                    ): bool => $row['status']
+                        ===
+                        'pending',
                 ),
+            ),
 
-            'days_pending' =>
-                count(
-                    array_filter(
-                        $allRows,
+            'predicted_total' => $predictedTotal,
 
-                        static fn (
-                            array $row,
-                        ): bool =>
-                            $row['status']
-                            ===
-                            'pending',
-                    ),
-                ),
+            'actual_total' => $actualTotal,
 
-            'predicted_total' =>
+            'difference' => $actualTotal -
                 $predictedTotal,
 
-            'actual_total' =>
-                $actualTotal,
+            'absolute_error_total' => $absoluteErrorTotal,
 
-            'difference' =>
-                $actualTotal -
-                $predictedTotal,
-
-            'absolute_error_total' =>
-                $absoluteErrorTotal,
-
-            'mae' =>
-                $daysCompared > 0
+            'mae' => $daysCompared > 0
                     ? round(
                         $absoluteErrorTotal /
                         $daysCompared,
@@ -499,8 +449,7 @@ final class MachineLearningComparisonService
                     )
                     : 0.0,
 
-            'average_accuracy_percentage' =>
-                $daysCompared > 0
+            'average_accuracy_percentage' => $daysCompared > 0
                     ? round(
                         $accuracyTotal /
                         $daysCompared,
@@ -553,29 +502,23 @@ final class MachineLearningComparisonService
         MlModelRun $run,
     ): array {
         return [
-            'uuid' =>
-                $run->uuid,
+            'uuid' => $run->uuid,
 
-            'algorithm' =>
-                $run->algorithm,
+            'algorithm' => $run->algorithm,
 
-            'version' =>
-                $run->version,
+            'version' => $run->version,
 
-            'generated_at' =>
-                $run
-                    ->generated_at
-                    ?->toIso8601String(),
+            'generated_at' => $run
+                ->generated_at
+                ?->toIso8601String(),
 
-            'forecast_from' =>
-                $run
-                    ->forecast_from
-                    ?->toDateString(),
+            'forecast_from' => $run
+                ->forecast_from
+                ?->toDateString(),
 
-            'forecast_until' =>
-                $run
-                    ->forecast_until
-                    ?->toDateString(),
+            'forecast_until' => $run
+                ->forecast_until
+                ?->toDateString(),
         ];
     }
 
@@ -589,32 +532,25 @@ final class MachineLearningComparisonService
     ): array {
         return [
             'period' => [
-                'date_from' =>
-                    $from->toDateString(),
+                'date_from' => $from->toDateString(),
 
-                'date_to' =>
-                    $to->toDateString(),
+                'date_to' => $to->toDateString(),
 
-                'timezone' =>
-                    $timezone,
+                'timezone' => $timezone,
 
-                'days' =>
-                    $from->diffInDays(
-                        $to,
-                    ) + 1,
+                'days' => $from->diffInDays(
+                    $to,
+                ) + 1,
             ],
 
-            'model' =>
-                null,
+            'model' => null,
 
-            'summary' =>
-                $this->summary(
-                    allRows: [],
-                    completedRows: [],
-                ),
+            'summary' => $this->summary(
+                allRows: [],
+                completedRows: [],
+            ),
 
-            'days' =>
-                [],
+            'days' => [],
         ];
     }
 
@@ -629,14 +565,11 @@ final class MachineLearningComparisonService
     ): array {
         $result =
             $this->emptyResult(
-                from:
-                    $from,
+                from: $from,
 
-                to:
-                    $to,
+                to: $to,
 
-                timezone:
-                    $timezone,
+                timezone: $timezone,
             );
 
         $result['model'] =

@@ -2,25 +2,25 @@
 
 declare(strict_types=1);
 
+use App\Enums\PaymentReceiptStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Category;
 use App\Models\DeliveryType;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPromotionItem;
 use App\Models\OrderStatus;
+use App\Models\OrderStatusChange;
+use App\Models\Payment;
 use App\Models\PaymentMethod;
+use App\Models\PaymentReceipt;
 use App\Models\Pizza;
 use App\Models\Promotion;
 use App\Models\Size;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-use App\Enums\PaymentReceiptStatus;
-use App\Enums\PaymentStatus;
-use App\Models\OrderStatusChange;
-use App\Models\Payment;
-use App\Models\PaymentReceipt;
 use Illuminate\Support\Str;
+use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
@@ -64,8 +64,7 @@ function createSalesDashboardCatalog(): array
                 'name' => 'cash',
             ],
             [
-                'description' =>
-                'Pago en efectivo para pruebas del dashboard',
+                'description' => 'Pago en efectivo para pruebas del dashboard',
 
                 'active' => true,
             ],
@@ -76,36 +75,27 @@ function createSalesDashboardCatalog(): array
      * por eso debe enviarse obligatoriamente.
      */
     $size = Size::query()->create([
-        'size_name' =>
-        'Mediana dashboard',
+        'size_name' => 'Mediana dashboard',
 
-        'portion' =>
-        8,
+        'portion' => 8,
     ]);
 
     $category = Category::query()->create([
-        'category_name' =>
-        'Especial dashboard',
+        'category_name' => 'Especial dashboard',
 
-        'description' =>
-        'Categoría para pruebas de analítica administrativa',
+        'description' => 'Categoría para pruebas de analítica administrativa',
     ]);
 
     $pizza = Pizza::query()->create([
-        'category_id' =>
-        $category->id,
+        'category_id' => $category->id,
 
-        'pizza_name' =>
-        'Pizza especial dashboard',
+        'pizza_name' => 'Pizza especial dashboard',
 
-        'description' =>
-        'Pizza para pruebas del dashboard administrativo',
+        'description' => 'Pizza para pruebas del dashboard administrativo',
 
-        'image_url' =>
-        null,
+        'image_url' => null,
 
-        'is_visible' =>
-        true,
+        'is_visible' => true,
     ]);
 
     /*
@@ -121,68 +111,50 @@ function createSalesDashboardCatalog(): array
      * pero también se envían para que la intención de la prueba sea explícita.
      */
     $promotion = Promotion::query()->create([
-        'promotion_name' =>
-        'Promoción dashboard',
+        'promotion_name' => 'Promoción dashboard',
 
-        'slug' =>
-        'promocion-dashboard-test',
+        'slug' => 'promocion-dashboard-test',
 
-        'description' =>
-        'Promoción para pruebas de analítica administrativa',
+        'description' => 'Promoción para pruebas de analítica administrativa',
 
-        'banner_image_url' =>
-        null,
+        'banner_image_url' => null,
 
-        'promotion_type' =>
-        Promotion::TYPE_FIXED_COMBO,
+        'promotion_type' => Promotion::TYPE_FIXED_COMBO,
 
-        'selection_quantity' =>
-        2,
+        'selection_quantity' => 2,
 
-        'promotion_price' =>
-        '15.00',
+        'promotion_price' => '15.00',
 
-        'starts_at' =>
-        '2026-01-01 00:00:00',
+        'starts_at' => '2026-01-01 00:00:00',
 
-        'ends_at' =>
-        '2026-12-31 23:59:59',
+        'ends_at' => '2026-12-31 23:59:59',
 
-        'is_active' =>
-        true,
+        'is_active' => true,
     ]);
 
     return [
-        'delivered_status_id' =>
-        (int) $deliveredStatus->id,
+        'delivered_status_id' => (int) $deliveredStatus->id,
 
-        'cancelled_status_id' =>
-        (int) $cancelledStatus->id,
+        'cancelled_status_id' => (int) $cancelledStatus->id,
 
-        'delivery_type_id' =>
-        (int) $deliveryType->id,
+        'delivery_type_id' => (int) $deliveryType->id,
 
-        'payment_method_id' =>
-        (int) $paymentMethod->id,
+        'payment_method_id' => (int) $paymentMethod->id,
 
-        'size_id' =>
-        (int) $size->id,
+        'size_id' => (int) $size->id,
 
-        'category_id' =>
-        (int) $category->id,
+        'category_id' => (int) $category->id,
 
-        'pizza_id' =>
-        (int) $pizza->id,
+        'pizza_id' => (int) $pizza->id,
 
-        'promotion_id' =>
-        (int) $promotion->id,
+        'promotion_id' => (int) $promotion->id,
     ];
 }
 
 /**
  * Crea un pedido con los campos requeridos por la tabla orders.
  *
- * @param array<string, int> $catalog
+ * @param  array<string, int>  $catalog
  */
 function createSalesDashboardOrder(
     User $customer,
@@ -193,50 +165,35 @@ function createSalesDashboardOrder(
     string $total,
 ): Order {
     return Order::query()->create([
-        'order_number' =>
-        $number,
+        'order_number' => $number,
 
-        'user_id' =>
-        $customer->id,
+        'user_id' => $customer->id,
 
-        'ordered_at' =>
-        $orderedAt,
+        'ordered_at' => $orderedAt,
 
-        'subtotal' =>
-        $total,
+        'subtotal' => $total,
 
-        'delivery_fee' =>
-        '0.00',
+        'delivery_fee' => '0.00',
 
-        'total' =>
-        $total,
+        'total' => $total,
 
-        'delivery_type_id' =>
-        $catalog['delivery_type_id'],
+        'delivery_type_id' => $catalog['delivery_type_id'],
 
-        'address' =>
-        null,
+        'address' => null,
 
-        'delivery_lat' =>
-        null,
+        'delivery_lat' => null,
 
-        'delivery_lng' =>
-        null,
+        'delivery_lng' => null,
 
-        'delivery_maps_url' =>
-        null,
+        'delivery_maps_url' => null,
 
-        'delivery_place_id' =>
-        null,
+        'delivery_place_id' => null,
 
-        'delivery_reference' =>
-        null,
+        'delivery_reference' => null,
 
-        'payment_method_id' =>
-        $catalog['payment_method_id'],
+        'payment_method_id' => $catalog['payment_method_id'],
 
-        'order_status_id' =>
-        $statusId,
+        'order_status_id' => $statusId,
     ]);
 }
 
@@ -244,7 +201,6 @@ it(
     'requires authentication to access the sales dashboard',
     function (): void {
         /** @var TestCase $this */
-
         $this
             ->getJson(
                 '/api/v1/admin/analytics/dashboard'
@@ -257,7 +213,6 @@ it(
     'forbids customers from accessing the sales dashboard',
     function (): void {
         /** @var TestCase $this */
-
         $customer = User::factory()
             ->customer()
             ->create();
@@ -278,7 +233,6 @@ it(
     'validates the administrative analytics date range',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -290,8 +244,8 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/analytics/dashboard'
-                    . '?date_from=2026-08-10'
-                    . '&date_to=2026-08-01'
+                    .'?date_from=2026-08-10'
+                    .'&date_to=2026-08-01'
             )
             ->assertUnprocessable()
             ->assertJsonValidationErrors([
@@ -304,7 +258,6 @@ it(
     'calculates delivered sales pizzas promotions and cancellations',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -333,50 +286,35 @@ it(
             );
 
         OrderItem::query()->create([
-            'order_id' =>
-            $individualOrder->id,
+            'order_id' => $individualOrder->id,
 
-            'promotion_id' =>
-            null,
+            'promotion_id' => null,
 
-            'promotion_name' =>
-            null,
+            'promotion_name' => null,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza especial dashboard',
+            'pizza_name' => 'Pizza especial dashboard',
 
-            'pizza_id_second' =>
-            null,
+            'pizza_id_second' => null,
 
-            'pizza_name_second' =>
-            null,
+            'pizza_name_second' => null,
 
-            'size_id' =>
-            $catalog['size_id'],
+            'size_id' => $catalog['size_id'],
 
-            'size_name' =>
-            'Mediana dashboard',
+            'size_name' => 'Mediana dashboard',
 
-            'category_name' =>
-            'Especial dashboard',
+            'category_name' => 'Especial dashboard',
 
-            'category_name_second' =>
-            null,
+            'category_name_second' => null,
 
-            'is_half_and_half' =>
-            false,
+            'is_half_and_half' => false,
 
-            'quantity' =>
-            2,
+            'quantity' => 2,
 
-            'unit_price' =>
-            '10.00',
+            'unit_price' => '10.00',
 
-            'subtotal' =>
-            '20.00',
+            'subtotal' => '20.00',
         ]);
 
         /*
@@ -399,50 +337,35 @@ it(
 
         $promotionOrderItem =
             OrderItem::query()->create([
-                'order_id' =>
-                $promotionOrder->id,
+                'order_id' => $promotionOrder->id,
 
-                'promotion_id' =>
-                $catalog['promotion_id'],
+                'promotion_id' => $catalog['promotion_id'],
 
-                'promotion_name' =>
-                'Promoción dashboard',
+                'promotion_name' => 'Promoción dashboard',
 
-                'pizza_id' =>
-                null,
+                'pizza_id' => null,
 
-                'pizza_name' =>
-                null,
+                'pizza_name' => null,
 
-                'pizza_id_second' =>
-                null,
+                'pizza_id_second' => null,
 
-                'pizza_name_second' =>
-                null,
+                'pizza_name_second' => null,
 
-                'size_id' =>
-                $catalog['size_id'],
+                'size_id' => $catalog['size_id'],
 
-                'size_name' =>
-                'Mediana dashboard',
+                'size_name' => 'Mediana dashboard',
 
-                'category_name' =>
-                null,
+                'category_name' => null,
 
-                'category_name_second' =>
-                null,
+                'category_name_second' => null,
 
-                'is_half_and_half' =>
-                false,
+                'is_half_and_half' => false,
 
-                'quantity' =>
-                2,
+                'quantity' => 2,
 
-                'unit_price' =>
-                '15.00',
+                'unit_price' => '15.00',
 
-                'subtotal' =>
-                '30.00',
+                'subtotal' => '30.00',
             ]);
 
         /*
@@ -452,14 +375,11 @@ it(
          * dos unidades físicas de esta pizza.
          */
         OrderPromotionItem::query()->create([
-            'order_item_id' =>
-            $promotionOrderItem->id,
+            'order_item_id' => $promotionOrderItem->id,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza promocional uno',
+            'pizza_name' => 'Pizza promocional uno',
         ]);
 
         /*
@@ -469,14 +389,11 @@ it(
          * promocional fue comprado dos veces.
          */
         OrderPromotionItem::query()->create([
-            'order_item_id' =>
-            $promotionOrderItem->id,
+            'order_item_id' => $promotionOrderItem->id,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza promocional dos',
+            'pizza_name' => 'Pizza promocional dos',
         ]);
 
         /*
@@ -502,9 +419,9 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/analytics/dashboard'
-                    . '?date_from=2026-08-02'
-                    . '&date_to=2026-08-03'
-                    . '&timezone=UTC'
+                    .'?date_from=2026-08-02'
+                    .'&date_to=2026-08-03'
+                    .'&timezone=UTC'
             );
 
         $response
@@ -556,7 +473,6 @@ it(
     'excludes orders outside the requested range',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -599,9 +515,9 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/analytics/dashboard'
-                    . '?date_from=2026-08-01'
-                    . '&date_to=2026-08-01'
-                    . '&timezone=UTC'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-01'
+                    .'&timezone=UTC'
             )
             ->assertOk()
             ->assertJsonPath(
@@ -622,13 +538,11 @@ it(
             );
     },
 
-
 );
 it(
     'returns daily sales including dates without activity',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -651,50 +565,35 @@ it(
             );
 
         OrderItem::query()->create([
-            'order_id' =>
-            $firstOrder->id,
+            'order_id' => $firstOrder->id,
 
-            'promotion_id' =>
-            null,
+            'promotion_id' => null,
 
-            'promotion_name' =>
-            null,
+            'promotion_name' => null,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza especial dashboard',
+            'pizza_name' => 'Pizza especial dashboard',
 
-            'pizza_id_second' =>
-            null,
+            'pizza_id_second' => null,
 
-            'pizza_name_second' =>
-            null,
+            'pizza_name_second' => null,
 
-            'size_id' =>
-            $catalog['size_id'],
+            'size_id' => $catalog['size_id'],
 
-            'size_name' =>
-            'Mediana dashboard',
+            'size_name' => 'Mediana dashboard',
 
-            'category_name' =>
-            'Especial dashboard',
+            'category_name' => 'Especial dashboard',
 
-            'category_name_second' =>
-            null,
+            'category_name_second' => null,
 
-            'is_half_and_half' =>
-            false,
+            'is_half_and_half' => false,
 
-            'quantity' =>
-            2,
+            'quantity' => 2,
 
-            'unit_price' =>
-            '10.00',
+            'unit_price' => '10.00',
 
-            'subtotal' =>
-            '20.00',
+            'subtotal' => '20.00',
         ]);
 
         createSalesDashboardOrder(
@@ -713,9 +612,9 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/analytics/sales/daily'
-                    . '?date_from=2026-08-01'
-                    . '&date_to=2026-08-03'
-                    . '&timezone=America/Guayaquil'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-03'
+                    .'&timezone=America/Guayaquil'
             );
 
         $response
@@ -791,7 +690,6 @@ it(
     'counts promotion pizzas correctly in daily sales',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -815,72 +713,51 @@ it(
 
         $orderItem =
             OrderItem::query()->create([
-                'order_id' =>
-                $order->id,
+                'order_id' => $order->id,
 
-                'promotion_id' =>
-                $catalog['promotion_id'],
+                'promotion_id' => $catalog['promotion_id'],
 
-                'promotion_name' =>
-                'Promoción dashboard',
+                'promotion_name' => 'Promoción dashboard',
 
-                'pizza_id' =>
-                null,
+                'pizza_id' => null,
 
-                'pizza_name' =>
-                null,
+                'pizza_name' => null,
 
-                'pizza_id_second' =>
-                null,
+                'pizza_id_second' => null,
 
-                'pizza_name_second' =>
-                null,
+                'pizza_name_second' => null,
 
-                'size_id' =>
-                $catalog['size_id'],
+                'size_id' => $catalog['size_id'],
 
-                'size_name' =>
-                'Mediana dashboard',
+                'size_name' => 'Mediana dashboard',
 
-                'category_name' =>
-                null,
+                'category_name' => null,
 
-                'category_name_second' =>
-                null,
+                'category_name_second' => null,
 
-                'is_half_and_half' =>
-                false,
+                'is_half_and_half' => false,
 
-                'quantity' =>
-                2,
+                'quantity' => 2,
 
-                'unit_price' =>
-                '15.00',
+                'unit_price' => '15.00',
 
-                'subtotal' =>
-                '30.00',
+                'subtotal' => '30.00',
             ]);
 
         OrderPromotionItem::query()->create([
-            'order_item_id' =>
-            $orderItem->id,
+            'order_item_id' => $orderItem->id,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza promocional uno',
+            'pizza_name' => 'Pizza promocional uno',
         ]);
 
         OrderPromotionItem::query()->create([
-            'order_item_id' =>
-            $orderItem->id,
+            'order_item_id' => $orderItem->id,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza promocional dos',
+            'pizza_name' => 'Pizza promocional dos',
         ]);
 
         $this
@@ -890,9 +767,9 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/analytics/sales/daily'
-                    . '?date_from=2026-08-02'
-                    . '&date_to=2026-08-02'
-                    . '&timezone=America/Guayaquil'
+                    .'?date_from=2026-08-02'
+                    .'&date_to=2026-08-02'
+                    .'&timezone=America/Guayaquil'
             )
             ->assertOk()
             ->assertJsonPath(
@@ -922,7 +799,6 @@ it(
     'uses the local business day without shifting it to UTC',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -950,9 +826,9 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/analytics/sales/daily'
-                    . '?date_from=2026-08-01'
-                    . '&date_to=2026-08-01'
-                    . '&timezone=America/Guayaquil'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-01'
+                    .'&timezone=America/Guayaquil'
             )
             ->assertOk()
             ->assertJsonPath(
@@ -970,12 +846,10 @@ it(
     },
 );
 
-
 it(
     'returns the complete hourly sales timeline and peak hours',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -1003,50 +877,35 @@ it(
             );
 
         OrderItem::query()->create([
-            'order_id' =>
-            $firstOrder->id,
+            'order_id' => $firstOrder->id,
 
-            'promotion_id' =>
-            null,
+            'promotion_id' => null,
 
-            'promotion_name' =>
-            null,
+            'promotion_name' => null,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza especial dashboard',
+            'pizza_name' => 'Pizza especial dashboard',
 
-            'pizza_id_second' =>
-            null,
+            'pizza_id_second' => null,
 
-            'pizza_name_second' =>
-            null,
+            'pizza_name_second' => null,
 
-            'size_id' =>
-            $catalog['size_id'],
+            'size_id' => $catalog['size_id'],
 
-            'size_name' =>
-            'Mediana dashboard',
+            'size_name' => 'Mediana dashboard',
 
-            'category_name' =>
-            'Especial dashboard',
+            'category_name' => 'Especial dashboard',
 
-            'category_name_second' =>
-            null,
+            'category_name_second' => null,
 
-            'is_half_and_half' =>
-            false,
+            'is_half_and_half' => false,
 
-            'quantity' =>
-            2,
+            'quantity' => 2,
 
-            'unit_price' =>
-            '10.00',
+            'unit_price' => '10.00',
 
-            'subtotal' =>
-            '20.00',
+            'subtotal' => '20.00',
         ]);
 
         /*
@@ -1068,50 +927,35 @@ it(
             );
 
         OrderItem::query()->create([
-            'order_id' =>
-            $secondOrder->id,
+            'order_id' => $secondOrder->id,
 
-            'promotion_id' =>
-            null,
+            'promotion_id' => null,
 
-            'promotion_name' =>
-            null,
+            'promotion_name' => null,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza especial dashboard',
+            'pizza_name' => 'Pizza especial dashboard',
 
-            'pizza_id_second' =>
-            null,
+            'pizza_id_second' => null,
 
-            'pizza_name_second' =>
-            null,
+            'pizza_name_second' => null,
 
-            'size_id' =>
-            $catalog['size_id'],
+            'size_id' => $catalog['size_id'],
 
-            'size_name' =>
-            'Mediana dashboard',
+            'size_name' => 'Mediana dashboard',
 
-            'category_name' =>
-            'Especial dashboard',
+            'category_name' => 'Especial dashboard',
 
-            'category_name_second' =>
-            null,
+            'category_name_second' => null,
 
-            'is_half_and_half' =>
-            false,
+            'is_half_and_half' => false,
 
-            'quantity' =>
-            1,
+            'quantity' => 1,
 
-            'unit_price' =>
-            '25.00',
+            'unit_price' => '25.00',
 
-            'subtotal' =>
-            '25.00',
+            'subtotal' => '25.00',
         ]);
 
         $thirdOrder =
@@ -1125,50 +969,35 @@ it(
             );
 
         OrderItem::query()->create([
-            'order_id' =>
-            $thirdOrder->id,
+            'order_id' => $thirdOrder->id,
 
-            'promotion_id' =>
-            null,
+            'promotion_id' => null,
 
-            'promotion_name' =>
-            null,
+            'promotion_name' => null,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza especial dashboard',
+            'pizza_name' => 'Pizza especial dashboard',
 
-            'pizza_id_second' =>
-            null,
+            'pizza_id_second' => null,
 
-            'pizza_name_second' =>
-            null,
+            'pizza_name_second' => null,
 
-            'size_id' =>
-            $catalog['size_id'],
+            'size_id' => $catalog['size_id'],
 
-            'size_name' =>
-            'Mediana dashboard',
+            'size_name' => 'Mediana dashboard',
 
-            'category_name' =>
-            'Especial dashboard',
+            'category_name' => 'Especial dashboard',
 
-            'category_name_second' =>
-            null,
+            'category_name_second' => null,
 
-            'is_half_and_half' =>
-            false,
+            'is_half_and_half' => false,
 
-            'quantity' =>
-            1,
+            'quantity' => 1,
 
-            'unit_price' =>
-            '20.00',
+            'unit_price' => '20.00',
 
-            'subtotal' =>
-            '20.00',
+            'subtotal' => '20.00',
         ]);
 
         /*
@@ -1190,9 +1019,9 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/analytics/sales/hourly'
-                    . '?date_from=2026-08-01'
-                    . '&date_to=2026-08-01'
-                    . '&timezone=America/Guayaquil'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-01'
+                    .'&timezone=America/Guayaquil'
             );
 
         $response
@@ -1304,7 +1133,6 @@ it(
     'counts promotion units and promotion pizzas by hour',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -1328,72 +1156,51 @@ it(
 
         $orderItem =
             OrderItem::query()->create([
-                'order_id' =>
-                $order->id,
+                'order_id' => $order->id,
 
-                'promotion_id' =>
-                $catalog['promotion_id'],
+                'promotion_id' => $catalog['promotion_id'],
 
-                'promotion_name' =>
-                'Promoción dashboard',
+                'promotion_name' => 'Promoción dashboard',
 
-                'pizza_id' =>
-                null,
+                'pizza_id' => null,
 
-                'pizza_name' =>
-                null,
+                'pizza_name' => null,
 
-                'pizza_id_second' =>
-                null,
+                'pizza_id_second' => null,
 
-                'pizza_name_second' =>
-                null,
+                'pizza_name_second' => null,
 
-                'size_id' =>
-                $catalog['size_id'],
+                'size_id' => $catalog['size_id'],
 
-                'size_name' =>
-                'Mediana dashboard',
+                'size_name' => 'Mediana dashboard',
 
-                'category_name' =>
-                null,
+                'category_name' => null,
 
-                'category_name_second' =>
-                null,
+                'category_name_second' => null,
 
-                'is_half_and_half' =>
-                false,
+                'is_half_and_half' => false,
 
-                'quantity' =>
-                2,
+                'quantity' => 2,
 
-                'unit_price' =>
-                '15.00',
+                'unit_price' => '15.00',
 
-                'subtotal' =>
-                '30.00',
+                'subtotal' => '30.00',
             ]);
 
         OrderPromotionItem::query()->create([
-            'order_item_id' =>
-            $orderItem->id,
+            'order_item_id' => $orderItem->id,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza promocional uno',
+            'pizza_name' => 'Pizza promocional uno',
         ]);
 
         OrderPromotionItem::query()->create([
-            'order_item_id' =>
-            $orderItem->id,
+            'order_item_id' => $orderItem->id,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza promocional dos',
+            'pizza_name' => 'Pizza promocional dos',
         ]);
 
         $this
@@ -1403,9 +1210,9 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/analytics/sales/hourly'
-                    . '?date_from=2026-08-02'
-                    . '&date_to=2026-08-02'
-                    . '&timezone=America/Guayaquil'
+                    .'?date_from=2026-08-02'
+                    .'&date_to=2026-08-02'
+                    .'&timezone=America/Guayaquil'
             )
             ->assertOk()
             ->assertJsonPath(
@@ -1439,7 +1246,6 @@ it(
     'returns empty peak hour values when the period has no delivered sales',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -1451,9 +1257,9 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/analytics/sales/hourly'
-                    . '?date_from=2026-08-01'
-                    . '&date_to=2026-08-01'
-                    . '&timezone=America/Guayaquil'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-01'
+                    .'&timezone=America/Guayaquil'
             )
             ->assertOk()
             ->assertJsonCount(
@@ -1498,7 +1304,6 @@ it(
     'calculates product performance including half and half pizzas and promotions',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -1511,20 +1316,15 @@ it(
             createSalesDashboardCatalog();
 
         $secondPizza = Pizza::query()->create([
-            'category_id' =>
-            $catalog['category_id'],
+            'category_id' => $catalog['category_id'],
 
-            'pizza_name' =>
-            'Segunda pizza dashboard',
+            'pizza_name' => 'Segunda pizza dashboard',
 
-            'description' =>
-            'Segundo sabor para pruebas de rendimiento',
+            'description' => 'Segundo sabor para pruebas de rendimiento',
 
-            'image_url' =>
-            null,
+            'image_url' => null,
 
-            'is_visible' =>
-            true,
+            'is_visible' => true,
         ]);
 
         /*
@@ -1542,50 +1342,35 @@ it(
             );
 
         OrderItem::query()->create([
-            'order_id' =>
-            $completeOrder->id,
+            'order_id' => $completeOrder->id,
 
-            'promotion_id' =>
-            null,
+            'promotion_id' => null,
 
-            'promotion_name' =>
-            null,
+            'promotion_name' => null,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza especial dashboard',
+            'pizza_name' => 'Pizza especial dashboard',
 
-            'pizza_id_second' =>
-            null,
+            'pizza_id_second' => null,
 
-            'pizza_name_second' =>
-            null,
+            'pizza_name_second' => null,
 
-            'size_id' =>
-            $catalog['size_id'],
+            'size_id' => $catalog['size_id'],
 
-            'size_name' =>
-            'Mediana dashboard',
+            'size_name' => 'Mediana dashboard',
 
-            'category_name' =>
-            'Especial dashboard',
+            'category_name' => 'Especial dashboard',
 
-            'category_name_second' =>
-            null,
+            'category_name_second' => null,
 
-            'is_half_and_half' =>
-            false,
+            'is_half_and_half' => false,
 
-            'quantity' =>
-            2,
+            'quantity' => 2,
 
-            'unit_price' =>
-            '10.00',
+            'unit_price' => '10.00',
 
-            'subtotal' =>
-            '20.00',
+            'subtotal' => '20.00',
         ]);
 
         /*
@@ -1606,50 +1391,35 @@ it(
             );
 
         OrderItem::query()->create([
-            'order_id' =>
-            $halfOrder->id,
+            'order_id' => $halfOrder->id,
 
-            'promotion_id' =>
-            null,
+            'promotion_id' => null,
 
-            'promotion_name' =>
-            null,
+            'promotion_name' => null,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza especial dashboard',
+            'pizza_name' => 'Pizza especial dashboard',
 
-            'pizza_id_second' =>
-            $secondPizza->id,
+            'pizza_id_second' => $secondPizza->id,
 
-            'pizza_name_second' =>
-            'Segunda pizza dashboard',
+            'pizza_name_second' => 'Segunda pizza dashboard',
 
-            'size_id' =>
-            $catalog['size_id'],
+            'size_id' => $catalog['size_id'],
 
-            'size_name' =>
-            'Mediana dashboard',
+            'size_name' => 'Mediana dashboard',
 
-            'category_name' =>
-            'Especial dashboard',
+            'category_name' => 'Especial dashboard',
 
-            'category_name_second' =>
-            'Especial dashboard',
+            'category_name_second' => 'Especial dashboard',
 
-            'is_half_and_half' =>
-            true,
+            'is_half_and_half' => true,
 
-            'quantity' =>
-            2,
+            'quantity' => 2,
 
-            'unit_price' =>
-            '12.00',
+            'unit_price' => '12.00',
 
-            'subtotal' =>
-            '24.00',
+            'subtotal' => '24.00',
         ]);
 
         /*
@@ -1674,72 +1444,51 @@ it(
 
         $promotionItem =
             OrderItem::query()->create([
-                'order_id' =>
-                $promotionOrder->id,
+                'order_id' => $promotionOrder->id,
 
-                'promotion_id' =>
-                $catalog['promotion_id'],
+                'promotion_id' => $catalog['promotion_id'],
 
-                'promotion_name' =>
-                'Promoción dashboard',
+                'promotion_name' => 'Promoción dashboard',
 
-                'pizza_id' =>
-                null,
+                'pizza_id' => null,
 
-                'pizza_name' =>
-                null,
+                'pizza_name' => null,
 
-                'pizza_id_second' =>
-                null,
+                'pizza_id_second' => null,
 
-                'pizza_name_second' =>
-                null,
+                'pizza_name_second' => null,
 
-                'size_id' =>
-                $catalog['size_id'],
+                'size_id' => $catalog['size_id'],
 
-                'size_name' =>
-                'Mediana dashboard',
+                'size_name' => 'Mediana dashboard',
 
-                'category_name' =>
-                null,
+                'category_name' => null,
 
-                'category_name_second' =>
-                null,
+                'category_name_second' => null,
 
-                'is_half_and_half' =>
-                false,
+                'is_half_and_half' => false,
 
-                'quantity' =>
-                2,
+                'quantity' => 2,
 
-                'unit_price' =>
-                '15.00',
+                'unit_price' => '15.00',
 
-                'subtotal' =>
-                '30.00',
+                'subtotal' => '30.00',
             ]);
 
         OrderPromotionItem::query()->create([
-            'order_item_id' =>
-            $promotionItem->id,
+            'order_item_id' => $promotionItem->id,
 
-            'pizza_id' =>
-            $catalog['pizza_id'],
+            'pizza_id' => $catalog['pizza_id'],
 
-            'pizza_name' =>
-            'Pizza especial dashboard',
+            'pizza_name' => 'Pizza especial dashboard',
         ]);
 
         OrderPromotionItem::query()->create([
-            'order_item_id' =>
-            $promotionItem->id,
+            'order_item_id' => $promotionItem->id,
 
-            'pizza_id' =>
-            $secondPizza->id,
+            'pizza_id' => $secondPizza->id,
 
-            'pizza_name' =>
-            'Segunda pizza dashboard',
+            'pizza_name' => 'Segunda pizza dashboard',
         ]);
 
         /*
@@ -1762,9 +1511,9 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/analytics/products'
-                    . '?date_from=2026-08-01'
-                    . '&date_to=2026-08-01'
-                    . '&timezone=America/Guayaquil'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-01'
+                    .'&timezone=America/Guayaquil'
             );
 
         $response
@@ -1871,7 +1620,6 @@ it(
     'returns empty product performance when the period has no delivered orders',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -1883,9 +1631,9 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/analytics/products'
-                    . '?date_from=2026-08-01'
-                    . '&date_to=2026-08-01'
-                    . '&timezone=America/Guayaquil'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-01'
+                    .'&timezone=America/Guayaquil'
             )
             ->assertOk()
             ->assertJsonCount(
@@ -1934,7 +1682,6 @@ it(
     'calculates collected and pending payments by recognition date',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -1952,11 +1699,9 @@ it(
                     'name' => 'transfer',
                 ],
                 [
-                    'description' =>
-                    'Transferencia bancaria',
+                    'description' => 'Transferencia bancaria',
 
-                    'active' =>
-                    true,
+                    'active' => true,
                 ],
             );
 
@@ -1966,11 +1711,9 @@ it(
                     'name' => 'card',
                 ],
                 [
-                    'description' =>
-                    'Pago mediante PayPal',
+                    'description' => 'Pago mediante PayPal',
 
-                    'active' =>
-                    true,
+                    'active' => true,
                 ],
             );
 
@@ -1988,23 +1731,17 @@ it(
             );
 
         OrderStatusChange::query()->create([
-            'order_id' =>
-            $cashOrder->id,
+            'order_id' => $cashOrder->id,
 
-            'from_order_status_id' =>
-            null,
+            'from_order_status_id' => null,
 
-            'to_order_status_id' =>
-            $catalog['delivered_status_id'],
+            'to_order_status_id' => $catalog['delivered_status_id'],
 
-            'changed_by_user_id' =>
-            $admin->id,
+            'changed_by_user_id' => $admin->id,
 
-            'changed_at' =>
-            '2026-08-01 18:30:00',
+            'changed_at' => '2026-08-01 18:30:00',
 
-            'note' =>
-            'Pedido entregado y cobrado en efectivo',
+            'note' => 'Pedido entregado y cobrado en efectivo',
         ]);
 
         /*
@@ -2013,8 +1750,7 @@ it(
         $transferCatalog = [
             ...$catalog,
 
-            'payment_method_id' =>
-            (int) $transferMethod->id,
+            'payment_method_id' => (int) $transferMethod->id,
         ];
 
         $approvedTransferOrder =
@@ -2028,50 +1764,35 @@ it(
             );
 
         PaymentReceipt::query()->create([
-            'uuid' =>
-            (string) Str::uuid(),
+            'uuid' => (string) Str::uuid(),
 
-            'order_id' =>
-            $approvedTransferOrder->id,
+            'order_id' => $approvedTransferOrder->id,
 
-            'user_id' =>
-            $customer->id,
+            'user_id' => $customer->id,
 
-            'disk' =>
-            'payment_receipts',
+            'disk' => 'payment_receipts',
 
-            'file_path' =>
-            'tests/approved-transfer.jpg',
+            'file_path' => 'tests/approved-transfer.jpg',
 
-            'original_name' =>
-            'transferencia.jpg',
+            'original_name' => 'transferencia.jpg',
 
-            'mime_type' =>
-            'image/jpeg',
+            'mime_type' => 'image/jpeg',
 
-            'file_size' =>
-            1024,
+            'file_size' => 1024,
 
-            'status' =>
-            PaymentReceiptStatus::Approved,
+            'status' => PaymentReceiptStatus::Approved,
 
-            'rejection_reason' =>
-            null,
+            'rejection_reason' => null,
 
-            'submitted_at' =>
-            '2026-08-01 17:05:00',
+            'submitted_at' => '2026-08-01 17:05:00',
 
-            'reviewed_at' =>
-            '2026-08-01 17:20:00',
+            'reviewed_at' => '2026-08-01 17:20:00',
 
-            'reviewed_by' =>
-            $admin->id,
+            'reviewed_by' => $admin->id,
 
-            'expires_at' =>
-            null,
+            'expires_at' => null,
 
-            'file_deleted_at' =>
-            null,
+            'file_deleted_at' => null,
         ]);
 
         /*
@@ -2088,50 +1809,35 @@ it(
             );
 
         PaymentReceipt::query()->create([
-            'uuid' =>
-            (string) Str::uuid(),
+            'uuid' => (string) Str::uuid(),
 
-            'order_id' =>
-            $pendingTransferOrder->id,
+            'order_id' => $pendingTransferOrder->id,
 
-            'user_id' =>
-            $customer->id,
+            'user_id' => $customer->id,
 
-            'disk' =>
-            'payment_receipts',
+            'disk' => 'payment_receipts',
 
-            'file_path' =>
-            'tests/pending-transfer.jpg',
+            'file_path' => 'tests/pending-transfer.jpg',
 
-            'original_name' =>
-            'pendiente.jpg',
+            'original_name' => 'pendiente.jpg',
 
-            'mime_type' =>
-            'image/jpeg',
+            'mime_type' => 'image/jpeg',
 
-            'file_size' =>
-            1024,
+            'file_size' => 1024,
 
-            'status' =>
-            PaymentReceiptStatus::Pending,
+            'status' => PaymentReceiptStatus::Pending,
 
-            'rejection_reason' =>
-            null,
+            'rejection_reason' => null,
 
-            'submitted_at' =>
-            '2026-08-01 19:10:00',
+            'submitted_at' => '2026-08-01 19:10:00',
 
-            'reviewed_at' =>
-            null,
+            'reviewed_at' => null,
 
-            'reviewed_by' =>
-            null,
+            'reviewed_by' => null,
 
-            'expires_at' =>
-            null,
+            'expires_at' => null,
 
-            'file_deleted_at' =>
-            null,
+            'file_deleted_at' => null,
         ]);
 
         /*
@@ -2140,8 +1846,7 @@ it(
         $paypalCatalog = [
             ...$catalog,
 
-            'payment_method_id' =>
-            (int) $cardMethod->id,
+            'payment_method_id' => (int) $cardMethod->id,
         ];
 
         $paypalOrder =
@@ -2155,44 +1860,31 @@ it(
             );
 
         Payment::query()->create([
-            'uuid' =>
-            (string) Str::uuid(),
+            'uuid' => (string) Str::uuid(),
 
-            'idempotency_key' =>
-            (string) Str::uuid(),
+            'idempotency_key' => (string) Str::uuid(),
 
-            'user_id' =>
-            $customer->id,
+            'user_id' => $customer->id,
 
-            'cart_id' =>
-            null,
+            'cart_id' => null,
 
-            'order_id' =>
-            $paypalOrder->id,
+            'order_id' => $paypalOrder->id,
 
-            'provider' =>
-            'paypal',
+            'provider' => 'paypal',
 
-            'provider_order_id' =>
-            'PAYPAL-ORDER-001',
+            'provider_order_id' => 'PAYPAL-ORDER-001',
 
-            'provider_capture_id' =>
-            'PAYPAL-CAPTURE-001',
+            'provider_capture_id' => 'PAYPAL-CAPTURE-001',
 
-            'provider_status' =>
-            'COMPLETED',
+            'provider_status' => 'COMPLETED',
 
-            'amount' =>
-            '40.00',
+            'amount' => '40.00',
 
-            'currency' =>
-            'USD',
+            'currency' => 'USD',
 
-            'status' =>
-            PaymentStatus::COMPLETED,
+            'status' => PaymentStatus::COMPLETED,
 
-            'paid_at' =>
-            '2026-08-01 20:10:00',
+            'paid_at' => '2026-08-01 20:10:00',
         ]);
 
         /*
@@ -2203,47 +1895,33 @@ it(
  * para comprobar correctamente el filtro del reporte.
  */
         Payment::query()->forceCreate([
-            'uuid' =>
-            (string) Str::uuid(),
+            'uuid' => (string) Str::uuid(),
 
-            'idempotency_key' =>
-            (string) Str::uuid(),
+            'idempotency_key' => (string) Str::uuid(),
 
-            'user_id' =>
-            $customer->id,
+            'user_id' => $customer->id,
 
-            'cart_id' =>
-            null,
+            'cart_id' => null,
 
-            'order_id' =>
-            null,
+            'order_id' => null,
 
-            'provider' =>
-            'paypal',
+            'provider' => 'paypal',
 
-            'provider_order_id' =>
-            'PAYPAL-ORDER-002',
+            'provider_order_id' => 'PAYPAL-ORDER-002',
 
-            'provider_capture_id' =>
-            null,
+            'provider_capture_id' => null,
 
-            'provider_status' =>
-            'CREATED',
+            'provider_status' => 'CREATED',
 
-            'amount' =>
-            '15.00',
+            'amount' => '15.00',
 
-            'currency' =>
-            'USD',
+            'currency' => 'USD',
 
-            'status' =>
-            PaymentStatus::PENDING,
+            'status' => PaymentStatus::PENDING,
 
-            'created_at' =>
-            '2026-08-01 21:00:00',
+            'created_at' => '2026-08-01 21:00:00',
 
-            'updated_at' =>
-            '2026-08-01 21:00:00',
+            'updated_at' => '2026-08-01 21:00:00',
         ]);
 
         $response = $this
@@ -2253,9 +1931,9 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/analytics/payments'
-                    . '?date_from=2026-08-01'
-                    . '&date_to=2026-08-01'
-                    . '&timezone=America/Guayaquil'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-01'
+                    .'&timezone=America/Guayaquil'
             );
 
         $response
@@ -2322,7 +2000,6 @@ it(
     'returns an empty financial summary when the period has no movements',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -2334,9 +2011,9 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/analytics/payments'
-                    . '?date_from=2026-08-01'
-                    . '&date_to=2026-08-01'
-                    . '&timezone=America/Guayaquil'
+                    .'?date_from=2026-08-01'
+                    .'&date_to=2026-08-01'
+                    .'&timezone=America/Guayaquil'
             )
             ->assertOk()
             ->assertJsonPath(

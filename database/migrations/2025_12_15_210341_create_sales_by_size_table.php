@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->date('date');                       // fecha :contentReference[oaicite:30]{index=30}
             $table->foreignId('size_id')
-            ->constrained('sizes')
-            ->restrictOnDelete();
+                ->constrained('sizes')
+                ->restrictOnDelete();
             $table->integer('quantity');
             $table->timestamps();
         });

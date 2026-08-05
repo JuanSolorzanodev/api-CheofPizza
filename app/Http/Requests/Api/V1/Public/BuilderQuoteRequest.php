@@ -16,11 +16,11 @@ class BuilderQuoteRequest extends FormRequest
     {
         return [
             'pizza_id' => ['required', 'integer', 'exists:pizzas,id'],
-            'size_id'  => ['required', 'integer', 'exists:sizes,id'],
+            'size_id' => ['required', 'integer', 'exists:sizes,id'],
             'quantity' => ['nullable', 'integer', 'min:1', 'max:10'],
 
             'is_half_and_half' => ['nullable', 'boolean'],
-            'second_pizza_id'  => [
+            'second_pizza_id' => [
                 'nullable',
                 'integer',
                 'exists:pizzas,id',
@@ -54,7 +54,7 @@ class BuilderQuoteRequest extends FormRequest
     {
         $customizations = $this->input('customizations');
 
-        if ((!is_array($customizations) || empty($customizations)) && is_array($this->input('extras'))) {
+        if ((! is_array($customizations) || empty($customizations)) && is_array($this->input('extras'))) {
             $customizations = collect($this->input('extras'))
                 ->map(fn ($extra) => [
                     'action' => 'extra',

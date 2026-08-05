@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Payments\PayPal;
 
-use App\Models\PayPalWebhookEvent;
 use App\Models\Payment;
-use DomainException;
+use App\Models\PayPalWebhookEvent;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -31,8 +30,7 @@ final class PayPalWebhookService
      *     transmission_sig: ?string,
      *     transmission_time: ?string
      * } $headers
-     *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function receive(
         array $headers,
@@ -55,7 +53,7 @@ final class PayPalWebhookService
                 webhookEvent: $payload,
             );
 
-        if (!$verified) {
+        if (! $verified) {
             throw new RuntimeException(
                 'PayPal no confirmó la firma del webhook.'
             );
@@ -122,8 +120,7 @@ final class PayPalWebhookService
      *     transmission_sig: ?string,
      *     transmission_time: ?string
      * } $headers
-     *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function handle(
         array $headers,
@@ -221,52 +218,45 @@ final class PayPalWebhookService
 
         try {
             match ($eventType) {
-                'PAYMENT.CAPTURE.COMPLETED' =>
-                    $this->handleCaptureCompleted(
-                        event: $webhookEvent,
-                        captureId: $providerCaptureId,
-                        orderId: $providerOrderId,
-                        resource: $resource,
-                    ),
+                'PAYMENT.CAPTURE.COMPLETED' => $this->handleCaptureCompleted(
+                    event: $webhookEvent,
+                    captureId: $providerCaptureId,
+                    orderId: $providerOrderId,
+                    resource: $resource,
+                ),
 
-                'PAYMENT.CAPTURE.PENDING' =>
-                    $this->handleCapturePending(
-                        event: $webhookEvent,
-                        captureId: $providerCaptureId,
-                        orderId: $providerOrderId,
-                        resource: $resource,
-                    ),
+                'PAYMENT.CAPTURE.PENDING' => $this->handleCapturePending(
+                    event: $webhookEvent,
+                    captureId: $providerCaptureId,
+                    orderId: $providerOrderId,
+                    resource: $resource,
+                ),
 
-                'PAYMENT.CAPTURE.DENIED' =>
-                    $this->handleCaptureDenied(
-                        event: $webhookEvent,
-                        captureId: $providerCaptureId,
-                        orderId: $providerOrderId,
-                        resource: $resource,
-                    ),
+                'PAYMENT.CAPTURE.DENIED' => $this->handleCaptureDenied(
+                    event: $webhookEvent,
+                    captureId: $providerCaptureId,
+                    orderId: $providerOrderId,
+                    resource: $resource,
+                ),
 
-                'PAYMENT.CAPTURE.REFUNDED' =>
-                    $this->handleCaptureRefunded(
-                        event: $webhookEvent,
-                        captureId: $providerCaptureId,
-                        orderId: $providerOrderId,
-                        resource: $resource,
-                    ),
+                'PAYMENT.CAPTURE.REFUNDED' => $this->handleCaptureRefunded(
+                    event: $webhookEvent,
+                    captureId: $providerCaptureId,
+                    orderId: $providerOrderId,
+                    resource: $resource,
+                ),
 
-                'PAYMENT.CAPTURE.REVERSED' =>
-                    $this->handleCaptureReversed(
-                        event: $webhookEvent,
-                        captureId: $providerCaptureId,
-                        orderId: $providerOrderId,
-                        resource: $resource,
-                    ),
+                'PAYMENT.CAPTURE.REVERSED' => $this->handleCaptureReversed(
+                    event: $webhookEvent,
+                    captureId: $providerCaptureId,
+                    orderId: $providerOrderId,
+                    resource: $resource,
+                ),
 
-                default =>
-                    $this->markIgnored(
-                        event: $webhookEvent,
-                        reason:
-                            "Evento PayPal no manejado: {$eventType}.",
-                    ),
+                default => $this->markIgnored(
+                    event: $webhookEvent,
+                    reason: "Evento PayPal no manejado: {$eventType}.",
+                ),
             };
         } catch (Throwable $exception) {
             $webhookEvent->forceFill([
@@ -309,7 +299,7 @@ final class PayPalWebhookService
      * - marca el pago como completado;
      * - responde idempotentemente si ya fue procesado.
      *
-     * @param array<string, mixed> $resource
+     * @param  array<string, mixed>  $resource
      */
     private function handleCaptureCompleted(
         PayPalWebhookEvent $event,
@@ -325,8 +315,7 @@ final class PayPalWebhookService
         if ($payment === null) {
             $this->markIgnored(
                 event: $event,
-                reason:
-                    'No se encontró un pago local relacionado con la captura completada.',
+                reason: 'No se encontró un pago local relacionado con la captura completada.',
             );
 
             return;
@@ -348,51 +337,40 @@ final class PayPalWebhookService
             );
 
         $event->forceFill([
-            'provider_order_id' =>
-                $payment->provider_order_id
+            'provider_order_id' => $payment->provider_order_id
                 ?? $orderId,
 
-            'provider_capture_id' =>
-                $payment->provider_capture_id
+            'provider_capture_id' => $payment->provider_capture_id
                 ?? $captureId,
 
-            'processing_status' =>
-                'processed',
+            'processing_status' => 'processed',
 
-            'failure_message' =>
-                null,
+            'failure_message' => null,
 
-            'processed_at' =>
-                now(),
+            'processed_at' => now(),
         ])->save();
 
         Log::info(
             'PayPal completed webhook processed.',
             [
-                'event_id' =>
-                    $event->event_id,
+                'event_id' => $event->event_id,
 
-                'payment_id' =>
-                    $payment->id,
+                'payment_id' => $payment->id,
 
-                'payment_uuid' =>
-                    $payment->uuid,
+                'payment_uuid' => $payment->uuid,
 
-                'order_id' =>
-                    $order->id,
+                'order_id' => $order->id,
 
-                'paypal_order_id' =>
-                    $payment->provider_order_id,
+                'paypal_order_id' => $payment->provider_order_id,
 
-                'paypal_capture_id' =>
-                    $payment->provider_capture_id
+                'paypal_capture_id' => $payment->provider_capture_id
                     ?? $captureId,
             ]
         );
     }
 
     /**
-     * @param array<string, mixed> $resource
+     * @param  array<string, mixed>  $resource
      */
     private function handleCapturePending(
         PayPalWebhookEvent $event,
@@ -414,8 +392,7 @@ final class PayPalWebhookService
             if ($payment === null) {
                 $this->markIgnored(
                     event: $event,
-                    reason:
-                        'No se encontró un pago local relacionado con la captura pendiente.',
+                    reason: 'No se encontró un pago local relacionado con la captura pendiente.',
                 );
 
                 return;
@@ -426,29 +403,23 @@ final class PayPalWebhookService
              */
             if (! $payment->isCompleted()) {
                 $payment->markAsPending(
-                    providerStatus:
-                        $this->nullableString(
-                            $resource['status']
-                                ?? null
-                        ) ?? 'PENDING',
+                    providerStatus: $this->nullableString(
+                        $resource['status']
+                            ?? null
+                    ) ?? 'PENDING',
 
                     providerMetadata: [
                         'webhook' => [
-                            'event_id' =>
-                                $event->event_id,
+                            'event_id' => $event->event_id,
 
-                            'event_type' =>
-                                $event->event_type,
+                            'event_type' => $event->event_type,
 
-                            'capture_id' =>
-                                $captureId,
+                            'capture_id' => $captureId,
 
-                            'status_details' =>
-                                $resource['status_details']
+                            'status_details' => $resource['status_details']
                                     ?? null,
 
-                            'update_time' =>
-                                $resource['update_time']
+                            'update_time' => $resource['update_time']
                                     ?? null,
                         ],
                     ],
@@ -460,7 +431,7 @@ final class PayPalWebhookService
     }
 
     /**
-     * @param array<string, mixed> $resource
+     * @param  array<string, mixed>  $resource
      */
     private function handleCaptureDenied(
         PayPalWebhookEvent $event,
@@ -482,8 +453,7 @@ final class PayPalWebhookService
             if ($payment === null) {
                 $this->markIgnored(
                     event: $event,
-                    reason:
-                        'No se encontró un pago local relacionado con la captura rechazada.',
+                    reason: 'No se encontró un pago local relacionado con la captura rechazada.',
                 );
 
                 return;
@@ -491,37 +461,29 @@ final class PayPalWebhookService
 
             if (! $payment->isCompleted()) {
                 $payment->markAsDenied(
-                    code:
-                        $this->extractIssue(
-                            $resource
-                        ) ?? 'PAYMENT_CAPTURE_DENIED',
+                    code: $this->extractIssue(
+                        $resource
+                    ) ?? 'PAYMENT_CAPTURE_DENIED',
 
-                    message:
-                        'PayPal informó que la captura fue rechazada.',
+                    message: 'PayPal informó que la captura fue rechazada.',
 
-                    providerStatus:
-                        $this->nullableString(
-                            $resource['status']
-                                ?? null
-                        ) ?? 'DENIED',
+                    providerStatus: $this->nullableString(
+                        $resource['status']
+                            ?? null
+                    ) ?? 'DENIED',
 
                     providerMetadata: [
                         'webhook' => [
-                            'event_id' =>
-                                $event->event_id,
+                            'event_id' => $event->event_id,
 
-                            'event_type' =>
-                                $event->event_type,
+                            'event_type' => $event->event_type,
 
-                            'capture_id' =>
-                                $captureId,
+                            'capture_id' => $captureId,
 
-                            'status_details' =>
-                                $resource['status_details']
+                            'status_details' => $resource['status_details']
                                     ?? null,
 
-                            'update_time' =>
-                                $resource['update_time']
+                            'update_time' => $resource['update_time']
                                     ?? null,
                         ],
                     ],
@@ -536,7 +498,7 @@ final class PayPalWebhookService
      * PAYPAL.CAPTURE.REFUNDED puede representar un reembolso completo
      * o parcial. Comparamos el importe reembolsado con el pago local.
      *
-     * @param array<string, mixed> $resource
+     * @param  array<string, mixed>  $resource
      */
     private function handleCaptureRefunded(
         PayPalWebhookEvent $event,
@@ -558,8 +520,7 @@ final class PayPalWebhookService
             if ($payment === null) {
                 $this->markIgnored(
                     event: $event,
-                    reason:
-                        'No se encontró un pago local relacionado con el reembolso.',
+                    reason: 'No se encontró un pago local relacionado con el reembolso.',
                 );
 
                 return;
@@ -576,31 +537,24 @@ final class PayPalWebhookService
 
             $metadata = [
                 'webhook_refund' => [
-                    'event_id' =>
-                        $event->event_id,
+                    'event_id' => $event->event_id,
 
-                    'event_type' =>
-                        $event->event_type,
+                    'event_type' => $event->event_type,
 
-                    'refund_id' =>
-                        $this->nullableString(
-                            $resource['id']
-                                ?? null
-                        ),
+                    'refund_id' => $this->nullableString(
+                        $resource['id']
+                            ?? null
+                    ),
 
-                    'capture_id' =>
-                        $captureId,
+                    'capture_id' => $captureId,
 
-                    'amount' =>
-                        $resource['amount']
+                    'amount' => $resource['amount']
                             ?? null,
 
-                    'status' =>
-                        $resource['status']
+                    'status' => $resource['status']
                             ?? null,
 
-                    'update_time' =>
-                        $resource['update_time']
+                    'update_time' => $resource['update_time']
                             ?? null,
                 ],
             ];
@@ -611,25 +565,21 @@ final class PayPalWebhookService
                 && $refundAmount < $paymentAmount
             ) {
                 $payment->markAsPartiallyRefunded(
-                    providerStatus:
-                        $this->nullableString(
-                            $resource['status']
-                                ?? null
-                        ) ?? 'COMPLETED',
+                    providerStatus: $this->nullableString(
+                        $resource['status']
+                            ?? null
+                    ) ?? 'COMPLETED',
 
-                    providerMetadata:
-                        $metadata,
+                    providerMetadata: $metadata,
                 );
             } else {
                 $payment->markAsRefunded(
-                    providerStatus:
-                        $this->nullableString(
-                            $resource['status']
-                                ?? null
-                        ) ?? 'COMPLETED',
+                    providerStatus: $this->nullableString(
+                        $resource['status']
+                            ?? null
+                    ) ?? 'COMPLETED',
 
-                    providerMetadata:
-                        $metadata,
+                    providerMetadata: $metadata,
                 );
             }
 
@@ -644,7 +594,7 @@ final class PayPalWebhookService
      * El enum actual no posee REVERSED, así que temporalmente se
      * representa como REFUNDED conservando el detalle técnico.
      *
-     * @param array<string, mixed> $resource
+     * @param  array<string, mixed>  $resource
      */
     private function handleCaptureReversed(
         PayPalWebhookEvent $event,
@@ -666,37 +616,30 @@ final class PayPalWebhookService
             if ($payment === null) {
                 $this->markIgnored(
                     event: $event,
-                    reason:
-                        'No se encontró un pago local relacionado con la reversión.',
+                    reason: 'No se encontró un pago local relacionado con la reversión.',
                 );
 
                 return;
             }
 
             $payment->markAsRefunded(
-                providerStatus:
-                    $this->nullableString(
-                        $resource['status']
-                            ?? null
-                    ) ?? 'REVERSED',
+                providerStatus: $this->nullableString(
+                    $resource['status']
+                        ?? null
+                ) ?? 'REVERSED',
 
                 providerMetadata: [
                     'webhook_reversal' => [
-                        'event_id' =>
-                            $event->event_id,
+                        'event_id' => $event->event_id,
 
-                        'event_type' =>
-                            $event->event_type,
+                        'event_type' => $event->event_type,
 
-                        'capture_id' =>
-                            $captureId,
+                        'capture_id' => $captureId,
 
-                        'status_details' =>
-                            $resource['status_details']
+                        'status_details' => $resource['status_details']
                                 ?? null,
 
-                        'update_time' =>
-                            $resource['update_time']
+                        'update_time' => $resource['update_time']
                                 ?? null,
                     ],
                 ],
@@ -768,14 +711,11 @@ final class PayPalWebhookService
         PayPalWebhookEvent $event
     ): void {
         $event->forceFill([
-            'processing_status' =>
-                'processed',
+            'processing_status' => 'processed',
 
-            'failure_message' =>
-                null,
+            'failure_message' => null,
 
-            'processed_at' =>
-                now(),
+            'processed_at' => now(),
         ])->save();
     }
 
@@ -784,34 +724,27 @@ final class PayPalWebhookService
         string $reason,
     ): void {
         $event->forceFill([
-            'processing_status' =>
-                'ignored',
+            'processing_status' => 'ignored',
 
-            'failure_message' =>
-                $reason,
+            'failure_message' => $reason,
 
-            'processed_at' =>
-                now(),
+            'processed_at' => now(),
         ])->save();
 
         Log::notice(
             'PayPal webhook ignored.',
             [
-                'event_id' =>
-                    $event->event_id,
+                'event_id' => $event->event_id,
 
-                'event_type' =>
-                    $event->event_type,
+                'event_type' => $event->event_type,
 
-                'reason' =>
-                    $reason,
+                'reason' => $reason,
             ]
         );
     }
 
     /**
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function resource(
@@ -830,7 +763,7 @@ final class PayPalWebhookService
      * En eventos de reembolso, resource.id es el refund ID y el
      * capture ID normalmente se encuentra en links o supplementary_data.
      *
-     * @param array<string, mixed> $resource
+     * @param  array<string, mixed>  $resource
      */
     private function extractCaptureId(
         string $eventType,
@@ -854,8 +787,7 @@ final class PayPalWebhookService
         }
 
         $relatedIds =
-            $resource['supplementary_data']
-                ['related_ids']
+            $resource['supplementary_data']['related_ids']
                 ?? null;
 
         if (is_array($relatedIds)) {
@@ -905,14 +837,13 @@ final class PayPalWebhookService
     }
 
     /**
-     * @param array<string, mixed> $resource
+     * @param  array<string, mixed>  $resource
      */
     private function extractOrderId(
         array $resource
     ): ?string {
         $relatedIds =
-            $resource['supplementary_data']
-                ['related_ids']
+            $resource['supplementary_data']['related_ids']
                 ?? null;
 
         if (! is_array($relatedIds)) {
@@ -926,7 +857,7 @@ final class PayPalWebhookService
     }
 
     /**
-     * @param array<string, mixed> $resource
+     * @param  array<string, mixed>  $resource
      */
     private function extractIssue(
         array $resource

@@ -14,41 +14,33 @@ final class AdminSizeResource extends JsonResource
         return [
             'id' => (int) $this->id,
 
-            'name' =>
-                (string) $this->size_name,
+            'name' => (string) $this->size_name,
 
-            'portion' =>
-                (int) $this->portion,
+            'portion' => (int) $this->portion,
 
-            'category_prices_count' =>
-                (int) (
-                    $this->category_size_prices_count
-                    ?? 0
-                ),
+            'category_prices_count' => (int) (
+                $this->category_size_prices_count
+                ?? 0
+            ),
 
-            'ingredient_prices_count' =>
-                (int) (
-                    $this->ingredient_size_prices_count
-                    ?? 0
-                ),
+            'ingredient_prices_count' => (int) (
+                $this->ingredient_size_prices_count
+                ?? 0
+            ),
 
-            'cart_items_count' =>
-                (int) (
-                    $this->cart_items_count
-                    ?? 0
-                ),
+            'cart_items_count' => (int) (
+                $this->cart_items_count
+                ?? 0
+            ),
 
-            'order_items_count' =>
-                (int) (
-                    $this->order_items_count
-                    ?? 0
-                ),
+            'order_items_count' => (int) (
+                $this->order_items_count
+                ?? 0
+            ),
 
-            'created_at' =>
-                $this->created_at?->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
 
-            'updated_at' =>
-                $this->updated_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

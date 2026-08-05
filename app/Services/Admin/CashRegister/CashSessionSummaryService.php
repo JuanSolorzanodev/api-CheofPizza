@@ -81,46 +81,37 @@ final class CashSessionSummaryService
 
         return [
             'session' => [
-                'uuid' =>
-                    $session->uuid,
+                'uuid' => $session->uuid,
 
-                'status' =>
-                    $session->status->value,
+                'status' => $session->status->value,
 
-                'opened_at' =>
-                    $session
-                        ->opened_at
-                        ?->toISOString(),
+                'opened_at' => $session
+                    ->opened_at
+                    ?->toISOString(),
 
-                'closed_at' =>
-                    $session
-                        ->closed_at
-                        ?->toISOString(),
+                'closed_at' => $session
+                    ->closed_at
+                    ?->toISOString(),
 
                 'opened_by' => [
-                    'id' =>
-                        $session
-                            ->openedBy
-                            ?->id,
+                    'id' => $session
+                        ->openedBy
+                        ?->id,
 
-                    'name' =>
-                        $session
-                            ->openedBy
-                            ?->full_name,
+                    'name' => $session
+                        ->openedBy
+                        ?->full_name,
                 ],
 
-                'closed_by' =>
-                    $session->closedBy !== null
+                'closed_by' => $session->closedBy !== null
                         ? [
-                            'id' =>
-                                $session
-                                    ->closedBy
-                                    ->id,
+                            'id' => $session
+                                ->closedBy
+                                ->id,
 
-                            'name' =>
-                                $session
-                                    ->closedBy
-                                    ->full_name,
+                            'name' => $session
+                                ->closedBy
+                                ->full_name,
                         ]
                         : null,
             ],
@@ -132,34 +123,27 @@ final class CashSessionSummaryService
             */
 
             'amounts' => [
-                'opening_amount' =>
-                    (float) $session
-                        ->opening_amount,
+                'opening_amount' => (float) $session
+                    ->opening_amount,
 
-                'cash_sales' =>
-                    (float) $cash['amount'],
+                'cash_sales' => (float) $cash['amount'],
 
-                'manual_income' =>
-                    (float) $movements[
+                'manual_income' => (float) $movements[
                         'income_amount'
                     ],
 
-                'manual_expense' =>
-                    (float) $movements[
+                'manual_expense' => (float) $movements[
                         'expense_amount'
                     ],
 
-                'expected_cash' =>
-                    (float) $expectedCash,
+                'expected_cash' => (float) $expectedCash,
 
-                'counted_cash' =>
-                    $session->counted_cash !== null
+                'counted_cash' => $session->counted_cash !== null
                         ? (float) $session
                             ->counted_cash
                         : null,
 
-                'difference' =>
-                    $session->difference !== null
+                'difference' => $session->difference !== null
                         ? (float) $session
                             ->difference
                         : null,
@@ -172,61 +156,47 @@ final class CashSessionSummaryService
             */
 
             'collections' => [
-                'total_collected' =>
-                    (float) $totalCollected,
+                'total_collected' => (float) $totalCollected,
 
                 'cash' => [
-                    'amount' =>
-                        (float) $cash['amount'],
+                    'amount' => (float) $cash['amount'],
 
-                    'transactions' =>
-                        $cash['transactions'],
+                    'transactions' => $cash['transactions'],
                 ],
 
                 'transfer' => [
-                    'amount' =>
-                        (float) $transfer['amount'],
+                    'amount' => (float) $transfer['amount'],
 
-                    'transactions' =>
-                        $transfer['transactions'],
+                    'transactions' => $transfer['transactions'],
                 ],
 
                 'paypal' => [
-                    'amount' =>
-                        (float) $paypal['amount'],
+                    'amount' => (float) $paypal['amount'],
 
-                    'transactions' =>
-                        $paypal['transactions'],
+                    'transactions' => $paypal['transactions'],
                 ],
             ],
 
             'activity' => [
-                'cash_orders' =>
-                    $cash['transactions'],
+                'cash_orders' => $cash['transactions'],
 
-                'transfer_orders' =>
-                    $transfer['transactions'],
+                'transfer_orders' => $transfer['transactions'],
 
-                'paypal_payments' =>
-                    $paypal['transactions'],
+                'paypal_payments' => $paypal['transactions'],
 
-                'collected_transactions' =>
-                    $cash['transactions']
+                'collected_transactions' => $cash['transactions']
                     + $transfer['transactions']
                     + $paypal['transactions'],
 
-                'income_movements' =>
-                    $movements[
+                'income_movements' => $movements[
                         'income_count'
                     ],
 
-                'expense_movements' =>
-                    $movements[
+                'expense_movements' => $movements[
                         'expense_count'
                     ],
 
-                'movements_total' =>
-                    $movements[
+                'movements_total' => $movements[
                         'income_count'
                     ]
                     + $movements[
@@ -317,17 +287,15 @@ final class CashSessionSummaryService
             ->first();
 
         return [
-            'amount' =>
-                $this->money(
-                    $row->amount ?? 0
-                ),
+            'amount' => $this->money(
+                $row->amount ?? 0
+            ),
 
-            'transactions' =>
-                (int) (
-                    $row
-                        ->transactions_count
-                    ?? 0
-                ),
+            'transactions' => (int) (
+                $row
+                    ->transactions_count
+                ?? 0
+            ),
         ];
     }
 
@@ -413,17 +381,15 @@ final class CashSessionSummaryService
             ->first();
 
         return [
-            'amount' =>
-                $this->money(
-                    $row->amount ?? 0
-                ),
+            'amount' => $this->money(
+                $row->amount ?? 0
+            ),
 
-            'transactions' =>
-                (int) (
-                    $row
-                        ->transactions_count
-                    ?? 0
-                ),
+            'transactions' => (int) (
+                $row
+                    ->transactions_count
+                ?? 0
+            ),
         ];
     }
 
@@ -469,17 +435,15 @@ final class CashSessionSummaryService
             ->first();
 
         return [
-            'amount' =>
-                $this->money(
-                    $row->amount ?? 0
-                ),
+            'amount' => $this->money(
+                $row->amount ?? 0
+            ),
 
-            'transactions' =>
-                (int) (
-                    $row
-                        ->transactions_count
-                    ?? 0
-                ),
+            'transactions' => (int) (
+                $row
+                    ->transactions_count
+                ?? 0
+            ),
         ];
     }
 
@@ -530,29 +494,25 @@ final class CashSessionSummaryService
         );
 
         return [
-            'income_amount' =>
-                $this->money(
-                    $income->amount ?? 0
-                ),
+            'income_amount' => $this->money(
+                $income->amount ?? 0
+            ),
 
-            'expense_amount' =>
-                $this->money(
-                    $expense->amount ?? 0
-                ),
+            'expense_amount' => $this->money(
+                $expense->amount ?? 0
+            ),
 
-            'income_count' =>
-                (int) (
-                    $income
-                        ->movements_count
-                    ?? 0
-                ),
+            'income_count' => (int) (
+                $income
+                    ->movements_count
+                ?? 0
+            ),
 
-            'expense_count' =>
-                (int) (
-                    $expense
-                        ->movements_count
-                    ?? 0
-                ),
+            'expense_count' => (int) (
+                $expense
+                    ->movements_count
+                ?? 0
+            ),
         ];
     }
 

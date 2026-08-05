@@ -259,7 +259,7 @@ final class UpdatePromotionRequest extends FormRequest
     }
 
     /**
-     * @param array<int, mixed> $details
+     * @param  array<int, mixed>  $details
      */
     private function validateFixedCombo(
         Validator $validator,
@@ -292,8 +292,7 @@ final class UpdatePromotionRequest extends FormRequest
             ->map(
                 static fn (
                     mixed $id
-                ): int =>
-                    (int) $id
+                ): int => (int) $id
             )
             ->unique()
             ->values();
@@ -309,12 +308,11 @@ final class UpdatePromotionRequest extends FormRequest
             ->groupBy(
                 static fn (
                     array $detail
-                ): string =>
-                    (int) (
-                        $detail[
-                            'category_id'
-                        ] ?? 0
-                    )
+                ): string => (int) (
+                    $detail[
+                        'category_id'
+                    ] ?? 0
+                )
                     .'|'.
                     (int) (
                         $detail[
@@ -325,8 +323,7 @@ final class UpdatePromotionRequest extends FormRequest
             ->filter(
                 static fn (
                     $rows
-                ): bool =>
-                    $rows->count() > 1
+                ): bool => $rows->count() > 1
             );
 
         if ($duplicates->isNotEmpty()) {
@@ -359,7 +356,7 @@ final class UpdatePromotionRequest extends FormRequest
     }
 
     /**
-     * @param array<int, mixed> $sizePrices
+     * @param  array<int, mixed>  $sizePrices
      */
     private function validateSizePrices(
         Validator $validator,
@@ -378,17 +375,15 @@ final class UpdatePromotionRequest extends FormRequest
             ->groupBy(
                 static fn (
                     array $row
-                ): int =>
-                    (int) (
-                        $row['size_id']
-                        ?? 0
-                    )
+                ): int => (int) (
+                    $row['size_id']
+                    ?? 0
+                )
             )
             ->filter(
                 static fn (
                     $rows
-                ): bool =>
-                    $rows->count() > 1
+                ): bool => $rows->count() > 1
             );
 
         if ($duplicates->isNotEmpty()) {
@@ -405,56 +400,39 @@ final class UpdatePromotionRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'name' =>
-                'nombre',
+            'name' => 'nombre',
 
-            'slug' =>
-                'slug',
+            'slug' => 'slug',
 
-            'description' =>
-                'descripción',
+            'description' => 'descripción',
 
-            'banner_image_url' =>
-                'URL del banner',
+            'banner_image_url' => 'URL del banner',
 
-            'type' =>
-                'tipo',
+            'type' => 'tipo',
 
-            'selection_quantity' =>
-                'cantidad de selección',
+            'selection_quantity' => 'cantidad de selección',
 
-            'price' =>
-                'precio',
+            'price' => 'precio',
 
-            'starts_at' =>
-                'fecha de inicio',
+            'starts_at' => 'fecha de inicio',
 
-            'ends_at' =>
-                'fecha de finalización',
+            'ends_at' => 'fecha de finalización',
 
-            'is_active' =>
-                'estado',
+            'is_active' => 'estado',
 
-            'details' =>
-                'reglas del combo',
+            'details' => 'reglas del combo',
 
-            'details.*.category_id' =>
-                'categoría',
+            'details.*.category_id' => 'categoría',
 
-            'details.*.size_id' =>
-                'tamaño',
+            'details.*.size_id' => 'tamaño',
 
-            'details.*.required_quantity' =>
-                'cantidad requerida',
+            'details.*.required_quantity' => 'cantidad requerida',
 
-            'size_prices' =>
-                'precios por tamaño',
+            'size_prices' => 'precios por tamaño',
 
-            'size_prices.*.size_id' =>
-                'tamaño',
+            'size_prices.*.size_id' => 'tamaño',
 
-            'size_prices.*.price' =>
-                'precio',
+            'size_prices.*.price' => 'precio',
         ];
     }
 
@@ -464,53 +442,37 @@ final class UpdatePromotionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' =>
-                'El nombre de la promoción es obligatorio.',
+            'name.required' => 'El nombre de la promoción es obligatorio.',
 
-            'name.unique' =>
-                'Ya existe una promoción con este nombre.',
+            'name.unique' => 'Ya existe una promoción con este nombre.',
 
-            'slug.required' =>
-                'El slug es obligatorio.',
+            'slug.required' => 'El slug es obligatorio.',
 
-            'slug.unique' =>
-                'Ya existe una promoción con este slug.',
+            'slug.unique' => 'Ya existe una promoción con este slug.',
 
-            'slug.regex' =>
-                'El slug solo puede contener letras minúsculas, números y guiones.',
+            'slug.regex' => 'El slug solo puede contener letras minúsculas, números y guiones.',
 
-            'type.required' =>
-                'Selecciona el tipo de promoción.',
+            'type.required' => 'Selecciona el tipo de promoción.',
 
-            'type.in' =>
-                'El tipo de promoción seleccionado no es válido.',
+            'type.in' => 'El tipo de promoción seleccionado no es válido.',
 
-            'price.numeric' =>
-                'El precio debe ser un valor numérico.',
+            'price.numeric' => 'El precio debe ser un valor numérico.',
 
-            'starts_at.required' =>
-                'La fecha de inicio es obligatoria.',
+            'starts_at.required' => 'La fecha de inicio es obligatoria.',
 
-            'ends_at.required' =>
-                'La fecha de finalización es obligatoria.',
+            'ends_at.required' => 'La fecha de finalización es obligatoria.',
 
-            'ends_at.after' =>
-                'La fecha de finalización debe ser posterior al inicio.',
+            'ends_at.after' => 'La fecha de finalización debe ser posterior al inicio.',
 
-            'details.*.category_id.exists' =>
-                'Una de las categorías seleccionadas no existe.',
+            'details.*.category_id.exists' => 'Una de las categorías seleccionadas no existe.',
 
-            'details.*.size_id.exists' =>
-                'Uno de los tamaños seleccionados no existe.',
+            'details.*.size_id.exists' => 'Uno de los tamaños seleccionados no existe.',
 
-            'size_prices.*.size_id.distinct' =>
-                'No puedes repetir tamaños.',
+            'size_prices.*.size_id.distinct' => 'No puedes repetir tamaños.',
 
-            'size_prices.*.size_id.exists' =>
-                'Uno de los tamaños seleccionados no existe.',
+            'size_prices.*.size_id.exists' => 'Uno de los tamaños seleccionados no existe.',
 
-            'size_prices.*.price.gt' =>
-                'El precio por tamaño debe ser mayor a cero.',
+            'size_prices.*.price.gt' => 'El precio por tamaño debe ser mayor a cero.',
         ];
     }
 }

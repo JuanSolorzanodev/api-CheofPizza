@@ -29,20 +29,15 @@ final class StorePaymentReceiptRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'receipt.required' =>
-                'Debes seleccionar un comprobante.',
+            'receipt.required' => 'Debes seleccionar un comprobante.',
 
-            'receipt.file' =>
-                'El comprobante seleccionado no es un archivo válido.',
+            'receipt.file' => 'El comprobante seleccionado no es un archivo válido.',
 
-            'receipt.mimes' =>
-                'El comprobante debe ser JPG, PNG, WebP o PDF.',
+            'receipt.mimes' => 'El comprobante debe ser JPG, PNG, WebP o PDF.',
 
-            'receipt.mimetypes' =>
-                'El tipo real del comprobante no está permitido.',
+            'receipt.mimetypes' => 'El tipo real del comprobante no está permitido.',
 
-            'receipt.max' =>
-                'El comprobante no puede superar los 5 MB.',
+            'receipt.max' => 'El comprobante no puede superar los 5 MB.',
         ];
     }
 }

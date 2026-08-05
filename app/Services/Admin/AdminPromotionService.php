@@ -28,10 +28,9 @@ final class AdminPromotionService
             ->orderBy('promotion_name')
             ->get()
             ->each(
-                fn (Promotion $promotion): Promotion =>
-                    $this->appendDeleteState(
-                        $promotion
-                    )
+                fn (Promotion $promotion): Promotion => $this->appendDeleteState(
+                    $promotion
+                )
             );
     }
 
@@ -53,7 +52,7 @@ final class AdminPromotionService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function create(
         array $data
@@ -80,7 +79,7 @@ final class AdminPromotionService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function update(
         Promotion $promotion,
@@ -144,8 +143,7 @@ final class AdminPromotionService
                 ->order_items_count > 0
         ) {
             throw ValidationException::withMessages([
-                'promotion' =>
-                    'No puedes eliminar esta promoción porque está registrada en pedidos históricos. Desactívala en lugar de eliminarla.',
+                'promotion' => 'No puedes eliminar esta promoción porque está registrada en pedidos históricos. Desactívala en lugar de eliminarla.',
             ]);
         }
 
@@ -154,8 +152,7 @@ final class AdminPromotionService
                 ->cart_items_count > 0
         ) {
             throw ValidationException::withMessages([
-                'promotion' =>
-                    'No puedes eliminar esta promoción porque está siendo utilizada en carritos.',
+                'promotion' => 'No puedes eliminar esta promoción porque está siendo utilizada en carritos.',
             ]);
         }
 
@@ -177,8 +174,7 @@ final class AdminPromotionService
     }
 
     /**
-     * @param array<string, mixed> $data
-     *
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function promotionValues(
@@ -189,57 +185,47 @@ final class AdminPromotionService
             Promotion::TYPE_FIXED_COMBO;
 
         return [
-            'promotion_name' =>
-                trim(
-                    (string) $data['name']
-                ),
+            'promotion_name' => trim(
+                (string) $data['name']
+            ),
 
-            'slug' =>
-                trim(
-                    (string) $data['slug']
-                ),
+            'slug' => trim(
+                (string) $data['slug']
+            ),
 
-            'description' =>
-                $this->nullableText(
-                    $data['description']
-                    ?? null
-                ),
+            'description' => $this->nullableText(
+                $data['description']
+                ?? null
+            ),
 
-            'banner_image_url' =>
-                $this->nullableText(
-                    $data['banner_image_url']
-                    ?? null
-                ),
+            'banner_image_url' => $this->nullableText(
+                $data['banner_image_url']
+                ?? null
+            ),
 
-            'promotion_type' =>
-                (string) $data['type'],
+            'promotion_type' => (string) $data['type'],
 
-            'selection_quantity' =>
-                (int) $data[
+            'selection_quantity' => (int) $data[
                     'selection_quantity'
                 ],
 
-            'promotion_price' =>
-                $isFixedCombo
+            'promotion_price' => $isFixedCombo
                     ? round(
                         (float) $data['price'],
                         2
                     )
                     : 0,
 
-            'starts_at' =>
-                $data['starts_at'],
+            'starts_at' => $data['starts_at'],
 
-            'ends_at' =>
-                $data['ends_at'],
+            'ends_at' => $data['ends_at'],
 
-            'is_active' =>
-                (bool) $data['is_active'],
+            'is_active' => (bool) $data['is_active'],
         ];
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     private function syncConfiguration(
         Promotion $promotion,
@@ -258,26 +244,21 @@ final class AdminPromotionService
                 ->delete();
 
             foreach (
-                $data['details'] ?? []
-                as $detail
+                $data['details'] ?? [] as $detail
             ) {
                 PromotionDetail::query()
                     ->create([
-                        'promotion_id' =>
-                            (int) $promotion->id,
+                        'promotion_id' => (int) $promotion->id,
 
-                        'category_id' =>
-                            (int) $detail[
+                        'category_id' => (int) $detail[
                                 'category_id'
                             ],
 
-                        'size_id' =>
-                            (int) $detail[
+                        'size_id' => (int) $detail[
                                 'size_id'
                             ],
 
-                        'required_quantity' =>
-                            (int) $detail[
+                        'required_quantity' => (int) $detail[
                                 'required_quantity'
                             ],
                     ]);
@@ -297,17 +278,14 @@ final class AdminPromotionService
                 static fn (
                     array $row
                 ): array => [
-                    'promotion_id' =>
-                        (int) $promotion->id,
+                    'promotion_id' => (int) $promotion->id,
 
-                    'size_id' =>
-                        (int) $row['size_id'],
+                    'size_id' => (int) $row['size_id'],
 
-                    'fixed_price' =>
-                        round(
-                            (float) $row['price'],
-                            2
-                        ),
+                    'fixed_price' => round(
+                        (float) $row['price'],
+                        2
+                    ),
 
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -326,11 +304,10 @@ final class AdminPromotionService
             )
             ->when(
                 $sizeIds !== [],
-                static fn ($query) =>
-                    $query->whereNotIn(
-                        'size_id',
-                        $sizeIds
-                    )
+                static fn ($query) => $query->whereNotIn(
+                    'size_id',
+                    $sizeIds
+                )
             )
             ->delete();
 
@@ -361,13 +338,12 @@ final class AdminPromotionService
         if (
             $promotion->starts_at === null ||
             $promotion->ends_at === null ||
-            !$promotion->ends_at->greaterThan(
+            ! $promotion->ends_at->greaterThan(
                 $promotion->starts_at
             )
         ) {
             throw ValidationException::withMessages([
-                'is_active' =>
-                    'La promoción necesita un periodo de vigencia válido.',
+                'is_active' => 'La promoción necesita un periodo de vigencia válido.',
             ]);
         }
 
@@ -383,8 +359,7 @@ final class AdminPromotionService
                     ->promotion_price <= 0
             ) {
                 throw ValidationException::withMessages([
-                    'is_active' =>
-                        'El combo necesita reglas y un precio válido antes de activarse.',
+                    'is_active' => 'El combo necesita reglas y un precio válido antes de activarse.',
                 ]);
             }
 
@@ -397,8 +372,7 @@ final class AdminPromotionService
                 ->isEmpty()
         ) {
             throw ValidationException::withMessages([
-                'is_active' =>
-                    'Configura al menos un precio por tamaño antes de activar la promoción.',
+                'is_active' => 'Configura al menos un precio por tamaño antes de activar la promoción.',
             ]);
         }
     }
@@ -432,40 +406,36 @@ final class AdminPromotionService
     private function relations(): array
     {
         return [
-            'promotionDetails' =>
-                static fn ($query) =>
-                    $query
-                        ->with([
-                            'category:id,category_name',
-                            'size:id,size_name,portion',
-                        ])
-                        ->orderBy('id'),
+            'promotionDetails' => static fn ($query) => $query
+                ->with([
+                    'category:id,category_name',
+                    'size:id,size_name,portion',
+                ])
+                ->orderBy('id'),
 
-            'sizePrices' =>
-                static fn ($query) =>
-                    $query
-                        ->with(
-                            'size:id,size_name,portion'
-                        )
-                        ->join(
-                            'sizes',
-                            'sizes.id',
-                            '=',
-                            'promotion_size_prices.size_id'
-                        )
-                        ->select(
-                            'promotion_size_prices.*'
-                        )
-                        ->orderBy(
-                            'sizes.portion'
-                        ),
+            'sizePrices' => static fn ($query) => $query
+                ->with(
+                    'size:id,size_name,portion'
+                )
+                ->join(
+                    'sizes',
+                    'sizes.id',
+                    '=',
+                    'promotion_size_prices.size_id'
+                )
+                ->select(
+                    'promotion_size_prices.*'
+                )
+                ->orderBy(
+                    'sizes.portion'
+                ),
         ];
     }
 
     private function nullableText(
         mixed $value
     ): ?string {
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             return null;
         }
 

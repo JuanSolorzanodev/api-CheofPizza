@@ -2,16 +2,16 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminRole    = Role::where('role_name', 'admin')->firstOrFail();
+        $adminRole = Role::where('role_name', 'admin')->firstOrFail();
         $customerRole = Role::where('role_name', 'customer')->firstOrFail();
         $operatorRole = Role::where('role_name', 'operator')->firstOrFail();
 

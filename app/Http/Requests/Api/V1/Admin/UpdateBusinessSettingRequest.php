@@ -51,23 +51,19 @@ final class UpdateBusinessSettingRequest extends FormRequest
             'business' => [
                 ...$business,
 
-                'name' =>
-                $this->trimmed(
+                'name' => $this->trimmed(
                     $business['name'] ?? null,
                 ),
 
-                'phone' =>
-                $this->nullableTrimmed(
+                'phone' => $this->nullableTrimmed(
                     $business['phone'] ?? null,
                 ),
 
-                'email' =>
-                $this->nullableLowercase(
+                'email' => $this->nullableLowercase(
                     $business['email'] ?? null,
                 ),
 
-                'address' =>
-                $this->nullableTrimmed(
+                'address' => $this->nullableTrimmed(
                     $business['address'] ?? null,
                 ),
             ],
@@ -75,26 +71,22 @@ final class UpdateBusinessSettingRequest extends FormRequest
             'store' => [
                 ...$store,
 
-                'accepts_orders' =>
-                $this->normalizedBoolean(
+                'accepts_orders' => $this->normalizedBoolean(
                     $store['accepts_orders']
                         ?? null,
                 ),
 
-                'closed_message' =>
-                $this->nullableTrimmed(
+                'closed_message' => $this->nullableTrimmed(
                     $store['closed_message'] ?? null,
                 ),
 
-                'currency' =>
-                strtoupper(
+                'currency' => strtoupper(
                     $this->trimmed(
                         $store['currency'] ?? 'USD',
                     ),
                 ),
 
-                'timezone' =>
-                $this->trimmed(
+                'timezone' => $this->trimmed(
                     $store['timezone']
                         ?? 'America/Guayaquil',
                 ),
@@ -103,14 +95,12 @@ final class UpdateBusinessSettingRequest extends FormRequest
             'delivery' => [
                 ...$delivery,
 
-                'pickup_enabled' =>
-                $this->normalizedBoolean(
+                'pickup_enabled' => $this->normalizedBoolean(
                     $delivery['pickup_enabled']
                         ?? null,
                 ),
 
-                'delivery_enabled' =>
-                $this->normalizedBoolean(
+                'delivery_enabled' => $this->normalizedBoolean(
                     $delivery['delivery_enabled']
                         ?? null,
                 ),
@@ -119,20 +109,17 @@ final class UpdateBusinessSettingRequest extends FormRequest
             'payments' => [
                 ...$payments,
 
-                'paypal_enabled' =>
-                $this->normalizedBoolean(
+                'paypal_enabled' => $this->normalizedBoolean(
                     $payments['paypal_enabled']
                         ?? null,
                 ),
 
-                'transfer_enabled' =>
-                $this->normalizedBoolean(
+                'transfer_enabled' => $this->normalizedBoolean(
                     $payments['transfer_enabled']
                         ?? null,
                 ),
 
-                'cash_enabled' =>
-                $this->normalizedBoolean(
+                'cash_enabled' => $this->normalizedBoolean(
                     $payments['cash_enabled']
                         ?? null,
                 ),
@@ -141,19 +128,16 @@ final class UpdateBusinessSettingRequest extends FormRequest
             'whatsapp' => [
                 ...$whatsapp,
 
-                'active' =>
-                $this->normalizedBoolean(
+                'active' => $this->normalizedBoolean(
                     $whatsapp['active']
                         ?? null,
                 ),
 
-                'phone' =>
-                $this->nullableTrimmed(
+                'phone' => $this->nullableTrimmed(
                     $whatsapp['phone'] ?? null,
                 ),
 
-                'receipt_template' =>
-                $this->nullableTrimmed(
+                'receipt_template' => $this->nullableTrimmed(
                     $whatsapp['receipt_template']
                         ?? null,
                 ),
@@ -303,8 +287,7 @@ final class UpdateBusinessSettingRequest extends FormRequest
                 'max:30',
                 'regex:/^[0-9+()\-\s]+$/',
                 Rule::requiredIf(
-                    fn(): bool =>
-                    $this->normalizedBoolean(
+                    fn (): bool => $this->normalizedBoolean(
                         $this->input(
                             'whatsapp.active',
                         ),
@@ -414,23 +397,17 @@ final class UpdateBusinessSettingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'business.name.required' =>
-            'El nombre del negocio es obligatorio.',
+            'business.name.required' => 'El nombre del negocio es obligatorio.',
 
-            'business.phone.regex' =>
-            'El teléfono del negocio no tiene un formato válido.',
+            'business.phone.regex' => 'El teléfono del negocio no tiene un formato válido.',
 
-            'store.estimated_minutes.min' =>
-            'El tiempo estimado debe ser de al menos 5 minutos.',
+            'store.estimated_minutes.min' => 'El tiempo estimado debe ser de al menos 5 minutos.',
 
-            'store.estimated_minutes.max' =>
-            'El tiempo estimado no puede superar 240 minutos.',
+            'store.estimated_minutes.max' => 'El tiempo estimado no puede superar 240 minutos.',
 
-            'whatsapp.phone.required' =>
-            'El teléfono de WhatsApp es obligatorio cuando el servicio está activo.',
+            'whatsapp.phone.required' => 'El teléfono de WhatsApp es obligatorio cuando el servicio está activo.',
 
-            'whatsapp.phone.regex' =>
-            'El teléfono de WhatsApp no tiene un formato válido.',
+            'whatsapp.phone.regex' => 'El teléfono de WhatsApp no tiene un formato válido.',
         ];
     }
 

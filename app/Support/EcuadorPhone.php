@@ -15,7 +15,7 @@ final class EcuadorPhone
      * +593991234567  → +593991234567
      */
     public static function normalize(
-        string|null $value,
+        ?string $value,
     ): string {
         $digits = preg_replace(
             '/\D+/',
@@ -64,14 +64,12 @@ final class EcuadorPhone
     }
 
     public static function isValid(
-        string|null $value,
+        ?string $value,
     ): bool {
         return self::normalize(
             $value,
         ) !== '';
     }
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }

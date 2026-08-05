@@ -54,14 +54,11 @@ final class HourlySalesAnalyticsService
         );
 
         return [
-            'period' =>
-                $range->toArray(),
+            'period' => $range->toArray(),
 
-            'summary' =>
-                $this->calculateSummary($hours),
+            'summary' => $this->calculateSummary($hours),
 
-            'hours' =>
-                $hours,
+            'hours' => $hours,
         ];
     }
 
@@ -111,8 +108,7 @@ final class HourlySalesAnalyticsService
             ->orderBy('sale_hour')
             ->get()
             ->keyBy(
-                static fn (object $row): int =>
-                    (int) $row->sale_hour
+                static fn (object $row): int => (int) $row->sale_hour
             );
     }
 
@@ -157,8 +153,7 @@ final class HourlySalesAnalyticsService
             ->orderBy('sale_hour')
             ->get()
             ->keyBy(
-                static fn (object $row): int =>
-                    (int) $row->sale_hour
+                static fn (object $row): int => (int) $row->sale_hour
             );
     }
 
@@ -220,8 +215,7 @@ final class HourlySalesAnalyticsService
             ->orderBy('sale_hour')
             ->get()
             ->keyBy(
-                static fn (object $row): int =>
-                    (int) $row->sale_hour
+                static fn (object $row): int => (int) $row->sale_hour
             );
     }
 
@@ -287,8 +281,7 @@ final class HourlySalesAnalyticsService
             ->orderBy('sale_hour')
             ->get()
             ->keyBy(
-                static fn (object $row): int =>
-                    (int) $row->sale_hour
+                static fn (object $row): int => (int) $row->sale_hour
             );
     }
 
@@ -345,20 +338,18 @@ final class HourlySalesAnalyticsService
             ->orderBy('sale_hour')
             ->get()
             ->keyBy(
-                static fn (object $row): int =>
-                    (int) $row->sale_hour
+                static fn (object $row): int => (int) $row->sale_hour
             );
     }
 
     /**
      * Construye las 24 franjas horarias.
      *
-     * @param Collection<int, object> $deliveredOrders
-     * @param Collection<int, object> $cancelledOrders
-     * @param Collection<int, object> $standalonePizzas
-     * @param Collection<int, object> $promotionPizzas
-     * @param Collection<int, object> $promotions
-     *
+     * @param  Collection<int, object>  $deliveredOrders
+     * @param  Collection<int, object>  $cancelledOrders
+     * @param  Collection<int, object>  $standalonePizzas
+     * @param  Collection<int, object>  $promotionPizzas
+     * @param  Collection<int, object>  $promotions
      * @return list<array{
      *     hour: int,
      *     label: string,
@@ -465,41 +456,30 @@ final class HourlySalesAnalyticsService
                     : 0.0;
 
             $result[] = [
-                'hour' =>
+                'hour' => $hour,
+
+                'label' => sprintf(
+                    '%02d:00',
                     $hour,
+                ),
 
-                'label' =>
-                    sprintf(
-                        '%02d:00',
-                        $hour,
-                    ),
+                'gross_sales' => (float) $grossSales,
 
-                'gross_sales' =>
-                    (float) $grossSales,
+                'refunds' => (float) $refunds,
 
-                'refunds' =>
-                    (float) $refunds,
+                'net_sales' => (float) $netSales,
 
-                'net_sales' =>
-                    (float) $netSales,
+                'delivered_orders' => $deliveredCount,
 
-                'delivered_orders' =>
-                    $deliveredCount,
+                'cancelled_orders' => $cancelledCount,
 
-                'cancelled_orders' =>
-                    $cancelledCount,
+                'pizzas_sold' => $pizzasSold,
 
-                'pizzas_sold' =>
-                    $pizzasSold,
+                'promotions_sold' => $promotionsSold,
 
-                'promotions_sold' =>
-                    $promotionsSold,
+                'average_ticket' => (float) $averageTicket,
 
-                'average_ticket' =>
-                    (float) $averageTicket,
-
-                'cancellation_rate' =>
-                    $cancellationRate,
+                'cancellation_rate' => $cancellationRate,
             ];
         }
 
@@ -507,8 +487,7 @@ final class HourlySalesAnalyticsService
     }
 
     /**
-     * @param list<array<string, int|float|string>> $hours
-     *
+     * @param  list<array<string, int|float|string>>  $hours
      * @return array{
      *     gross_sales: float,
      *     net_sales: float,
@@ -603,54 +582,41 @@ final class HourlySalesAnalyticsService
                 : '0.00';
 
         return [
-            'gross_sales' =>
-                (float) $grossSales,
+            'gross_sales' => (float) $grossSales,
 
-            'net_sales' =>
-                (float) $netSales,
+            'net_sales' => (float) $netSales,
 
-            'delivered_orders' =>
-                $deliveredOrders,
+            'delivered_orders' => $deliveredOrders,
 
-            'cancelled_orders' =>
-                $cancelledOrders,
+            'cancelled_orders' => $cancelledOrders,
 
-            'pizzas_sold' =>
-                $pizzasSold,
+            'pizzas_sold' => $pizzasSold,
 
-            'promotions_sold' =>
-                $promotionsSold,
+            'promotions_sold' => $promotionsSold,
 
-            'average_ticket' =>
-                (float) $averageTicket,
+            'average_ticket' => (float) $averageTicket,
 
-            'peak_sales_hour' =>
-                $peakSalesHour,
+            'peak_sales_hour' => $peakSalesHour,
 
-            'peak_sales_hour_label' =>
-                $peakSalesHour !== null
+            'peak_sales_hour_label' => $peakSalesHour !== null
                     ? sprintf(
                         '%02d:00',
                         $peakSalesHour,
                     )
                     : null,
 
-            'peak_sales_amount' =>
-                (float) $peakSalesAmount,
+            'peak_sales_amount' => (float) $peakSalesAmount,
 
-            'peak_orders_hour' =>
-                $peakOrdersHour,
+            'peak_orders_hour' => $peakOrdersHour,
 
-            'peak_orders_hour_label' =>
-                $peakOrdersHour !== null
+            'peak_orders_hour_label' => $peakOrdersHour !== null
                     ? sprintf(
                         '%02d:00',
                         $peakOrdersHour,
                     )
                     : null,
 
-            'peak_orders_count' =>
-                $peakOrdersCount,
+            'peak_orders_count' => $peakOrdersCount,
         ];
     }
 }

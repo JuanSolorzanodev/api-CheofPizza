@@ -67,11 +67,10 @@ final class StorePizzaRequest extends FormRequest
                     'pizzas',
                     'pizza_name'
                 )->where(
-                    static fn ($query) =>
-                        $query->where(
-                            'category_id',
-                            $categoryId
-                        )
+                    static fn ($query) => $query->where(
+                        'category_id',
+                        $categoryId
+                    )
                 ),
             ],
 
@@ -124,14 +123,11 @@ final class StorePizzaRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.unique' =>
-                'Ya existe una pizza con este nombre dentro de la categoría seleccionada.',
+            'name.unique' => 'Ya existe una pizza con este nombre dentro de la categoría seleccionada.',
 
-            'ingredient_ids.min' =>
-                'Selecciona al menos un ingrediente.',
+            'ingredient_ids.min' => 'Selecciona al menos un ingrediente.',
 
-            'ingredient_ids.*.distinct' =>
-                'No puedes repetir ingredientes.',
+            'ingredient_ids.*.distinct' => 'No puedes repetir ingredientes.',
         ];
     }
 }

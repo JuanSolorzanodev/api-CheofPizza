@@ -38,50 +38,43 @@ final class AuthController
                     $customerRoleId,
                 ): User {
                     return User::query()->create([
-                        'role_id' =>
-                            $customerRoleId,
+                        'role_id' => $customerRoleId,
 
-                        'first_name' =>
-                            $request
-                                ->string(
-                                    'first_name',
-                                )
-                                ->toString(),
+                        'first_name' => $request
+                            ->string(
+                                'first_name',
+                            )
+                            ->toString(),
 
-                        'last_name' =>
-                            $request
-                                ->string(
-                                    'last_name',
-                                )
-                                ->toString(),
+                        'last_name' => $request
+                            ->string(
+                                'last_name',
+                            )
+                            ->toString(),
 
-                        'phone' =>
-                            $request
-                                ->string(
-                                    'phone',
-                                )
-                                ->toString(),
+                        'phone' => $request
+                            ->string(
+                                'phone',
+                            )
+                            ->toString(),
 
-                        'email' =>
-                            $request
-                                ->string(
-                                    'email',
-                                )
-                                ->toString(),
+                        'email' => $request
+                            ->string(
+                                'email',
+                            )
+                            ->toString(),
 
                         /*
                          * El modelo User utiliza el cast "hashed".
                          * Laravel almacenará la contraseña de forma segura.
                          */
-                        'password' =>
-                            $request
-                                ->string(
-                                    'password',
-                                )
-                                ->toString(),
+                        'password' => $request
+                            ->string(
+                                'password',
+                            )
+                            ->toString(),
 
-                        'is_active' =>
-                            true,
+                        'is_active' => true,
                     ]);
                 },
                 attempts: 3,
@@ -103,14 +96,11 @@ final class AuthController
                 ->createResponse(
                     user: $user,
 
-                    tokenName:
-                        'password-web',
+                    tokenName: 'password-web',
 
-                    cartSessionId:
-                        $cartSessionId,
+                    cartSessionId: $cartSessionId,
 
-                    message:
-                        'Tu cuenta fue creada correctamente.',
+                    message: 'Tu cuenta fue creada correctamente.',
 
                     status: 201,
                 );
@@ -118,13 +108,11 @@ final class AuthController
             report($exception);
 
             return ApiResponse::error(
-                message:
-                    'No fue posible crear tu cuenta en este momento.',
+                message: 'No fue posible crear tu cuenta en este momento.',
 
                 status: 500,
 
-                code:
-                    'REGISTRATION_FAILED',
+                code: 'REGISTRATION_FAILED',
             );
         }
     }
@@ -164,13 +152,11 @@ final class AuthController
                 )
             ) {
                 return ApiResponse::error(
-                    message:
-                        'El correo o la contraseña no son correctos.',
+                    message: 'El correo o la contraseña no son correctos.',
 
                     status: 422,
 
-                    code:
-                        'INVALID_CREDENTIALS',
+                    code: 'INVALID_CREDENTIALS',
 
                     errors: [
                         'email' => [
@@ -182,13 +168,11 @@ final class AuthController
 
             if (! $user->is_active) {
                 return ApiResponse::error(
-                    message:
-                        'Tu cuenta se encuentra bloqueada. Comunícate con el administrador.',
+                    message: 'Tu cuenta se encuentra bloqueada. Comunícate con el administrador.',
 
                     status: 403,
 
-                    code:
-                        'USER_INACTIVE',
+                    code: 'USER_INACTIVE',
                 );
             }
 
@@ -208,23 +192,19 @@ final class AuthController
                 ->createResponse(
                     user: $user,
 
-                    tokenName:
-                        'password-web',
+                    tokenName: 'password-web',
 
-                    cartSessionId:
-                        $cartSessionId,
+                    cartSessionId: $cartSessionId,
                 );
         } catch (Throwable $exception) {
             report($exception);
 
             return ApiResponse::error(
-                message:
-                    'No fue posible iniciar sesión en este momento.',
+                message: 'No fue posible iniciar sesión en este momento.',
 
                 status: 500,
 
-                code:
-                    'AUTHENTICATION_FAILED',
+                code: 'AUTHENTICATION_FAILED',
             );
         }
     }
@@ -284,25 +264,21 @@ final class AuthController
                 )
             ) {
                 return ApiResponse::error(
-                    message:
-                        'La cuenta de Google no proporcionó un correo válido.',
+                    message: 'La cuenta de Google no proporcionó un correo válido.',
 
                     status: 422,
 
-                    code:
-                        'GOOGLE_EMAIL_REQUIRED',
+                    code: 'GOOGLE_EMAIL_REQUIRED',
                 );
             }
 
             if ($firebaseUid === '') {
                 return ApiResponse::error(
-                    message:
-                        'No fue posible identificar la cuenta de Google.',
+                    message: 'No fue posible identificar la cuenta de Google.',
 
                     status: 422,
 
-                    code:
-                        'GOOGLE_UID_REQUIRED',
+                    code: 'GOOGLE_UID_REQUIRED',
                 );
             }
 
@@ -339,13 +315,11 @@ final class AuthController
                 )
             ) {
                 return ApiResponse::error(
-                    message:
-                        'Completa tus datos para crear tu cuenta.',
+                    message: 'Completa tus datos para crear tu cuenta.',
 
                     status: 422,
 
-                    code:
-                        'PROFILE_COMPLETION_REQUIRED',
+                    code: 'PROFILE_COMPLETION_REQUIRED',
 
                     errors: [
                         'phone' => [
@@ -398,41 +372,34 @@ final class AuthController
                             : $googleLastName;
 
                     return User::query()->create([
-                        'email' =>
-                            $email,
+                        'email' => $email,
 
-                        'role_id' =>
-                            $customerRoleId,
+                        'role_id' => $customerRoleId,
 
-                        'first_name' =>
-                            $firstName !== ''
+                        'first_name' => $firstName !== ''
                                 ? $firstName
                                 : 'Cliente',
 
-                        'last_name' =>
-                            $lastName !== ''
+                        'last_name' => $lastName !== ''
                                 ? $lastName
                                 : 'Google',
 
-                        'phone' =>
-                            $request
-                                ->string(
-                                    'phone',
-                                )
-                                ->toString(),
+                        'phone' => $request
+                            ->string(
+                                'phone',
+                            )
+                            ->toString(),
 
                         /*
                          * La cuenta de Google no utiliza esta contraseña.
                          * Se genera una credencial imposible de conocer
                          * desde el cliente.
                          */
-                        'password' =>
-                            Str::password(
-                                length: 64,
-                            ),
+                        'password' => Str::password(
+                            length: 64,
+                        ),
 
-                        'is_active' =>
-                            true,
+                        'is_active' => true,
                     ]);
                 },
                 attempts: 3,
@@ -440,13 +407,11 @@ final class AuthController
 
             if (! $user->is_active) {
                 return ApiResponse::error(
-                    message:
-                        'Tu cuenta se encuentra bloqueada. Comunícate con el administrador.',
+                    message: 'Tu cuenta se encuentra bloqueada. Comunícate con el administrador.',
 
                     status: 403,
 
-                    code:
-                        'USER_INACTIVE',
+                    code: 'USER_INACTIVE',
                 );
             }
 
@@ -466,46 +431,39 @@ final class AuthController
                 ->createResponse(
                     user: $user,
 
-                    tokenName:
-                        'google-web',
+                    tokenName: 'google-web',
 
-                    cartSessionId:
-                        $cartSessionId,
+                    cartSessionId: $cartSessionId,
                 );
         } catch (FailedToVerifyToken $exception) {
             Log::notice(
                 'Token de Firebase rechazado.',
                 [
-                    'exception' =>
-                        $exception::class,
+                    'exception' => $exception::class,
                 ],
             );
 
             return ApiResponse::error(
-                message:
-                    'La sesión de Google no es válida o ha expirado.',
+                message: 'La sesión de Google no es válida o ha expirado.',
 
                 status: 401,
 
-                code:
-                    'INVALID_FIREBASE_TOKEN',
+                code: 'INVALID_FIREBASE_TOKEN',
             );
         } catch (Throwable $exception) {
             report($exception);
 
             return ApiResponse::error(
-                message:
-                    'No fue posible iniciar sesión en este momento.',
+                message: 'No fue posible iniciar sesión en este momento.',
 
                 status: 500,
 
-                code:
-                    'AUTHENTICATION_FAILED',
+                code: 'AUTHENTICATION_FAILED',
             );
         }
     }
 
-    private function customerRoleId(): int|null
+    private function customerRoleId(): ?int
     {
         $roleId = Role::query()
             ->where(
@@ -528,13 +486,11 @@ final class AuthController
         );
 
         return ApiResponse::error(
-            message:
-                'La autenticación no está configurada correctamente.',
+            message: 'La autenticación no está configurada correctamente.',
 
             status: 500,
 
-            code:
-                'AUTH_ROLE_NOT_CONFIGURED',
+            code: 'AUTH_ROLE_NOT_CONFIGURED',
         );
     }
 

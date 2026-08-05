@@ -20,8 +20,8 @@ final class ForecastImportService
      * Puede recibir información proveniente de Google Colab
      * o del microservicio FastAPI.
      *
-     * @param array<string, mixed> $payload
-     * @param array<string, mixed> $metadata
+     * @param  array<string, mixed>  $payload
+     * @param  array<string, mixed>  $metadata
      */
     public function import(
         array $payload,
@@ -45,8 +45,7 @@ final class ForecastImportService
 
         $existingRun = MlModelRun::query()
             ->with([
-                'predictions' => static fn($query) =>
-                $query->orderBy('prediction_date'),
+                'predictions' => static fn ($query) => $query->orderBy('prediction_date'),
             ])
             ->where('source_hash', $resolvedSourceHash)
             ->first();
@@ -81,8 +80,7 @@ final class ForecastImportService
                 $forecastDates = collect($predictions)
                     ->pluck('date')
                     ->map(
-                        static fn(mixed $date): CarbonImmutable =>
-                        CarbonImmutable::parse(
+                        static fn (mixed $date): CarbonImmutable => CarbonImmutable::parse(
                             (string) $date
                         )
                     );
@@ -102,77 +100,61 @@ final class ForecastImportService
 
                     'source' => $source,
 
-                    'status' =>
-                    MlModelRun::STATUS_COMPLETED,
+                    'status' => MlModelRun::STATUS_COMPLETED,
 
-                    'algorithm' =>
-                    (string) $totalModel['name'],
+                    'algorithm' => (string) $totalModel['name'],
 
-                    'target' =>
-                    MlModelRun::TARGET_TOTAL_UNITS,
+                    'target' => MlModelRun::TARGET_TOTAL_UNITS,
 
                     'version' => $resolvedVersion,
 
-                    'trained_from' =>
-                    $normalizedPayload['trained_from'],
+                    'trained_from' => $normalizedPayload['trained_from'],
 
-                    'trained_until' =>
-                    $normalizedPayload['trained_until'],
+                    'trained_until' => $normalizedPayload['trained_until'],
 
-                    'training_records' =>
-                    (int) $normalizedPayload['historical_days'],
+                    'training_records' => (int) $normalizedPayload['historical_days'],
 
-                    'forecast_days' =>
-                    (int) $normalizedPayload['forecast_days'],
+                    'forecast_days' => (int) $normalizedPayload['forecast_days'],
 
-                    'forecast_from' =>
-                    $forecastDates
+                    'forecast_from' => $forecastDates
                         ->min()
                         ->toDateString(),
 
-                    'forecast_until' =>
-                    $forecastDates
+                    'forecast_until' => $forecastDates
                         ->max()
                         ->toDateString(),
 
-                    'selection_score' =>
-                    Arr::get(
+                    'selection_score' => Arr::get(
                         $totalModel,
                         'selection_score'
                     ),
 
-                    'mae' =>
-                    Arr::get(
+                    'mae' => Arr::get(
                         $totalModel,
                         'test_mae'
                     ),
 
-                    'rmse' =>
-                    Arr::get(
+                    'rmse' => Arr::get(
                         $totalModel,
                         'test_rmse'
                     ),
 
-                    'smape' =>
-                    Arr::get(
+                    'smape' => Arr::get(
                         $totalModel,
                         'test_smape'
                     ),
 
-                    'r2' =>
-                    Arr::get(
+                    'r2' => Arr::get(
                         $totalModel,
                         'test_r2'
                     ),
 
-                    'cv_mae' =>
-                    Arr::get(
+                    'cv_mae' => Arr::get(
                         $totalModel,
                         'cv_mae'
                     ),
 
-                    'cv_rmse' =>
-                    Arr::get(
+                    'cv_rmse' => Arr::get(
                         $totalModel,
                         'cv_rmse'
                     ),
@@ -181,22 +163,17 @@ final class ForecastImportService
 
                     'is_active' => false,
 
-                    'models' =>
-                    $normalizedPayload['models'],
+                    'models' => $normalizedPayload['models'],
 
-                    'summary' =>
-                    $normalizedPayload['summary'],
+                    'summary' => $normalizedPayload['summary'],
 
-                    'recommendations' =>
-                    $normalizedPayload['recommendations'],
+                    'recommendations' => $normalizedPayload['recommendations'],
 
                     'metadata' => array_merge(
                         [
-                            'imported_at' =>
-                            now()->toIso8601String(),
+                            'imported_at' => now()->toIso8601String(),
 
-                            'source_file' =>
-                            $source
+                            'source_file' => $source
                                 === MlModelRun::SOURCE_GOOGLE_COLAB
                                 ? 'forecast_next_7_days.json'
                                 : null,
@@ -217,8 +194,7 @@ final class ForecastImportService
                 );
 
                 return $run->load([
-                    'predictions' => static fn($query) =>
-                    $query->orderBy('prediction_date'),
+                    'predictions' => static fn ($query) => $query->orderBy('prediction_date'),
                     'creator.role',
                 ]);
             }
@@ -226,7 +202,7 @@ final class ForecastImportService
     }
 
     /**
-     * @param array<int, array<string, mixed>> $predictions
+     * @param  array<int, array<string, mixed>>  $predictions
      */
     private function insertPredictions(
         MlModelRun $run,
@@ -245,27 +221,20 @@ final class ForecastImportService
                     return [
                         'ml_model_run_id' => $run->id,
 
-                        'prediction_date' =>
-                        $prediction['date'],
+                        'prediction_date' => $prediction['date'],
 
-                        'day_of_week' =>
-                        $prediction['day_of_week']
+                        'day_of_week' => $prediction['day_of_week']
                             ?? null,
 
-                        'total_pizzas' =>
-                        (int) $prediction['total_units'],
+                        'total_pizzas' => (int) $prediction['total_units'],
 
-                        'mini_pizzas' =>
-                        (int) $prediction['mini'],
+                        'mini_pizzas' => (int) $prediction['mini'],
 
-                        'small_pizzas' =>
-                        (int) $prediction['small'],
+                        'small_pizzas' => (int) $prediction['small'],
 
-                        'medium_pizzas' =>
-                        (int) $prediction['medium'],
+                        'medium_pizzas' => (int) $prediction['medium'],
 
-                        'family_pizzas' =>
-                        (int) $prediction['family'],
+                        'family_pizzas' => (int) $prediction['family'],
 
                         /*
                          * El modelo actual no predice estas
@@ -282,11 +251,9 @@ final class ForecastImportService
                         'confidence_score' => null,
 
                         'metadata' => json_encode([
-                            'data_scope' =>
-                            'historical_size_only',
+                            'data_scope' => 'historical_size_only',
 
-                            'flavor_prediction_available' =>
-                            false,
+                            'flavor_prediction_available' => false,
                         ], JSON_THROW_ON_ERROR),
 
                         'created_at' => $timestamp,
@@ -349,7 +316,7 @@ final class ForecastImportService
      * Normaliza recursivamente las claves para que el hash
      * sea estable aunque cambie el orden del JSON.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function normalizePayload(
@@ -360,7 +327,7 @@ final class ForecastImportService
         ) use (
             &$normalize
         ): mixed {
-            if (!is_array($value)) {
+            if (! is_array($value)) {
                 return $value;
             }
 

@@ -35,7 +35,7 @@ afterEach(function (): void {
 /**
  * Crea una ejecución de modelo activa.
  *
- * @param array<string, mixed> $overrides
+ * @param  array<string, mixed>  $overrides
  */
 function createComparisonModelRun(
     array $overrides = [],
@@ -44,89 +44,62 @@ function createComparisonModelRun(
         ->create(
             array_merge(
                 [
-                    'uuid' =>
-                        (string) Str::uuid(),
+                    'uuid' => (string) Str::uuid(),
 
-                    'source_hash' =>
-                        hash(
-                            'sha256',
-                            Str::random(40),
-                        ),
+                    'source_hash' => hash(
+                        'sha256',
+                        Str::random(40),
+                    ),
 
-                    'source' =>
-                        MlModelRun::SOURCE_ML_SERVICE,
+                    'source' => MlModelRun::SOURCE_ML_SERVICE,
 
-                    'status' =>
-                        MlModelRun::STATUS_COMPLETED,
+                    'status' => MlModelRun::STATUS_COMPLETED,
 
-                    'algorithm' =>
-                        'RandomForest',
+                    'algorithm' => 'RandomForest',
 
-                    'target' =>
-                        MlModelRun::TARGET_TOTAL_UNITS,
+                    'target' => MlModelRun::TARGET_TOTAL_UNITS,
 
-                    'version' =>
-                        'comparison-test',
+                    'version' => 'comparison-test',
 
-                    'trained_from' =>
-                        '2026-01-01',
+                    'trained_from' => '2026-01-01',
 
-                    'trained_until' =>
-                        '2026-07-31',
+                    'trained_until' => '2026-07-31',
 
-                    'training_records' =>
-                        212,
+                    'training_records' => 212,
 
-                    'forecast_days' =>
-                        3,
+                    'forecast_days' => 3,
 
-                    'forecast_from' =>
-                        '2026-08-03',
+                    'forecast_from' => '2026-08-03',
 
-                    'forecast_until' =>
-                        '2026-08-05',
+                    'forecast_until' => '2026-08-05',
 
-                    'selection_score' =>
-                        1.5,
+                    'selection_score' => 1.5,
 
-                    'mae' =>
-                        2.1,
+                    'mae' => 2.1,
 
-                    'rmse' =>
-                        2.8,
+                    'rmse' => 2.8,
 
-                    'smape' =>
-                        8.5,
+                    'smape' => 8.5,
 
-                    'r2' =>
-                        0.91,
+                    'r2' => 0.91,
 
-                    'cv_mae' =>
-                        2.3,
+                    'cv_mae' => 2.3,
 
-                    'cv_rmse' =>
-                        3.0,
+                    'cv_rmse' => 3.0,
 
-                    'generated_at' =>
-                        '2026-08-02 22:00:00',
+                    'generated_at' => '2026-08-02 22:00:00',
 
-                    'activated_at' =>
-                        '2026-08-02 22:05:00',
+                    'activated_at' => '2026-08-02 22:05:00',
 
-                    'is_active' =>
-                        true,
+                    'is_active' => true,
 
-                    'models' =>
-                        [],
+                    'models' => [],
 
-                    'summary' =>
-                        [],
+                    'summary' => [],
 
-                    'recommendations' =>
-                        [],
+                    'recommendations' => [],
 
-                    'metadata' =>
-                        [],
+                    'metadata' => [],
                 ],
                 $overrides,
             ),
@@ -146,7 +119,7 @@ function createComparisonModelRun(
  *
  * Por eso siempre deben incluirse en los datos de prueba.
  *
- * @param array<string, mixed> $overrides
+ * @param  array<string, mixed>  $overrides
  */
 function createComparisonPrediction(
     MlModelRun $run,
@@ -156,56 +129,39 @@ function createComparisonPrediction(
         ->create(
             array_merge(
                 [
-                    'ml_model_run_id' =>
-                        $run->id,
+                    'ml_model_run_id' => $run->id,
 
-                    'prediction_date' =>
-                        '2026-08-03',
+                    'prediction_date' => '2026-08-03',
 
-                    'day_of_week' =>
-                        'Lunes',
+                    'day_of_week' => 'Lunes',
 
-                    'total_pizzas' =>
-                        10,
+                    'total_pizzas' => 10,
 
-                    'mini_pizzas' =>
-                        1,
+                    'mini_pizzas' => 1,
 
-                    'small_pizzas' =>
-                        2,
+                    'small_pizzas' => 2,
 
-                    'medium_pizzas' =>
-                        4,
+                    'medium_pizzas' => 4,
 
-                    'family_pizzas' =>
-                        3,
+                    'family_pizzas' => 3,
 
-                    'giant_pizzas' =>
-                        0,
+                    'giant_pizzas' => 0,
 
-                    'basic' =>
-                        6,
+                    'basic' => 6,
 
-                    'special' =>
-                        4,
+                    'special' => 4,
 
-                    'estimated_promotions' =>
-                        2,
+                    'estimated_promotions' => 2,
 
-                    'estimated_regular' =>
-                        8,
+                    'estimated_regular' => 8,
 
-                    'lower_bound' =>
-                        null,
+                    'lower_bound' => null,
 
-                    'upper_bound' =>
-                        null,
+                    'upper_bound' => null,
 
-                    'confidence_score' =>
-                        null,
+                    'confidence_score' => null,
 
-                    'metadata' =>
-                        [],
+                    'metadata' => [],
                 ],
                 $overrides,
             ),
@@ -226,123 +182,87 @@ function createActiveComparisonForecast(): MlModelRun
     createComparisonPrediction(
         $run,
         [
-            'prediction_date' =>
-                '2026-08-03',
+            'prediction_date' => '2026-08-03',
 
-            'day_of_week' =>
-                'Lunes',
+            'day_of_week' => 'Lunes',
 
-            'total_pizzas' =>
-                10,
+            'total_pizzas' => 10,
 
-            'mini_pizzas' =>
-                1,
+            'mini_pizzas' => 1,
 
-            'small_pizzas' =>
-                2,
+            'small_pizzas' => 2,
 
-            'medium_pizzas' =>
-                4,
+            'medium_pizzas' => 4,
 
-            'family_pizzas' =>
-                3,
+            'family_pizzas' => 3,
 
-            'giant_pizzas' =>
-                0,
+            'giant_pizzas' => 0,
 
-            'basic' =>
-                6,
+            'basic' => 6,
 
-            'special' =>
-                4,
+            'special' => 4,
 
-            'estimated_promotions' =>
-                2,
+            'estimated_promotions' => 2,
 
-            'estimated_regular' =>
-                8,
+            'estimated_regular' => 8,
         ],
     );
 
     createComparisonPrediction(
         $run,
         [
-            'prediction_date' =>
-                '2026-08-04',
+            'prediction_date' => '2026-08-04',
 
-            'day_of_week' =>
-                'Martes',
+            'day_of_week' => 'Martes',
 
-            'total_pizzas' =>
-                8,
+            'total_pizzas' => 8,
 
-            'mini_pizzas' =>
-                0,
+            'mini_pizzas' => 0,
 
-            'small_pizzas' =>
-                2,
+            'small_pizzas' => 2,
 
-            'medium_pizzas' =>
-                4,
+            'medium_pizzas' => 4,
 
-            'family_pizzas' =>
-                2,
+            'family_pizzas' => 2,
 
-            'giant_pizzas' =>
-                0,
+            'giant_pizzas' => 0,
 
-            'basic' =>
-                5,
+            'basic' => 5,
 
-            'special' =>
-                3,
+            'special' => 3,
 
-            'estimated_promotions' =>
-                1,
+            'estimated_promotions' => 1,
 
-            'estimated_regular' =>
-                7,
+            'estimated_regular' => 7,
         ],
     );
 
     createComparisonPrediction(
         $run,
         [
-            'prediction_date' =>
-                '2026-08-05',
+            'prediction_date' => '2026-08-05',
 
-            'day_of_week' =>
-                'Miércoles',
+            'day_of_week' => 'Miércoles',
 
-            'total_pizzas' =>
-                12,
+            'total_pizzas' => 12,
 
-            'mini_pizzas' =>
-                1,
+            'mini_pizzas' => 1,
 
-            'small_pizzas' =>
-                3,
+            'small_pizzas' => 3,
 
-            'medium_pizzas' =>
-                5,
+            'medium_pizzas' => 5,
 
-            'family_pizzas' =>
-                3,
+            'family_pizzas' => 3,
 
-            'giant_pizzas' =>
-                0,
+            'giant_pizzas' => 0,
 
-            'basic' =>
-                7,
+            'basic' => 7,
 
-            'special' =>
-                5,
+            'special' => 5,
 
-            'estimated_promotions' =>
-                3,
+            'estimated_promotions' => 3,
 
-            'estimated_regular' =>
-                9,
+            'estimated_regular' => 9,
         ],
     );
 
@@ -353,12 +273,11 @@ it(
     'requires authentication to view the predictive comparison',
     function (): void {
         /** @var TestCase $this */
-
         $this
             ->getJson(
                 '/api/v1/admin/machine-learning/comparison'
-                . '?date_from=2026-08-03'
-                . '&date_to=2026-08-05',
+                .'?date_from=2026-08-03'
+                .'&date_to=2026-08-05',
             )
             ->assertUnauthorized();
     },
@@ -368,7 +287,6 @@ it(
     'forbids customers from viewing the predictive comparison',
     function (): void {
         /** @var TestCase $this */
-
         $customer = User::factory()
             ->customer()
             ->create();
@@ -380,8 +298,8 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/machine-learning/comparison'
-                . '?date_from=2026-08-03'
-                . '&date_to=2026-08-05',
+                .'?date_from=2026-08-03'
+                .'&date_to=2026-08-05',
             )
             ->assertForbidden();
     },
@@ -391,7 +309,6 @@ it(
     'validates the comparison date range',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -403,8 +320,8 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/machine-learning/comparison'
-                . '?date_from=2026-08-05'
-                . '&date_to=2026-08-03',
+                .'?date_from=2026-08-05'
+                .'&date_to=2026-08-03',
             )
             ->assertUnprocessable()
             ->assertJsonValidationErrors([
@@ -417,7 +334,6 @@ it(
     'limits comparison periods to thirty one days',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -429,8 +345,8 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/machine-learning/comparison'
-                . '?date_from=2026-06-01'
-                . '&date_to=2026-08-05',
+                .'?date_from=2026-06-01'
+                .'&date_to=2026-08-05',
             )
             ->assertUnprocessable()
             ->assertJsonValidationErrors([
@@ -443,7 +359,6 @@ it(
     'returns an empty comparison when no active model exists',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -455,8 +370,8 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/machine-learning/comparison'
-                . '?date_from=2026-08-03'
-                . '&date_to=2026-08-05',
+                .'?date_from=2026-08-03'
+                .'&date_to=2026-08-05',
             );
 
         $response
@@ -508,7 +423,6 @@ it(
     'compares completed days and excludes the current day from final metrics',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
@@ -531,8 +445,8 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/machine-learning/comparison'
-                . '?date_from=2026-08-03'
-                . '&date_to=2026-08-05',
+                .'?date_from=2026-08-03'
+                .'&date_to=2026-08-05',
             );
 
         $response
@@ -692,69 +606,50 @@ it(
     'marks future predictions as pending without assigning false sales',
     function (): void {
         /** @var TestCase $this */
-
         $admin = User::factory()
             ->admin()
             ->create();
 
         $run = createComparisonModelRun([
-            'version' =>
-                'future-test',
+            'version' => 'future-test',
 
-            'forecast_days' =>
-                1,
+            'forecast_days' => 1,
 
-            'forecast_from' =>
-                '2026-08-06',
+            'forecast_from' => '2026-08-06',
 
-            'forecast_until' =>
-                '2026-08-06',
+            'forecast_until' => '2026-08-06',
 
-            'generated_at' =>
-                '2026-08-05 01:00:00',
+            'generated_at' => '2026-08-05 01:00:00',
 
-            'activated_at' =>
-                '2026-08-05 01:05:00',
+            'activated_at' => '2026-08-05 01:05:00',
         ]);
 
         createComparisonPrediction(
             $run,
             [
-                'prediction_date' =>
-                    '2026-08-06',
+                'prediction_date' => '2026-08-06',
 
-                'day_of_week' =>
-                    'Jueves',
+                'day_of_week' => 'Jueves',
 
-                'total_pizzas' =>
-                    15,
+                'total_pizzas' => 15,
 
-                'mini_pizzas' =>
-                    1,
+                'mini_pizzas' => 1,
 
-                'small_pizzas' =>
-                    3,
+                'small_pizzas' => 3,
 
-                'medium_pizzas' =>
-                    6,
+                'medium_pizzas' => 6,
 
-                'family_pizzas' =>
-                    4,
+                'family_pizzas' => 4,
 
-                'giant_pizzas' =>
-                    1,
+                'giant_pizzas' => 1,
 
-                'basic' =>
-                    9,
+                'basic' => 9,
 
-                'special' =>
-                    6,
+                'special' => 6,
 
-                'estimated_promotions' =>
-                    4,
+                'estimated_promotions' => 4,
 
-                'estimated_regular' =>
-                    11,
+                'estimated_regular' => 11,
             ],
         );
 
@@ -765,8 +660,8 @@ it(
             )
             ->getJson(
                 '/api/v1/admin/machine-learning/comparison'
-                . '?date_from=2026-08-06'
-                . '&date_to=2026-08-06',
+                .'?date_from=2026-08-06'
+                .'&date_to=2026-08-06',
             )
             ->assertOk()
             ->assertJsonPath(

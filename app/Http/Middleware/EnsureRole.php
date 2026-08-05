@@ -20,7 +20,7 @@ final class EnsureRole
      * role:operator,admin
      * role:customer,operator,admin
      *
-     * @param string ...$roles Roles enviados por Laravel
+     * @param  string  ...$roles  Roles enviados por Laravel
      */
     public function handle(
         Request $request,
@@ -32,8 +32,7 @@ final class EnsureRole
         if ($user === null) {
             return new JsonResponse([
                 'success' => false,
-                'message' =>
-                    'Debes iniciar sesión para acceder a este recurso.',
+                'message' => 'Debes iniciar sesión para acceder a este recurso.',
                 'code' => 'UNAUTHENTICATED',
             ], Response::HTTP_UNAUTHORIZED);
         }
@@ -49,12 +48,10 @@ final class EnsureRole
          */
         $allowedRoles = collect($roles)
             ->flatMap(
-                static fn (string $role): array =>
-                    explode(',', $role),
+                static fn (string $role): array => explode(',', $role),
             )
             ->map(
-                static fn (string $role): string =>
-                    strtolower(trim($role)),
+                static fn (string $role): string => strtolower(trim($role)),
             )
             ->filter()
             ->unique()
@@ -79,8 +76,7 @@ final class EnsureRole
         ) {
             return new JsonResponse([
                 'success' => false,
-                'message' =>
-                    'No tienes permisos para acceder a este recurso.',
+                'message' => 'No tienes permisos para acceder a este recurso.',
                 'code' => 'FORBIDDEN',
             ], Response::HTTP_FORBIDDEN);
         }

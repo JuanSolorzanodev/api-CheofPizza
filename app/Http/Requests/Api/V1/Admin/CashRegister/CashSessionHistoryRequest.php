@@ -79,20 +79,15 @@ final class CashSessionHistoryRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'date_from.required_with' =>
-                'Debes enviar la fecha inicial cuando especifiques una fecha final.',
+            'date_from.required_with' => 'Debes enviar la fecha inicial cuando especifiques una fecha final.',
 
-            'date_to.required_with' =>
-                'Debes enviar la fecha final cuando especifiques una fecha inicial.',
+            'date_to.required_with' => 'Debes enviar la fecha final cuando especifiques una fecha inicial.',
 
-            'date_to.after_or_equal' =>
-                'La fecha final debe ser igual o posterior a la fecha inicial.',
+            'date_to.after_or_equal' => 'La fecha final debe ser igual o posterior a la fecha inicial.',
 
-            'status.enum' =>
-                'El estado debe ser open o closed.',
+            'status.enum' => 'El estado debe ser open o closed.',
 
-            'per_page.in' =>
-                'La cantidad por página debe ser 10, 15, 25, 50 o 100.',
+            'per_page.in' => 'La cantidad por página debe ser 10, 15, 25, 50 o 100.',
         ];
     }
 }

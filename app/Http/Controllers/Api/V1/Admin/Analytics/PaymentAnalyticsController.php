@@ -23,8 +23,7 @@ final class PaymentAnalyticsController
 
         return ApiResponse::success(
             data: $service->get($range),
-            message:
-                'Resumen financiero recuperado correctamente.',
+            message: 'Resumen financiero recuperado correctamente.',
         );
     }
 }
