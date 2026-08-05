@@ -1380,6 +1380,294 @@ describe(
         );
 
         it(
+            'impide aprobar dos veces el mismo comprobante',
+            function (): void {
+                /** @var \Tests\TestCase $this */
+                $customer = paymentReceiptUser(
+                    'customer',
+                );
+
+                $operator = paymentReceiptUser(
+                    'operator',
+                );
+
+                $order = paymentReceiptOrder(
+                    $customer,
+                );
+
+                $this
+                    ->actingAs(
+                        $customer,
+                        'sanctum',
+                    )
+                    ->post(
+                        "/api/v1/my/orders/{$order->id}/payment-receipts",
+                        [
+                            'receipt' => fakePaymentReceiptImage(
+                                'comprobante.jpg',
+                            ),
+                        ],
+                        [
+                            'Accept' => 'application/json',
+                        ],
+                    )
+                    ->assertCreated();
+
+                $receipt = PaymentReceipt::query()
+                    ->where(
+                        'order_id',
+                        (int) $order->id,
+                    )
+                    ->firstOrFail();
+
+                $url = "/api/v1/operator/payment-receipts/{$receipt->uuid}/approve";
+
+                $this
+                    ->actingAs(
+                        $operator,
+                        'sanctum',
+                    )
+                    ->patchJson($url)
+                    ->assertOk()
+                    ->assertJsonPath(
+                        'data.status',
+                        'approved',
+                    );
+
+                $this
+                    ->actingAs(
+                        $operator,
+                        'sanctum',
+                    )
+                    ->patchJson($url)
+                    ->assertUnprocessable()
+                    ->assertJsonValidationErrors([
+                        'receipt',
+                    ]);
+
+                $receipt->refresh();
+
+                expect(
+                    $receipt->status,
+                )->toBe(
+                    PaymentReceiptStatus::Approved,
+                );
+
+                $this->assertNotNull(
+                    $receipt->reviewed_at,
+                );
+
+                $this->assertSame(
+                    (int) $operator->id,
+                    (int) $receipt->reviewed_by,
+                );
+            },
+        );
+
+        it(
+            'impide rechazar un comprobante ya aprobado',
+            function (): void {
+                /** @var \Tests\TestCase $this */
+                $customer = paymentReceiptUser(
+                    'customer',
+                );
+
+                $operator = paymentReceiptUser(
+                    'operator',
+                );
+
+                $order = paymentReceiptOrder(
+                    $customer,
+                );
+
+                $this
+                    ->actingAs(
+                        $customer,
+                        'sanctum',
+                    )
+                    ->post(
+                        "/api/v1/my/orders/{$order->id}/payment-receipts",
+                        [
+                            'receipt' => fakePaymentReceiptImage(
+                                'comprobante.jpg',
+                            ),
+                        ],
+                        [
+                            'Accept' => 'application/json',
+                        ],
+                    )
+                    ->assertCreated();
+
+                $receipt = PaymentReceipt::query()
+                    ->where(
+                        'order_id',
+                        (int) $order->id,
+                    )
+                    ->firstOrFail();
+
+                $this
+                    ->actingAs(
+                        $operator,
+                        'sanctum',
+                    )
+                    ->patchJson(
+                        "/api/v1/operator/payment-receipts/{$receipt->uuid}/approve",
+                    )
+                    ->assertOk();
+
+                $this
+                    ->actingAs(
+                        $operator,
+                        'sanctum',
+                    )
+                    ->patchJson(
+                        "/api/v1/operator/payment-receipts/{$receipt->uuid}/reject",
+                        [
+                            'reason' => 'Intento de rechazo posterior.',
+                        ],
+                    )
+                    ->assertUnprocessable()
+                    ->assertJsonValidationErrors([
+                        'receipt',
+                    ]);
+
+                $receipt->refresh();
+
+                expect(
+                    $receipt->status,
+                )->toBe(
+                    PaymentReceiptStatus::Approved,
+                );
+
+                expect(
+                    $receipt->rejection_reason,
+                )->toBeNull();
+            },
+        );
+
+        it(
+            'impide aprobar un comprobante ya rechazado',
+            function (): void {
+                /** @var \Tests\TestCase $this */
+                $customer = paymentReceiptUser(
+                    'customer',
+                );
+
+                $operator = paymentReceiptUser(
+                    'operator',
+                );
+
+                $order = paymentReceiptOrder(
+                    $customer,
+                );
+
+                $this
+                    ->actingAs(
+                        $customer,
+                        'sanctum',
+                    )
+                    ->post(
+                        "/api/v1/my/orders/{$order->id}/payment-receipts",
+                        [
+                            'receipt' => fakePaymentReceiptImage(
+                                'comprobante.jpg',
+                            ),
+                        ],
+                        [
+                            'Accept' => 'application/json',
+                        ],
+                    )
+                    ->assertCreated();
+
+                $receipt = PaymentReceipt::query()
+                    ->where(
+                        'order_id',
+                        (int) $order->id,
+                    )
+                    ->firstOrFail();
+
+                $this
+                    ->actingAs(
+                        $operator,
+                        'sanctum',
+                    )
+                    ->patchJson(
+                        "/api/v1/operator/payment-receipts/{$receipt->uuid}/reject",
+                        [
+                            'reason' => 'El comprobante no es legible.',
+                        ],
+                    )
+                    ->assertOk()
+                    ->assertJsonPath(
+                        'data.status',
+                        'rejected',
+                    );
+
+                $this
+                    ->actingAs(
+                        $operator,
+                        'sanctum',
+                    )
+                    ->patchJson(
+                        "/api/v1/operator/payment-receipts/{$receipt->uuid}/approve",
+                    )
+                    ->assertUnprocessable()
+                    ->assertJsonValidationErrors([
+                        'receipt',
+                    ]);
+
+                $receipt->refresh();
+
+                expect(
+                    $receipt->status,
+                )->toBe(
+                    PaymentReceiptStatus::Rejected,
+                );
+
+                expect(
+                    $receipt->rejection_reason,
+                )->toBe(
+                    'El comprobante no es legible.',
+                );
+            },
+        );
+
+        it(
+            'valida la paginación del listado pendiente',
+            function (): void {
+                /** @var \Tests\TestCase $this */
+                $operator = paymentReceiptUser(
+                    'operator',
+                );
+
+                $this
+                    ->actingAs(
+                        $operator,
+                        'sanctum',
+                    )
+                    ->getJson(
+                        '/api/v1/operator/payment-receipts?per_page=101',
+                    )
+                    ->assertUnprocessable()
+                    ->assertJsonValidationErrors([
+                        'per_page',
+                    ]);
+
+                $this
+                    ->actingAs(
+                        $operator,
+                        'sanctum',
+                    )
+                    ->getJson(
+                        '/api/v1/operator/payment-receipts?per_page=0',
+                    )
+                    ->assertUnprocessable()
+                    ->assertJsonValidationErrors([
+                        'per_page',
+                    ]);
+            },
+        );
+        it(
             'elimina archivos vencidos y conserva el registro histórico',
             function (): void {
                 /** @var \Tests\TestCase $this */

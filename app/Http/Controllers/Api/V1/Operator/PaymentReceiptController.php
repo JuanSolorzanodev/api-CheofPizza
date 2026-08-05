@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Operator;
 
+use App\Http\Requests\Api\V1\Operator\PaymentReceiptIndexRequest;
 use App\Http\Requests\Api\V1\Operator\RejectPaymentReceiptRequest;
 use App\Http\Resources\Api\V1\PaymentReceiptResource;
 use App\Models\User;
@@ -18,16 +19,12 @@ final class PaymentReceiptController
     ) {}
 
     public function index(
-        Request $request,
+        PaymentReceiptIndexRequest $request,
     ): AnonymousResourceCollection {
         return PaymentReceiptResource::collection(
-            $this->service
-                ->paginatePending(
-                    (int) $request->integer(
-                        'per_page',
-                        15,
-                    ),
-                ),
+            $this->service->paginatePending(
+                perPage: $request->perPage(),
+            ),
         );
     }
 
@@ -40,8 +37,8 @@ final class PaymentReceiptController
 
         return new PaymentReceiptResource(
             $this->service->approve(
-                $receiptUuid,
-                $reviewer,
+                receiptUuid: $receiptUuid,
+                reviewer: $reviewer,
             ),
         );
     }
