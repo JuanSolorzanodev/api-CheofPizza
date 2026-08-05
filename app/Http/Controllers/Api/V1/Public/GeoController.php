@@ -1,127 +1,190 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1\Public;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Throwable;
 
-class GeoController
+final class GeoController
 {
     /**
-     * GET /api/v1/public/geo/reverse?lat=...&lng=...
-     * Devuelve: { data: { formatted_address: string|null, place_id: string|null } }
-     *
-     * Buenas prácticas:
-     * - Cache por coordenadas redondeadas.
-     * - TTL éxito largo, TTL error corto.
-     * - Timeouts y retry controlados.
+     * Devuelve una dirección aproximada a partir de coordenadas.
      */
     public function reverse(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'lat' => ['required', 'numeric', 'between:-90,90'],
-            'lng' => ['required', 'numeric', 'between:-180,180'],
-        ]);
+        $validated = $request->validate(
+            [
+                'lat' => [
+                    'required',
+                    'numeric',
+                    'between:-90,90',
+                ],
+
+                'lng' => [
+                    'required',
+                    'numeric',
+                    'between:-180,180',
+                ],
+            ],
+            [
+                'lat.required' => 'La latitud es obligatoria.',
+                'lat.numeric' => 'La latitud debe ser numérica.',
+                'lat.between' => 'La latitud debe estar entre -90 y 90.',
+
+                'lng.required' => 'La longitud es obligatoria.',
+                'lng.numeric' => 'La longitud debe ser numérica.',
+                'lng.between' => 'La longitud debe estar entre -180 y 180.',
+            ],
+        );
 
         $lat = (float) $validated['lat'];
         $lng = (float) $validated['lng'];
 
-        $latKey = number_format($lat, 5, '.', '');
-        $lngKey = number_format($lng, 5, '.', '');
-        $cacheKey = "geo:reverse:{$latKey},{$lngKey}";
+        $cacheKey = $this->cacheKey(
+            lat: $lat,
+            lng: $lng,
+        );
 
-        $ttlSuccess = now()->addDays(30);
-        $ttlFail = now()->addMinutes(5);
+        $cached = Cache::get($cacheKey);
 
-        $fallback = [
+        if (is_array($cached)) {
+            return response()->json([
+                'data' => $cached,
+            ]);
+        }
+
+        $fallback = $this->fallback();
+
+        try {
+            $response = Http::acceptJson()
+                ->withHeaders([
+                    'User-Agent' => 'CheofPizza/1.0 (reverse geocode)',
+                    'Accept-Language' => 'es',
+                ])
+                ->connectTimeout(4)
+                ->timeout(8)
+                ->retry(
+                    times: 3,
+                    sleepMilliseconds: 250,
+                    when: static fn (
+                        Throwable $exception,
+                    ): bool => $exception instanceof ConnectionException,
+                    throw: false,
+                )
+                ->get(
+                    'https://nominatim.openstreetmap.org/reverse',
+                    [
+                        'format' => 'jsonv2',
+                        'lat' => $lat,
+                        'lon' => $lng,
+                        'zoom' => 18,
+                        'addressdetails' => 1,
+                    ],
+                );
+
+            if (! $response instanceof Response || ! $response->successful()) {
+                return $this->cacheFallback(
+                    cacheKey: $cacheKey,
+                    fallback: $fallback,
+                );
+            }
+
+            $payload = $response->json();
+
+            if (! is_array($payload)) {
+                return $this->cacheFallback(
+                    cacheKey: $cacheKey,
+                    fallback: $fallback,
+                );
+            }
+
+            $data = [
+                'formatted_address' => isset($payload['display_name'])
+                    ? (string) $payload['display_name']
+                    : null,
+
+                'place_id' => isset($payload['place_id'])
+                    ? (string) $payload['place_id']
+                    : null,
+            ];
+
+            Cache::put(
+                $cacheKey,
+                $data,
+                now()->addDays(30),
+            );
+
+            return response()->json([
+                'data' => $data,
+            ]);
+        } catch (Throwable) {
+            return $this->cacheFallback(
+                cacheKey: $cacheKey,
+                fallback: $fallback,
+            );
+        }
+    }
+
+    private function cacheKey(
+        float $lat,
+        float $lng,
+    ): string {
+        $latKey = number_format(
+            $lat,
+            5,
+            '.',
+            '',
+        );
+
+        $lngKey = number_format(
+            $lng,
+            5,
+            '.',
+            '',
+        );
+
+        return "geo:reverse:{$latKey},{$lngKey}";
+    }
+
+    /**
+     * @return array{
+     *     formatted_address: null,
+     *     place_id: null
+     * }
+     */
+    private function fallback(): array
+    {
+        return [
             'formatted_address' => null,
             'place_id' => null,
         ];
+    }
 
-        // Cache hit
-        $cached = Cache::get($cacheKey);
-        if (is_array($cached)) {
-            return response()->json(['data' => $cached]);
-        }
+    /**
+     * @param array{
+     *     formatted_address: null,
+     *     place_id: null
+     * } $fallback
+     */
+    private function cacheFallback(
+        string $cacheKey,
+        array $fallback,
+    ): JsonResponse {
+        Cache::put(
+            $cacheKey,
+            $fallback,
+            now()->addMinutes(5),
+        );
 
-        $client = new Client([
-            'base_uri' => 'https://nominatim.openstreetmap.org/',
-            'timeout' => 8.0,
-            'connect_timeout' => 4.0,
-            'headers' => [
-                // Nominatim recomienda User-Agent identificable
-                'User-Agent' => 'CheofPizza/1.0 (reverse geocode)',
-                'Accept-Language' => 'es',
-                'Accept' => 'application/json',
-            ],
+        return response()->json([
+            'data' => $fallback,
         ]);
-
-        try {
-            // Retry simple (2 intentos extra) con backoff corto
-            $attempts = 0;
-            $maxAttempts = 3;
-            $lastException = null;
-
-            while ($attempts < $maxAttempts) {
-                $attempts++;
-
-                try {
-                    $response = $client->request('GET', 'reverse', [
-                        'query' => [
-                            'format' => 'jsonv2',
-                            'lat' => $lat,
-                            'lon' => $lng,
-                            'zoom' => 18,
-                            'addressdetails' => 1,
-                        ],
-                        // Evita que Guzzle lance excepción por 4xx/5xx automáticamente
-                        'http_errors' => false,
-                    ]);
-
-                    $status = $response->getStatusCode();
-                    if ($status < 200 || $status >= 300) {
-                        Cache::put($cacheKey, $fallback, $ttlFail);
-
-                        return response()->json(['data' => $fallback]);
-                    }
-
-                    $body = $response->getBody()->getContents();
-                    $json = json_decode($body, true);
-
-                    if (! is_array($json)) {
-                        Cache::put($cacheKey, $fallback, $ttlFail);
-
-                        return response()->json(['data' => $fallback]);
-                    }
-
-                    $data = [
-                        'formatted_address' => isset($json['display_name']) ? (string) $json['display_name'] : null,
-                        'place_id' => isset($json['place_id']) ? (string) $json['place_id'] : null,
-                    ];
-
-                    Cache::put($cacheKey, $data, $ttlSuccess);
-
-                    return response()->json(['data' => $data]);
-                } catch (GuzzleException $e) {
-                    $lastException = $e;
-                    // backoff ligero
-                    usleep(250000); // 250ms
-                }
-            }
-
-            // si fallaron todos los intentos
-            Cache::put($cacheKey, $fallback, $ttlFail);
-
-            return response()->json(['data' => $fallback]);
-
-        } catch (Throwable $e) {
-            Cache::put($cacheKey, $fallback, $ttlFail);
-
-            return response()->json(['data' => $fallback]);
-        }
     }
 }
