@@ -507,6 +507,96 @@ final class OrderStatusTransitionTest extends TestCase
         );
     }
 
+    public function test_repeated_transition_does_not_duplicate_history_or_events(): void
+    {
+        $order = $this->createOrder(
+            deliveryType: 'pickup',
+            status: 'pending',
+        );
+
+        $firstResponse = $this
+            ->actingAs(
+                $this->operator,
+                'sanctum',
+            )
+            ->patchJson(
+                "/api/v1/operator/orders/{$order->id}/status",
+                [
+                    'to_status' => 'confirmed',
+                    'note' => 'Primera confirmación.',
+                ],
+            );
+
+        $firstResponse
+            ->assertOk()
+            ->assertJsonPath(
+                'data.status',
+                'confirmed',
+            );
+
+        $secondResponse = $this
+            ->actingAs(
+                $this->operator,
+                'sanctum',
+            )
+            ->patchJson(
+                "/api/v1/operator/orders/{$order->id}/status",
+                [
+                    'to_status' => 'confirmed',
+                    'note' => 'Confirmación repetida.',
+                ],
+            );
+
+        $secondResponse
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'to_status',
+            ])
+            ->assertJsonPath(
+                'errors.to_status.0',
+                'La orden ya se encuentra en ese estado.',
+            );
+
+        $this->assertSame(
+            'confirmed',
+            $this->currentStatus($order),
+        );
+
+        $this->assertDatabaseCount(
+            'order_status_changes',
+            1,
+        );
+
+        $this->assertDatabaseHas(
+            'order_status_changes',
+            [
+                'order_id' => $order->id,
+                'from_order_status_id' => $this->statuses['pending']->id,
+                'to_order_status_id' => $this->statuses['confirmed']->id,
+                'changed_by_user_id' => $this->operator->id,
+                'note' => 'Primera confirmación.',
+            ],
+        );
+
+        $this->assertDatabaseMissing(
+            'order_status_changes',
+            [
+                'order_id' => $order->id,
+                'note' => 'Confirmación repetida.',
+            ],
+        );
+
+        Event::assertDispatchedTimes(
+            OrderStatusChanged::class,
+            1,
+        );
+
+        Event::assertDispatchedTimes(
+            CustomerOrderUpdated::class,
+            1,
+        );
+    }
+
     public function test_customer_cannot_access_operator_status_endpoint(): void
     {
         $customer = User::factory()
@@ -540,6 +630,14 @@ final class OrderStatusTransitionTest extends TestCase
         $this->assertDatabaseCount(
             'order_status_changes',
             0,
+        );
+
+        Event::assertNotDispatched(
+            OrderStatusChanged::class,
+        );
+
+        Event::assertNotDispatched(
+            CustomerOrderUpdated::class,
         );
     }
 
@@ -659,8 +757,8 @@ final class OrderStatusTransitionTest extends TestCase
             'delivery_type_id' => $deliveryTypeModel->id,
 
             'address' => $deliveryType === 'delivery'
-                    ? 'Dirección de prueba'
-                    : null,
+                ? 'Dirección de prueba'
+                : null,
 
             'payment_method_id' => $paymentMethod->id,
 
