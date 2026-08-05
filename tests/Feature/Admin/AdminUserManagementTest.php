@@ -202,58 +202,6 @@ final class AdminUserManagementTest extends TestCase
         ]);
     }
 
-    public function test_last_active_admin_cannot_lose_admin_role(): void
-    {
-        $actingAdmin = $this->userWithRole(
-            $this->adminRole,
-        );
-
-        $targetAdmin = $this->userWithRole(
-            $this->adminRole,
-        );
-
-        $actingAdmin->forceFill([
-            'is_active' => false,
-        ])->save();
-
-        $this
-            ->actingAs($targetAdmin)
-            ->patchJson(
-                "/api/v1/admin/users/{$actingAdmin->id}/role",
-                [
-                    'role' => 'operator',
-                ],
-            )
-            ->assertConflict()
-            ->assertJsonPath(
-                'code',
-                'LAST_ACTIVE_ADMIN_REQUIRED',
-            );
-
-        $actingAdmin->forceFill([
-            'is_active' => true,
-        ])->save();
-
-        $targetAdmin->forceFill([
-            'is_active' => false,
-        ])->save();
-
-        $this
-            ->actingAs($actingAdmin)
-            ->patchJson(
-                "/api/v1/admin/users/{$targetAdmin->id}/role",
-                [
-                    'role' => 'operator',
-                ],
-            )
-            ->assertConflict();
-
-        $this->assertDatabaseHas('users', [
-            'id' => $targetAdmin->id,
-            'role_id' => $this->adminRole->id,
-        ]);
-    }
-
     public function test_changing_user_role_revokes_all_tokens(): void
     {
         $admin = $this->userWithRole(

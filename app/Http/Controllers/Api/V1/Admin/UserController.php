@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
-use App\Exceptions\Admin\LastActiveAdminException;
 use App\Http\Requests\Api\V1\Admin\StoreAdminUserRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateAdminUserRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateAdminUserRoleRequest;
@@ -12,6 +11,7 @@ use App\Http\Requests\Api\V1\Admin\UpdateAdminUserStatusRequest;
 use App\Http\Resources\Api\V1\Admin\AdminUserResource;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Admin\Users\ActiveAdminGuard;
 use App\Support\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +22,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class UserController
 {
+    public function __construct(
+        private readonly ActiveAdminGuard $activeAdminGuard,
+    ) {}
+
     public function index(
         Request $request,
     ): JsonResponse {
@@ -148,20 +152,13 @@ final class UserController
             data: AdminUserResource::collection(
                 $users->getCollection(),
             ),
-
             message: 'Usuarios recuperados correctamente.',
-
             meta: [
                 'current_page' => $users->currentPage(),
-
                 'last_page' => $users->lastPage(),
-
                 'per_page' => $users->perPage(),
-
                 'total' => $users->total(),
-
                 'from' => $users->firstItem(),
-
                 'to' => $users->lastItem(),
             ],
         );
@@ -194,14 +191,10 @@ final class UserController
                     Role $role,
                 ): array => [
                     'id' => (int) $role->id,
-
                     'name' => (string) $role->role_name,
-
                     'label' => match ($role->role_name) {
                         'admin' => 'Administrador',
-
                         'operator' => 'Operador',
-
                         default => 'Cliente',
                     },
                 ],
@@ -236,39 +229,28 @@ final class UserController
 
         $user = User::query()->create([
             'role_id' => (int) $roleId,
-
             'first_name' => $data['first_name'],
-
             'last_name' => $data['last_name'],
-
             'phone' => $data['phone'],
-
             'email' => $data['email'],
 
             /*
-             * La autenticación actual usa Google/Firebase.
-             * La contraseña queda aleatoria y no se comparte.
+             * La contraseña aleatoria evita que el administrador conozca
+             * credenciales reutilizables del usuario creado.
              */
             'password' => Str::random(64),
-
             'is_active' => (bool) $data['is_active'],
         ]);
 
-        $user
-            ->load('role')
-            ->loadCount([
-                'carts',
-                'orders',
-                'payments',
-            ]);
+        $this->loadUserRelations(
+            $user,
+        );
 
         return ApiResponse::success(
             data: new AdminUserResource(
                 $user,
             ),
-
             message: 'Usuario creado correctamente.',
-
             status: Response::HTTP_CREATED,
         );
     }
@@ -276,19 +258,14 @@ final class UserController
     public function show(
         User $user,
     ): JsonResponse {
-        $user
-            ->load('role')
-            ->loadCount([
-                'carts',
-                'orders',
-                'payments',
-            ]);
+        $this->loadUserRelations(
+            $user,
+        );
 
         return ApiResponse::success(
             data: new AdminUserResource(
                 $user,
             ),
-
             message: 'Usuario recuperado correctamente.',
         );
     }
@@ -297,23 +274,20 @@ final class UserController
         UpdateAdminUserRequest $request,
         User $user,
     ): JsonResponse {
-        $user->fill(
-            $request->validated(),
-        )->save();
-
         $user
-            ->load('role')
-            ->loadCount([
-                'carts',
-                'orders',
-                'payments',
-            ]);
+            ->fill(
+                $request->validated(),
+            )
+            ->save();
+
+        $this->loadUserRelations(
+            $user,
+        );
 
         return ApiResponse::success(
             data: new AdminUserResource(
                 $user,
             ),
-
             message: 'Usuario actualizado correctamente.',
         );
     }
@@ -322,8 +296,7 @@ final class UserController
         UpdateAdminUserRoleRequest $request,
         User $user,
     ): JsonResponse {
-        $authenticatedUser =
-            $request->user();
+        $authenticatedUser = $request->user();
 
         if (
             (int) $authenticatedUser->id ===
@@ -336,10 +309,9 @@ final class UserController
             );
         }
 
-        $newRoleName =
-            $request->string(
-                'role',
-            )->toString();
+        $newRoleName = $request
+            ->string('role')
+            ->toString();
 
         $newRole = Role::query()
             ->where(
@@ -368,68 +340,39 @@ final class UserController
                         $user->id,
                     );
 
-                $currentRole =
-                    strtolower(
-                        (string) $lockedUser
-                            ->role
-                            ?->role_name,
+                $this->activeAdminGuard
+                    ->ensureRoleCanBeChanged(
+                        user: $lockedUser,
+                        newRole: $newRole,
                     );
 
-                if (
-                    $currentRole === 'admin' &&
-                    $newRole->role_name !== 'admin'
-                ) {
-                    $activeAdmins =
-                        User::query()
-                            ->where(
-                                'is_active',
-                                true,
-                            )
-                            ->whereHas(
-                                'role',
-                                fn (
-                                    Builder $query,
-                                ): Builder => $query->where(
-                                    'role_name',
-                                    'admin',
-                                ),
-                            )
-                            ->lockForUpdate()
-                            ->count();
-
-                    if ($activeAdmins <= 1) {
-                        throw new LastActiveAdminException(
-                            'No puedes quitar el rol al último administrador activo.',
-                        );
-                    }
-                }
-
-                $lockedUser->forceFill([
-                    'role_id' => (int) $newRole->id,
-                ])->save();
+                $lockedUser
+                    ->forceFill([
+                        'role_id' => (int) $newRole->id,
+                    ])
+                    ->save();
 
                 /*
-                 * Revoca sesiones previas cuando cambia el rol.
+                 * El cambio de privilegios invalida todas las sesiones
+                 * existentes para evitar tokens con permisos anteriores.
                  */
-                $lockedUser->tokens()->delete();
+                $lockedUser
+                    ->tokens()
+                    ->delete();
             },
             attempts: 3,
         );
 
-        $user
-            ->refresh()
-            ->load('role')
-            ->loadCount([
-                'carts',
-                'orders',
-                'payments',
-            ]);
+        $user->refresh();
+
+        $this->loadUserRelations(
+            $user,
+        );
 
         return ApiResponse::success(
             data: new AdminUserResource(
                 $user,
             ),
-
             message: 'Rol actualizado correctamente.',
         );
     }
@@ -438,18 +381,16 @@ final class UserController
         UpdateAdminUserStatusRequest $request,
         User $user,
     ): JsonResponse {
-        $authenticatedUser =
-            $request->user();
+        $authenticatedUser = $request->user();
 
-        $newStatus =
-            $request->boolean(
-                'is_active',
-            );
+        $newStatus = $request->boolean(
+            'is_active',
+        );
 
         if (
             (int) $authenticatedUser->id ===
-            (int) $user->id &&
-            ! $newStatus
+            (int) $user->id
+            && ! $newStatus
         ) {
             return ApiResponse::error(
                 message: 'No puedes bloquear tu propia cuenta.',
@@ -470,48 +411,22 @@ final class UserController
                         $user->id,
                     );
 
-                $isAdmin =
-                    strtolower(
-                        (string) $lockedUser
-                            ->role
-                            ?->role_name,
-                    ) === 'admin';
+                $this->activeAdminGuard
+                    ->ensureCanBeDisabled(
+                        user: $lockedUser,
+                        newStatus: $newStatus,
+                    );
 
-                if (
-                    $isAdmin &&
-                    ! $newStatus &&
-                    $lockedUser->is_active
-                ) {
-                    $activeAdmins =
-                        User::query()
-                            ->where(
-                                'is_active',
-                                true,
-                            )
-                            ->whereHas(
-                                'role',
-                                fn (
-                                    Builder $query,
-                                ): Builder => $query->where(
-                                    'role_name',
-                                    'admin',
-                                ),
-                            )
-                            ->lockForUpdate()
-                            ->count();
-
-                    if ($activeAdmins <= 1) {
-                        throw new LastActiveAdminException(
-                            'No puedes bloquear al último administrador activo.',
-                        );
-                    }
-                }
-
-                $lockedUser->forceFill([
-                    'is_active' => $newStatus,
-                ])->save();
+                $lockedUser
+                    ->forceFill([
+                        'is_active' => $newStatus,
+                    ])
+                    ->save();
 
                 if (! $newStatus) {
+                    /*
+                     * Un usuario bloqueado no debe conservar sesiones activas.
+                     */
                     $lockedUser
                         ->tokens()
                         ->delete();
@@ -520,23 +435,34 @@ final class UserController
             attempts: 3,
         );
 
+        $user->refresh();
+
+        $this->loadUserRelations(
+            $user,
+        );
+
+        return ApiResponse::success(
+            data: new AdminUserResource(
+                $user,
+            ),
+            message: $newStatus
+                ? 'Usuario activado correctamente.'
+                : 'Usuario bloqueado correctamente.',
+        );
+    }
+
+    /**
+     * Carga las relaciones y contadores requeridos por AdminUserResource.
+     */
+    private function loadUserRelations(
+        User $user,
+    ): void {
         $user
-            ->refresh()
             ->load('role')
             ->loadCount([
                 'carts',
                 'orders',
                 'payments',
             ]);
-
-        return ApiResponse::success(
-            data: new AdminUserResource(
-                $user,
-            ),
-
-            message: $newStatus
-                ? 'Usuario activado correctamente.'
-                : 'Usuario bloqueado correctamente.',
-        );
     }
 }
