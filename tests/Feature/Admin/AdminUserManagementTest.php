@@ -327,6 +327,166 @@ final class AdminUserManagementTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_filter_users_by_role(): void
+    {
+        $admin = $this->userWithRole(
+            $this->adminRole,
+        );
+
+        $operator = $this->userWithRole(
+            $this->operatorRole,
+            [
+                'email' => 'operador@example.com',
+            ],
+        );
+
+        $this->userWithRole(
+            $this->customerRole,
+            [
+                'email' => 'cliente@example.com',
+            ],
+        );
+
+        $response = $this
+            ->actingAs($admin)
+            ->getJson(
+                '/api/v1/admin/users?role=operator',
+            );
+
+        $response
+            ->assertOk()
+            ->assertJsonPath(
+                'success',
+                true,
+            )
+            ->assertJsonPath(
+                'meta.total',
+                1,
+            )
+            ->assertJsonPath(
+                'data.0.id',
+                $operator->id,
+            )
+            ->assertJsonPath(
+                'data.0.role.name',
+                'operator',
+            );
+    }
+
+    public function test_admin_can_filter_users_by_status(): void
+    {
+        $admin = $this->userWithRole(
+            $this->adminRole,
+        );
+
+        $inactiveCustomer = $this->userWithRole(
+            $this->customerRole,
+            [
+                'email' => 'inactivo@example.com',
+                'is_active' => false,
+            ],
+        );
+
+        $this->userWithRole(
+            $this->customerRole,
+            [
+                'email' => 'activo@example.com',
+                'is_active' => true,
+            ],
+        );
+
+        $response = $this
+            ->actingAs($admin)
+            ->getJson(
+                '/api/v1/admin/users?status=inactive',
+            );
+
+        $response
+            ->assertOk()
+            ->assertJsonPath(
+                'meta.total',
+                1,
+            )
+            ->assertJsonPath(
+                'data.0.id',
+                $inactiveCustomer->id,
+            )
+            ->assertJsonPath(
+                'data.0.is_active',
+                false,
+            );
+    }
+
+    public function test_admin_can_search_users_by_full_name(): void
+    {
+        $admin = $this->userWithRole(
+            $this->adminRole,
+        );
+
+        $customer = $this->userWithRole(
+            $this->customerRole,
+            [
+                'first_name' => 'María',
+                'last_name' => 'Zambrano',
+                'email' => 'maria@example.com',
+            ],
+        );
+
+        $this->userWithRole(
+            $this->customerRole,
+            [
+                'first_name' => 'Carlos',
+                'last_name' => 'Mendoza',
+                'email' => 'carlos@example.com',
+            ],
+        );
+
+        $response = $this
+            ->actingAs($admin)
+            ->getJson(
+                '/api/v1/admin/users?search=María%20Zambrano',
+            );
+
+        $response
+            ->assertOk()
+            ->assertJsonPath(
+                'meta.total',
+                1,
+            )
+            ->assertJsonPath(
+                'data.0.id',
+                $customer->id,
+            );
+    }
+
+    public function test_admin_can_retrieve_administrable_roles(): void
+    {
+        $admin = $this->userWithRole(
+            $this->adminRole,
+        );
+
+        $this
+            ->actingAs($admin)
+            ->getJson('/api/v1/admin/users/roles')
+            ->assertOk()
+            ->assertJsonPath(
+                'success',
+                true,
+            )
+            ->assertJsonPath(
+                'data.0.name',
+                'admin',
+            )
+            ->assertJsonPath(
+                'data.1.name',
+                'operator',
+            )
+            ->assertJsonPath(
+                'data.2.name',
+                'customer',
+            );
+    }
+
     private function userWithRole(
         Role $role,
         array $attributes = [],

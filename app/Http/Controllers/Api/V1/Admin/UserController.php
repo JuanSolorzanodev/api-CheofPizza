@@ -12,8 +12,8 @@ use App\Http\Resources\Api\V1\Admin\AdminUserResource;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\Admin\Users\ActiveAdminGuard;
+use App\Services\Admin\Users\AdminUserQueryService;
 use App\Support\ApiResponse;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,129 +24,15 @@ final class UserController
 {
     public function __construct(
         private readonly ActiveAdminGuard $activeAdminGuard,
+        private readonly AdminUserQueryService $queryService,
     ) {}
 
     public function index(
         Request $request,
     ): JsonResponse {
-        $search = trim(
-            (string) $request->query(
-                'search',
-                '',
-            ),
+        $users = $this->queryService->paginate(
+            filters: $request->query(),
         );
-
-        $role = strtolower(
-            trim(
-                (string) $request->query(
-                    'role',
-                    '',
-                ),
-            ),
-        );
-
-        $status = strtolower(
-            trim(
-                (string) $request->query(
-                    'status',
-                    '',
-                ),
-            ),
-        );
-
-        $perPage = max(
-            5,
-            min(
-                100,
-                (int) $request->integer(
-                    'per_page',
-                    15,
-                ),
-            ),
-        );
-
-        $users = User::query()
-            ->with('role')
-            ->withCount([
-                'carts',
-                'orders',
-                'payments',
-            ])
-            ->when(
-                $search !== '',
-                function (
-                    Builder $query,
-                ) use ($search): void {
-                    $query->where(
-                        function (
-                            Builder $inner,
-                        ) use ($search): void {
-                            $inner
-                                ->where(
-                                    'first_name',
-                                    'like',
-                                    "%{$search}%",
-                                )
-                                ->orWhere(
-                                    'last_name',
-                                    'like',
-                                    "%{$search}%",
-                                )
-                                ->orWhere(
-                                    'email',
-                                    'like',
-                                    "%{$search}%",
-                                )
-                                ->orWhere(
-                                    'phone',
-                                    'like',
-                                    "%{$search}%",
-                                )
-                                ->orWhereRaw(
-                                    "CONCAT(first_name, ' ', last_name) LIKE ?",
-                                    ["%{$search}%"],
-                                );
-                        },
-                    );
-                },
-            )
-            ->when(
-                in_array(
-                    $role,
-                    [
-                        'customer',
-                        'operator',
-                        'admin',
-                    ],
-                    true,
-                ),
-                fn (Builder $query): Builder => $query->whereHas(
-                    'role',
-                    fn (
-                        Builder $roleQuery,
-                    ): Builder => $roleQuery->where(
-                        'role_name',
-                        $role,
-                    ),
-                ),
-            )
-            ->when(
-                $status === 'active',
-                fn (Builder $query): Builder => $query->where(
-                    'is_active',
-                    true,
-                ),
-            )
-            ->when(
-                $status === 'inactive',
-                fn (Builder $query): Builder => $query->where(
-                    'is_active',
-                    false,
-                ),
-            )
-            ->latest('id')
-            ->paginate($perPage)
-            ->withQueryString();
 
         return ApiResponse::success(
             data: AdminUserResource::collection(
@@ -166,43 +52,8 @@ final class UserController
 
     public function roles(): JsonResponse
     {
-        $roles = Role::query()
-            ->whereIn(
-                'role_name',
-                [
-                    'customer',
-                    'operator',
-                    'admin',
-                ],
-            )
-            ->orderByRaw(
-                "
-                CASE role_name
-                    WHEN 'admin' THEN 1
-                    WHEN 'operator' THEN 2
-                    WHEN 'customer' THEN 3
-                    ELSE 4
-                END
-                ",
-            )
-            ->get()
-            ->map(
-                static fn (
-                    Role $role,
-                ): array => [
-                    'id' => (int) $role->id,
-                    'name' => (string) $role->role_name,
-                    'label' => match ($role->role_name) {
-                        'admin' => 'Administrador',
-                        'operator' => 'Operador',
-                        default => 'Cliente',
-                    },
-                ],
-            )
-            ->values();
-
         return ApiResponse::success(
-            data: $roles,
+            data: $this->queryService->roles(),
             message: 'Roles recuperados correctamente.',
         );
     }
