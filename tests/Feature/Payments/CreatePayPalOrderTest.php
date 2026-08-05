@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Enums\PaymentProvider;
+use App\Enums\PaymentStatus;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\CartStatus;
@@ -23,9 +25,11 @@ use Tests\TestCase;
  *     cart: Cart
  * }
  */
-function createPayPalTestCart(): array
-{
-    $user = User::factory()
+function createPayPalTestCart(
+    ?User $user = null,
+    string $total = '5.00',
+): array {
+    $user ??= User::factory()
         ->customer()
         ->create();
 
@@ -35,20 +39,20 @@ function createPayPalTestCart(): array
         ]);
 
     $category = Category::query()->create([
-        'category_name' => 'Sencillas',
+        'category_name' => 'Sencillas '.fake()->uuid(),
         'description' => 'Categoría para pruebas',
     ]);
 
     $pizza = Pizza::query()->create([
         'category_id' => $category->id,
-        'pizza_name' => 'Americana',
+        'pizza_name' => 'Americana '.fake()->uuid(),
         'description' => 'Pizza de prueba',
         'image_url' => null,
         'is_visible' => true,
     ]);
 
     $size = Size::query()->create([
-        'size_name' => 'Pequeña',
+        'size_name' => 'Pequeña '.fake()->uuid(),
         'portion' => 4,
     ]);
 
@@ -56,7 +60,7 @@ function createPayPalTestCart(): array
         'user_id' => $user->id,
         'cart_status_id' => $activeStatus->id,
         'session_id' => null,
-        'total' => 5.00,
+        'total' => $total,
     ]);
 
     CartItem::query()->create([
@@ -67,8 +71,8 @@ function createPayPalTestCart(): array
         'promotion_id' => null,
         'size_id' => $size->id,
         'quantity' => 1,
-        'unit_price' => 5.00,
-        'subtotal' => 5.00,
+        'unit_price' => $total,
+        'subtotal' => $total,
     ]);
 
     return [
@@ -122,6 +126,19 @@ function fakePayPalCreateOrder(
     ]);
 }
 
+/**
+ * @return array<string, mixed>
+ */
+function payPalCreatePayload(): array
+{
+    return [
+        'delivery_type' => 'pickup',
+        'address' => null,
+        'delivery_location' => null,
+        'notes' => 'Pedido de prueba',
+    ];
+}
+
 describe('Creación de órdenes PayPal', function (): void {
     it(
         'crea una orden PayPal para un carrito válido',
@@ -136,18 +153,15 @@ describe('Creación de órdenes PayPal', function (): void {
 
             $paypalOrderId = 'PAYPAL-ORDER-TEST-123';
 
-            fakePayPalCreateOrder($paypalOrderId);
+            fakePayPalCreateOrder(
+                $paypalOrderId,
+            );
 
             $idempotencyKey = fake()->uuid();
 
             $response = $this->postJson(
                 '/api/v1/payments/paypal/orders',
-                [
-                    'delivery_type' => 'pickup',
-                    'address' => null,
-                    'delivery_location' => null,
-                    'notes' => 'Pedido de prueba',
-                ],
+                payPalCreatePayload(),
                 [
                     'Idempotency-Key' => $idempotencyKey,
                 ],
@@ -209,22 +223,22 @@ describe('Creación de órdenes PayPal', function (): void {
                     $payload = $request->data();
 
                     expect(
-                        $payload['intent'] ?? null
+                        $payload['intent'] ?? null,
                     )->toBe('CAPTURE');
 
                     expect(
                         $payload['purchase_units'][0]['amount']['currency_code']
-                            ?? null
+                            ?? null,
                     )->toBe('USD');
 
                     expect(
                         $payload['purchase_units'][0]['amount']['value']
-                            ?? null
+                            ?? null,
                     )->toBe('5.00');
 
                     expect(
                         $payload['purchase_units'][0]['reference_id']
-                            ?? null
+                            ?? null,
                     )->toBe($payment->uuid);
 
                     return true;
@@ -246,16 +260,11 @@ describe('Creación de órdenes PayPal', function (): void {
             $paypalOrderId =
                 'PAYPAL-ORDER-IDEMPOTENT-123';
 
-            fakePayPalCreateOrder($paypalOrderId);
+            fakePayPalCreateOrder(
+                $paypalOrderId,
+            );
 
             $idempotencyKey = fake()->uuid();
-
-            $payload = [
-                'delivery_type' => 'pickup',
-                'address' => null,
-                'delivery_location' => null,
-                'notes' => null,
-            ];
 
             $headers = [
                 'Idempotency-Key' => $idempotencyKey,
@@ -263,28 +272,27 @@ describe('Creación de órdenes PayPal', function (): void {
 
             $firstResponse = $this->postJson(
                 '/api/v1/payments/paypal/orders',
-                $payload,
+                payPalCreatePayload(),
                 $headers,
             );
 
             $secondResponse = $this->postJson(
                 '/api/v1/payments/paypal/orders',
-                $payload,
+                payPalCreatePayload(),
                 $headers,
             );
 
             $firstResponse->assertOk();
-
             $secondResponse->assertOk();
 
             expect(
                 $firstResponse->json(
-                    'data.payment_id'
-                )
+                    'data.payment_id',
+                ),
             )->toBe(
                 $secondResponse->json(
-                    'data.payment_id'
-                )
+                    'data.payment_id',
+                ),
             );
 
             expect(
@@ -293,7 +301,7 @@ describe('Creación de órdenes PayPal', function (): void {
                         'idempotency_key',
                         $idempotencyKey,
                     )
-                    ->count()
+                    ->count(),
             )->toBe(1);
 
             $baseUrl = rtrim(
@@ -305,10 +313,10 @@ describe('Creación de órdenes PayPal', function (): void {
             );
 
             $orderRequests = collect(
-                Http::recorded()
+                Http::recorded(),
             )->filter(
                 function (
-                    array $record
+                    array $record,
                 ) use ($baseUrl): bool {
                     [$request] = $record;
 
@@ -317,12 +325,330 @@ describe('Creación de órdenes PayPal', function (): void {
                 },
             );
 
-            /*
-             * Aunque el endpoint local se llamó dos veces,
-             * Laravel solo debe crear una orden externa.
-             */
             expect($orderRequests)
                 ->toHaveCount(1);
+        },
+    );
+
+    it(
+        'rechaza una clave de idempotencia utilizada por otro usuario',
+        function (): void {
+            /** @var TestCase $this */
+            [
+                'user' => $firstUser,
+                'cart' => $firstCart,
+            ] = createPayPalTestCart();
+
+            [
+                'user' => $secondUser,
+            ] = createPayPalTestCart();
+
+            $idempotencyKey = fake()->uuid();
+
+            Payment::query()->create([
+                'idempotency_key' => $idempotencyKey,
+                'user_id' => $firstUser->id,
+                'cart_id' => $firstCart->id,
+                'order_id' => null,
+                'provider' => PaymentProvider::PAYPAL,
+                'provider_order_id' => 'PAYPAL-EXISTING-001',
+                'provider_capture_id' => null,
+                'provider_status' => 'CREATED',
+                'amount' => '5.00',
+                'currency' => 'USD',
+                'status' => PaymentStatus::PENDING,
+                'checkout_context' => payPalCreatePayload(),
+                'cart_fingerprint' => 'fingerprint-test',
+                'provider_metadata' => null,
+                'failure_code' => null,
+                'failure_message' => null,
+                'failed_at' => null,
+            ]);
+
+            Sanctum::actingAs(
+                $secondUser,
+            );
+
+            Http::fake();
+
+            $this
+                ->postJson(
+                    '/api/v1/payments/paypal/orders',
+                    payPalCreatePayload(),
+                    [
+                        'Idempotency-Key' => $idempotencyKey,
+                    ],
+                )
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors([
+                    'idempotency_key',
+                ])
+                ->assertJsonPath(
+                    'errors.idempotency_key.0',
+                    'La clave de idempotencia ya fue utilizada.',
+                );
+
+            Http::assertNothingSent();
+
+            $this->assertDatabaseCount(
+                'payments',
+                1,
+            );
+        },
+    );
+
+    it(
+        'rechaza una clave de idempotencia asociada a otro carrito',
+        function (): void {
+            /** @var TestCase $this */
+            $user = User::factory()
+                ->customer()
+                ->create();
+
+            [
+                'cart' => $firstCart,
+            ] = createPayPalTestCart(
+                user: $user,
+            );
+
+            [
+                'cart' => $secondCart,
+            ] = createPayPalTestCart(
+                user: $user,
+            );
+
+            $idempotencyKey = fake()->uuid();
+
+            Payment::query()->create([
+                'idempotency_key' => $idempotencyKey,
+                'user_id' => $user->id,
+                'cart_id' => $firstCart->id,
+                'order_id' => null,
+                'provider' => PaymentProvider::PAYPAL,
+                'provider_order_id' => 'PAYPAL-EXISTING-002',
+                'provider_capture_id' => null,
+                'provider_status' => 'CREATED',
+                'amount' => '5.00',
+                'currency' => 'USD',
+                'status' => PaymentStatus::PENDING,
+                'checkout_context' => payPalCreatePayload(),
+                'cart_fingerprint' => 'fingerprint-test',
+                'provider_metadata' => null,
+                'failure_code' => null,
+                'failure_message' => null,
+                'failed_at' => null,
+            ]);
+
+            /*
+             * CartService recupera el carrito activo más reciente.
+             */
+            $secondCart->touch();
+
+            Sanctum::actingAs(
+                $user,
+            );
+
+            Http::fake();
+
+            $this
+                ->postJson(
+                    '/api/v1/payments/paypal/orders',
+                    payPalCreatePayload(),
+                    [
+                        'Idempotency-Key' => $idempotencyKey,
+                    ],
+                )
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors([
+                    'idempotency_key',
+                ])
+                ->assertJsonPath(
+                    'errors.idempotency_key.0',
+                    'La clave de idempotencia pertenece a otro carrito.',
+                );
+
+            Http::assertNothingSent();
+
+            $this->assertDatabaseCount(
+                'payments',
+                1,
+            );
+        },
+    );
+
+    it(
+        'rechaza una solicitud anterior que quedó incompleta',
+        function (): void {
+            /** @var TestCase $this */
+            [
+                'user' => $user,
+                'cart' => $cart,
+            ] = createPayPalTestCart();
+
+            $idempotencyKey = fake()->uuid();
+
+            Payment::query()->create([
+                'idempotency_key' => $idempotencyKey,
+                'user_id' => $user->id,
+                'cart_id' => $cart->id,
+                'order_id' => null,
+                'provider' => PaymentProvider::PAYPAL,
+                'provider_order_id' => null,
+                'provider_capture_id' => null,
+                'provider_status' => null,
+                'amount' => '5.00',
+                'currency' => 'USD',
+                'status' => PaymentStatus::CREATED,
+                'checkout_context' => payPalCreatePayload(),
+                'cart_fingerprint' => 'fingerprint-test',
+                'provider_metadata' => null,
+                'failure_code' => null,
+                'failure_message' => null,
+                'failed_at' => null,
+            ]);
+
+            Sanctum::actingAs(
+                $user,
+            );
+
+            Http::fake();
+
+            $this
+                ->postJson(
+                    '/api/v1/payments/paypal/orders',
+                    payPalCreatePayload(),
+                    [
+                        'Idempotency-Key' => $idempotencyKey,
+                    ],
+                )
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors([
+                    'idempotency_key',
+                ])
+                ->assertJsonPath(
+                    'errors.idempotency_key.0',
+                    'La solicitud anterior quedó incompleta. Usa una nueva clave de idempotencia.',
+                );
+
+            Http::assertNothingSent();
+
+            $this->assertDatabaseCount(
+                'payments',
+                1,
+            );
+        },
+    );
+
+    it(
+        'rechaza iniciar PayPal con un carrito vacío',
+        function (): void {
+            /** @var TestCase $this */
+            [
+                'user' => $user,
+                'cart' => $cart,
+            ] = createPayPalTestCart();
+
+            CartItem::query()
+                ->where(
+                    'cart_id',
+                    $cart->id,
+                )
+                ->delete();
+
+            Sanctum::actingAs(
+                $user,
+            );
+
+            Http::fake();
+
+            $this
+                ->postJson(
+                    '/api/v1/payments/paypal/orders',
+                    payPalCreatePayload(),
+                    [
+                        'Idempotency-Key' => fake()->uuid(),
+                    ],
+                )
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors([
+                    'cart',
+                ])
+                ->assertJsonPath(
+                    'errors.cart.0',
+                    'No puedes iniciar un pago con el carrito vacío.',
+                );
+
+            Http::assertNothingSent();
+
+            $this->assertDatabaseCount(
+                'payments',
+                0,
+            );
+        },
+    );
+
+    it(
+        'rechaza iniciar PayPal cuando el usuario no tiene un carrito activo con productos',
+        function (): void {
+            /** @var TestCase $this */
+            [
+                'user' => $user,
+                'cart' => $cart,
+            ] = createPayPalTestCart();
+
+            $orderedStatus = CartStatus::query()
+                ->firstOrCreate([
+                    'status_name' => 'ordered',
+                ]);
+
+            /*
+         * Al procesar el carrito deja de estar disponible como carrito
+         * activo. El flujo de PayPal recuperará un nuevo carrito vacío
+         * y debe impedir que se inicie el pago.
+         */
+            $cart
+                ->forceFill([
+                    'cart_status_id' => $orderedStatus->id,
+                ])
+                ->save();
+
+            Sanctum::actingAs(
+                $user,
+            );
+
+            Http::fake();
+
+            $this
+                ->postJson(
+                    '/api/v1/payments/paypal/orders',
+                    payPalCreatePayload(),
+                    [
+                        'Idempotency-Key' => fake()->uuid(),
+                    ],
+                )
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors([
+                    'cart',
+                ])
+                ->assertJsonPath(
+                    'errors.cart.0',
+                    'No puedes iniciar un pago con el carrito vacío.',
+                );
+
+            Http::assertNothingSent();
+
+            $this->assertDatabaseCount(
+                'payments',
+                0,
+            );
+
+            $this->assertDatabaseHas(
+                'carts',
+                [
+                    'id' => $cart->id,
+                    'cart_status_id' => $orderedStatus->id,
+                ],
+            );
         },
     );
 });
