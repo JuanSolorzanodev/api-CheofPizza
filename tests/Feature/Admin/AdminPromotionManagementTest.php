@@ -4,11 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Cart;
+use App\Models\CartItem;
+use App\Models\CartStatus;
 use App\Models\Category;
+use App\Models\DeliveryType;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\OrderStatus;
+use App\Models\PaymentMethod;
 use App\Models\Promotion;
 use App\Models\PromotionDetail;
 use App\Models\Size;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -863,6 +872,614 @@ final class AdminPromotionManagementTest extends TestCase
         $this->assertDatabaseCount(
             'promotion_size_prices',
             0,
+        );
+    }
+
+    public function test_admin_can_activate_and_deactivate_a_valid_promotion(): void
+    {
+        CarbonImmutable::setTestNow(
+            '2026-08-12 12:00:00',
+        );
+
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        [
+            'category' => $category,
+            'small' => $small,
+        ] = $this->promotionCatalogFixture();
+
+        $promotion = Promotion::query()->create([
+            'promotion_name' => 'Combo activable',
+            'slug' => 'combo-activable',
+            'description' => null,
+            'banner_image_url' => null,
+            'promotion_type' => Promotion::TYPE_FIXED_COMBO,
+            'selection_quantity' => 2,
+            'promotion_price' => '15.00',
+            'starts_at' => '2026-08-10 00:00:00',
+            'ends_at' => '2026-08-20 23:59:59',
+            'is_active' => false,
+        ]);
+
+        PromotionDetail::query()->create([
+            'promotion_id' => $promotion->id,
+            'category_id' => $category->id,
+            'size_id' => $small->id,
+            'required_quantity' => 2,
+        ]);
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->patchJson(
+                "/api/v1/admin/promotions/{$promotion->id}/visibility",
+                [
+                    'is_active' => true,
+                ],
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'data.is_active',
+                true,
+            )
+            ->assertJsonPath(
+                'data.status',
+                'active',
+            )
+            ->assertJsonPath(
+                'message',
+                'Promoción activada correctamente.',
+            );
+
+        $this->assertDatabaseHas(
+            'promotions',
+            [
+                'id' => $promotion->id,
+                'is_active' => true,
+            ],
+        );
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->patchJson(
+                "/api/v1/admin/promotions/{$promotion->id}/visibility",
+                [
+                    'is_active' => false,
+                ],
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'data.is_active',
+                false,
+            )
+            ->assertJsonPath(
+                'data.status',
+                'inactive',
+            )
+            ->assertJsonPath(
+                'message',
+                'Promoción desactivada correctamente.',
+            );
+
+        $this->assertDatabaseHas(
+            'promotions',
+            [
+                'id' => $promotion->id,
+                'is_active' => false,
+            ],
+        );
+
+        CarbonImmutable::setTestNow();
+    }
+
+    public function test_fixed_combo_cannot_be_activated_without_rules(): void
+    {
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $promotion = Promotion::query()->create([
+            'promotion_name' => 'Combo incompleto',
+            'slug' => 'combo-incompleto',
+            'description' => null,
+            'banner_image_url' => null,
+            'promotion_type' => Promotion::TYPE_FIXED_COMBO,
+            'selection_quantity' => 2,
+            'promotion_price' => '15.00',
+            'starts_at' => '2026-08-10 00:00:00',
+            'ends_at' => '2026-08-20 23:59:59',
+            'is_active' => false,
+        ]);
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->patchJson(
+                "/api/v1/admin/promotions/{$promotion->id}/visibility",
+                [
+                    'is_active' => true,
+                ],
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'is_active',
+            ])
+            ->assertJsonPath(
+                'errors.is_active.0',
+                'El combo necesita reglas y un precio válido antes de activarse.',
+            );
+
+        $this->assertDatabaseHas(
+            'promotions',
+            [
+                'id' => $promotion->id,
+                'is_active' => false,
+            ],
+        );
+    }
+
+    public function test_size_fixed_price_promotion_cannot_be_activated_without_prices(): void
+    {
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $promotion = Promotion::query()->create([
+            'promotion_name' => 'Promoción sin precios',
+            'slug' => 'promocion-sin-precios',
+            'description' => null,
+            'banner_image_url' => null,
+            'promotion_type' => Promotion::TYPE_SIZE_FIXED_PRICE,
+            'selection_quantity' => 1,
+            'promotion_price' => '0.00',
+            'starts_at' => '2026-08-10 00:00:00',
+            'ends_at' => '2026-08-20 23:59:59',
+            'is_active' => false,
+        ]);
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->patchJson(
+                "/api/v1/admin/promotions/{$promotion->id}/visibility",
+                [
+                    'is_active' => true,
+                ],
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'is_active',
+            ])
+            ->assertJsonPath(
+                'errors.is_active.0',
+                'Configura al menos un precio por tamaño antes de activar la promoción.',
+            );
+
+        $this->assertDatabaseHas(
+            'promotions',
+            [
+                'id' => $promotion->id,
+                'is_active' => false,
+            ],
+        );
+    }
+
+    public function test_active_promotion_with_future_start_date_is_scheduled(): void
+    {
+        CarbonImmutable::setTestNow(
+            '2026-08-05 12:00:00',
+        );
+
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $promotion = Promotion::query()->create([
+            'promotion_name' => 'Promoción programada',
+            'slug' => 'promocion-programada',
+            'description' => null,
+            'banner_image_url' => null,
+            'promotion_type' => Promotion::TYPE_FIXED_COMBO,
+            'selection_quantity' => 2,
+            'promotion_price' => '15.00',
+            'starts_at' => '2026-08-10 00:00:00',
+            'ends_at' => '2026-08-20 23:59:59',
+            'is_active' => true,
+        ]);
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->getJson(
+                "/api/v1/admin/promotions/{$promotion->id}",
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'data.is_active',
+                true,
+            )
+            ->assertJsonPath(
+                'data.status',
+                'scheduled',
+            );
+
+        CarbonImmutable::setTestNow();
+    }
+
+    public function test_active_promotion_with_expired_end_date_is_finished(): void
+    {
+        CarbonImmutable::setTestNow(
+            '2026-08-25 12:00:00',
+        );
+
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $promotion = Promotion::query()->create([
+            'promotion_name' => 'Promoción finalizada',
+            'slug' => 'promocion-finalizada',
+            'description' => null,
+            'banner_image_url' => null,
+            'promotion_type' => Promotion::TYPE_FIXED_COMBO,
+            'selection_quantity' => 2,
+            'promotion_price' => '15.00',
+            'starts_at' => '2026-08-10 00:00:00',
+            'ends_at' => '2026-08-20 23:59:59',
+            'is_active' => true,
+        ]);
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->getJson(
+                "/api/v1/admin/promotions/{$promotion->id}",
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'data.is_active',
+                true,
+            )
+            ->assertJsonPath(
+                'data.status',
+                'finished',
+            );
+
+        CarbonImmutable::setTestNow();
+    }
+
+    public function test_admin_can_delete_unused_promotion_and_its_configuration(): void
+    {
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        [
+            'category' => $category,
+            'small' => $small,
+        ] = $this->promotionCatalogFixture();
+
+        $promotion = Promotion::query()->create([
+            'promotion_name' => 'Promoción eliminable',
+            'slug' => 'promocion-eliminable',
+            'description' => null,
+            'banner_image_url' => null,
+            'promotion_type' => Promotion::TYPE_FIXED_COMBO,
+            'selection_quantity' => 2,
+            'promotion_price' => '15.00',
+            'starts_at' => '2026-08-10 00:00:00',
+            'ends_at' => '2026-08-20 23:59:59',
+            'is_active' => false,
+        ]);
+
+        $detail = PromotionDetail::query()->create([
+            'promotion_id' => $promotion->id,
+            'category_id' => $category->id,
+            'size_id' => $small->id,
+            'required_quantity' => 2,
+        ]);
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->deleteJson(
+                "/api/v1/admin/promotions/{$promotion->id}",
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'success',
+                true,
+            )
+            ->assertJsonPath(
+                'data',
+                null,
+            )
+            ->assertJsonPath(
+                'message',
+                'Promoción eliminada correctamente.',
+            );
+
+        $this->assertDatabaseMissing(
+            'promotions',
+            [
+                'id' => $promotion->id,
+            ],
+        );
+
+        $this->assertDatabaseMissing(
+            'promotion_details',
+            [
+                'id' => $detail->id,
+            ],
+        );
+
+        $this->assertDatabaseHas(
+            'categories',
+            [
+                'id' => $category->id,
+            ],
+        );
+
+        $this->assertDatabaseHas(
+            'sizes',
+            [
+                'id' => $small->id,
+            ],
+        );
+    }
+
+    public function test_admin_cannot_delete_promotion_used_in_a_cart(): void
+    {
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $customer = User::factory()
+            ->customer()
+            ->create();
+
+        [
+            'category' => $category,
+            'small' => $small,
+        ] = $this->promotionCatalogFixture();
+
+        $promotion = Promotion::query()->create([
+            'promotion_name' => 'Promoción en carrito',
+            'slug' => 'promocion-en-carrito',
+            'description' => null,
+            'banner_image_url' => null,
+            'promotion_type' => Promotion::TYPE_FIXED_COMBO,
+            'selection_quantity' => 2,
+            'promotion_price' => '15.00',
+            'starts_at' => '2026-08-10 00:00:00',
+            'ends_at' => '2026-08-20 23:59:59',
+            'is_active' => true,
+        ]);
+
+        PromotionDetail::query()->create([
+            'promotion_id' => $promotion->id,
+            'category_id' => $category->id,
+            'size_id' => $small->id,
+            'required_quantity' => 2,
+        ]);
+
+        $activeStatus = CartStatus::query()
+            ->firstOrCreate([
+                'status_name' => 'active',
+            ]);
+
+        $cart = Cart::query()->create([
+            'user_id' => $customer->id,
+            'cart_status_id' => $activeStatus->id,
+            'session_id' => null,
+            'total' => '15.00',
+        ]);
+
+        $cartItem = CartItem::query()->create([
+            'cart_id' => $cart->id,
+            'item_type' => 'promotion',
+            'pizza_id' => null,
+            'pizza_id_second' => null,
+            'is_half_and_half' => false,
+            'promotion_id' => $promotion->id,
+            'size_id' => $small->id,
+            'quantity' => 1,
+            'unit_price' => '15.00',
+            'subtotal' => '15.00',
+        ]);
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->deleteJson(
+                "/api/v1/admin/promotions/{$promotion->id}",
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'promotion',
+            ])
+            ->assertJsonPath(
+                'errors.promotion.0',
+                'No puedes eliminar esta promoción porque está siendo utilizada en carritos.',
+            );
+
+        $this->assertDatabaseHas(
+            'promotions',
+            [
+                'id' => $promotion->id,
+            ],
+        );
+
+        $this->assertDatabaseHas(
+            'promotion_details',
+            [
+                'promotion_id' => $promotion->id,
+                'category_id' => $category->id,
+                'size_id' => $small->id,
+            ],
+        );
+
+        $this->assertDatabaseHas(
+            'cart_items',
+            [
+                'id' => $cartItem->id,
+                'cart_id' => $cart->id,
+                'promotion_id' => $promotion->id,
+                'item_type' => 'promotion',
+            ],
+        );
+    }
+
+    public function test_admin_cannot_delete_promotion_used_in_an_historical_order(): void
+    {
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $customer = User::factory()
+            ->customer()
+            ->create();
+
+        [
+            'category' => $category,
+            'small' => $small,
+        ] = $this->promotionCatalogFixture();
+
+        $promotion = Promotion::query()->create([
+            'promotion_name' => 'Promoción histórica',
+            'slug' => 'promocion-historica',
+            'description' => null,
+            'banner_image_url' => null,
+            'promotion_type' => Promotion::TYPE_FIXED_COMBO,
+            'selection_quantity' => 2,
+            'promotion_price' => '18.00',
+            'starts_at' => '2026-08-01 00:00:00',
+            'ends_at' => '2026-08-10 23:59:59',
+            'is_active' => false,
+        ]);
+
+        PromotionDetail::query()->create([
+            'promotion_id' => $promotion->id,
+            'category_id' => $category->id,
+            'size_id' => $small->id,
+            'required_quantity' => 2,
+        ]);
+
+        $deliveryType = DeliveryType::query()
+            ->firstOrCreate([
+                'delivery_type_name' => 'pickup',
+            ]);
+
+        $paymentMethod = PaymentMethod::query()
+            ->firstOrCreate([
+                'name' => 'cash',
+            ]);
+
+        $orderStatus = OrderStatus::query()
+            ->firstOrCreate([
+                'status_name' => 'delivered',
+            ]);
+
+        $order = Order::query()->create([
+            'order_number' => 'CH-PROMO-HIST-001',
+            'user_id' => $customer->id,
+            'ordered_at' => '2026-08-05 12:00:00',
+            'subtotal' => '18.00',
+            'delivery_fee' => '0.00',
+            'total' => '18.00',
+            'delivery_type_id' => $deliveryType->id,
+            'address' => null,
+            'payment_method_id' => $paymentMethod->id,
+            'order_status_id' => $orderStatus->id,
+        ]);
+
+        $orderItem = OrderItem::query()->create([
+            'order_id' => $order->id,
+            'promotion_id' => $promotion->id,
+            'promotion_name' => $promotion->promotion_name,
+            'pizza_id' => null,
+            'pizza_name' => null,
+            'pizza_id_second' => null,
+            'pizza_name_second' => null,
+            'size_id' => $small->id,
+            'size_name' => $small->size_name,
+            'category_name' => null,
+            'category_name_second' => null,
+            'is_half_and_half' => false,
+            'quantity' => 1,
+            'unit_price' => '18.00',
+            'subtotal' => '18.00',
+        ]);
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->deleteJson(
+                "/api/v1/admin/promotions/{$promotion->id}",
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'promotion',
+            ])
+            ->assertJsonPath(
+                'errors.promotion.0',
+                'No puedes eliminar esta promoción porque está registrada en pedidos históricos. Desactívala en lugar de eliminarla.',
+            );
+
+        $this->assertDatabaseHas(
+            'promotions',
+            [
+                'id' => $promotion->id,
+                'is_active' => false,
+            ],
+        );
+
+        $this->assertDatabaseHas(
+            'promotion_details',
+            [
+                'promotion_id' => $promotion->id,
+                'category_id' => $category->id,
+                'size_id' => $small->id,
+            ],
+        );
+
+        $this->assertDatabaseHas(
+            'orders',
+            [
+                'id' => $order->id,
+                'order_number' => 'CH-PROMO-HIST-001',
+            ],
+        );
+
+        $this->assertDatabaseHas(
+            'order_items',
+            [
+                'id' => $orderItem->id,
+                'order_id' => $order->id,
+                'promotion_id' => $promotion->id,
+                'promotion_name' => 'Promoción histórica',
+            ],
         );
     }
 
