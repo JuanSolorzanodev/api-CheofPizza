@@ -399,7 +399,7 @@ final class UserController
 
                     if ($activeAdmins <= 1) {
                         throw new LastActiveAdminException(
-                            'No puedes bloquear al último administrador activo.',
+                            'No puedes quitar el rol al último administrador activo.',
                         );
                     }
                 }
@@ -501,8 +501,7 @@ final class UserController
                             ->count();
 
                     if ($activeAdmins <= 1) {
-                        abort(
-                            Response::HTTP_CONFLICT,
+                        throw new LastActiveAdminException(
                             'No puedes bloquear al último administrador activo.',
                         );
                     }
