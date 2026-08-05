@@ -31,16 +31,29 @@ final class AppServiceProvider extends ServiceProvider
 
     private function configureRateLimiting(): void
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Inicio de sesión con correo y contraseña
+        |--------------------------------------------------------------------------
+        |
+        | El límite se aplica por combinación de dirección IP y correo.
+        | De esta forma, los intentos realizados sobre un correo no afectan
+        | automáticamente a otros usuarios que comparten la misma conexión.
+        |
+        */
+
         RateLimiter::for(
-            'auth',
+            'auth-login',
             fn (Request $request): Limit => Limit::perMinute(10)
                 ->by(
                     $request->ip()
                     .'|'
                     .strtolower(
-                        (string) $request->input(
-                            'email',
-                            'firebase',
+                        trim(
+                            (string) $request->input(
+                                'email',
+                                '',
+                            ),
                         ),
                     ),
                 )
@@ -52,12 +65,76 @@ final class AppServiceProvider extends ServiceProvider
                                 'Demasiados intentos de inicio de sesión. '
                                 .'Intenta nuevamente en un momento.'
                             ),
-                            'code' => 'TOO_MANY_AUTH_ATTEMPTS',
+                            'code' => 'TOO_MANY_LOGIN_ATTEMPTS',
                         ],
                         429,
                     ),
                 ),
         );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Registro de clientes
+        |--------------------------------------------------------------------------
+        |
+        | El límite se aplica por dirección IP, ya que una misma dirección
+        | no debería crear una cantidad excesiva de cuentas por minuto.
+        |
+        */
+
+        RateLimiter::for(
+            'auth-register',
+            fn (Request $request): Limit => Limit::perMinute(5)
+                ->by(
+                    $request->ip(),
+                )
+                ->response(
+                    fn () => response()->json(
+                        [
+                            'success' => false,
+                            'message' => (
+                                'Has realizado demasiados intentos de registro. '
+                                .'Intenta nuevamente en un momento.'
+                            ),
+                            'code' => 'TOO_MANY_REGISTRATION_ATTEMPTS',
+                        ],
+                        429,
+                    ),
+                ),
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Autenticación mediante Google y Firebase
+        |--------------------------------------------------------------------------
+        */
+
+        RateLimiter::for(
+            'auth-google',
+            fn (Request $request): Limit => Limit::perMinute(10)
+                ->by(
+                    $request->ip(),
+                )
+                ->response(
+                    fn () => response()->json(
+                        [
+                            'success' => false,
+                            'message' => (
+                                'Demasiados intentos de acceso con Google. '
+                                .'Intenta nuevamente en un momento.'
+                            ),
+                            'code' => 'TOO_MANY_GOOGLE_AUTH_ATTEMPTS',
+                        ],
+                        429,
+                    ),
+                ),
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | API pública
+        |--------------------------------------------------------------------------
+        */
 
         RateLimiter::for(
             'public-api',
@@ -66,6 +143,12 @@ final class AppServiceProvider extends ServiceProvider
                     $request->ip(),
                 ),
         );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Carrito
+        |--------------------------------------------------------------------------
+        */
 
         RateLimiter::for(
             'cart',
@@ -77,6 +160,12 @@ final class AppServiceProvider extends ServiceProvider
                 ),
         );
 
+        /*
+        |--------------------------------------------------------------------------
+        | Geolocalización
+        |--------------------------------------------------------------------------
+        */
+
         RateLimiter::for(
             'geo',
             fn (Request $request): Limit => Limit::perMinute(30)
@@ -86,6 +175,12 @@ final class AppServiceProvider extends ServiceProvider
                     ),
                 ),
         );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Checkout
+        |--------------------------------------------------------------------------
+        */
 
         RateLimiter::for(
             'checkout',
@@ -97,6 +192,12 @@ final class AppServiceProvider extends ServiceProvider
                 ),
         );
 
+        /*
+        |--------------------------------------------------------------------------
+        | Pagos
+        |--------------------------------------------------------------------------
+        */
+
         RateLimiter::for(
             'payments',
             fn (Request $request): Limit => Limit::perMinute(20)
@@ -107,6 +208,12 @@ final class AppServiceProvider extends ServiceProvider
                 ),
         );
 
+        /*
+        |--------------------------------------------------------------------------
+        | Webhook de PayPal
+        |--------------------------------------------------------------------------
+        */
+
         RateLimiter::for(
             'paypal-webhook',
             fn (Request $request): Limit => Limit::perMinute(180)
@@ -114,6 +221,12 @@ final class AppServiceProvider extends ServiceProvider
                     $request->ip(),
                 ),
         );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Acciones de operadores y administradores
+        |--------------------------------------------------------------------------
+        */
 
         RateLimiter::for(
             'operator-actions',
@@ -126,6 +239,14 @@ final class AppServiceProvider extends ServiceProvider
         );
     }
 
+    /**
+     * Obtiene una identidad estable para aplicar límites de solicitudes.
+     *
+     * Prioridad:
+     * 1. Usuario autenticado.
+     * 2. Sesión del carrito.
+     * 3. Dirección IP.
+     */
     private function requestIdentity(
         Request $request,
     ): string {

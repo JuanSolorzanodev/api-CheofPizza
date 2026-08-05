@@ -62,6 +62,12 @@ Route::prefix('v1')->group(function (): void {
     Route::prefix('auth')
         ->name('api.v1.auth.')
         ->group(function (): void {
+            /*
+        |--------------------------------------------------------------------------
+        | Registro de clientes
+        |--------------------------------------------------------------------------
+        */
+
             Route::post(
                 'register',
                 [
@@ -69,8 +75,14 @@ Route::prefix('v1')->group(function (): void {
                     'register',
                 ],
             )
-                ->middleware('throttle:auth')
+                ->middleware('throttle:auth-register')
                 ->name('register');
+
+            /*
+        |--------------------------------------------------------------------------
+        | Inicio de sesión con correo y contraseña
+        |--------------------------------------------------------------------------
+        */
 
             Route::post(
                 'login',
@@ -79,8 +91,14 @@ Route::prefix('v1')->group(function (): void {
                     'login',
                 ],
             )
-                ->middleware('throttle:auth')
+                ->middleware('throttle:auth-login')
                 ->name('login');
+
+            /*
+        |--------------------------------------------------------------------------
+        | Inicio de sesión mediante Google y Firebase
+        |--------------------------------------------------------------------------
+        */
 
             Route::post(
                 'firebase/google',
@@ -89,8 +107,14 @@ Route::prefix('v1')->group(function (): void {
                     'loginWithGoogle',
                 ],
             )
-                ->middleware('throttle:auth')
+                ->middleware('throttle:auth-google')
                 ->name('firebase.google');
+
+            /*
+        |--------------------------------------------------------------------------
+        | Sesión autenticada
+        |--------------------------------------------------------------------------
+        */
 
             Route::middleware([
                 'auth:sanctum',
