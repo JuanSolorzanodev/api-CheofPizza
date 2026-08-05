@@ -389,4 +389,286 @@ describe('Configuración administrativa del negocio', function (): void {
                 );
         },
     );
+
+    it(
+        'exige teléfono cuando WhatsApp está activo',
+        function (): void {
+            /** @var TestCase $this */
+            $admin = User::factory()
+                ->admin()
+                ->create();
+
+            $payload = businessSettingsPayload([
+                'whatsapp' => [
+                    'active' => true,
+                    'phone' => null,
+                ],
+            ]);
+
+            $this
+                ->actingAs(
+                    $admin,
+                    'sanctum',
+                )
+                ->putJson(
+                    '/api/v1/admin/settings',
+                    $payload,
+                )
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors([
+                    'whatsapp.phone',
+                ]);
+
+            $this->assertDatabaseCount(
+                'business_settings',
+                0,
+            );
+
+            $this->assertDatabaseCount(
+                'whats_app_settings',
+                0,
+            );
+        },
+
+    );
+
+    it(
+        'permite desactivar WhatsApp sin teléfono',
+        function (): void {
+            /** @var TestCase $this */
+            $admin = User::factory()
+                ->admin()
+                ->create();
+
+            $payload = businessSettingsPayload([
+                'whatsapp' => [
+                    'active' => false,
+                    'phone' => null,
+                    'receipt_template' => null,
+                ],
+            ]);
+
+            $this
+                ->actingAs(
+                    $admin,
+                    'sanctum',
+                )
+                ->putJson(
+                    '/api/v1/admin/settings',
+                    $payload,
+                )
+                ->assertOk()
+                ->assertJsonPath(
+                    'data.whatsapp.active',
+                    false,
+                )
+                ->assertJsonPath(
+                    'data.whatsapp.phone',
+                    null,
+                )
+                ->assertJsonPath(
+                    'data.whatsapp.receipt_template',
+                    null,
+                );
+
+            $this->assertDatabaseHas(
+                'whats_app_settings',
+                [
+                    'active' => false,
+                    'phone' => null,
+                    'receipt_template' => null,
+                ],
+            );
+        },
+    );
+    it(
+        'rechaza valores comerciales fuera de rango',
+        function (): void {
+            /** @var TestCase $this */
+            $admin = User::factory()
+                ->admin()
+                ->create();
+
+            $payload = businessSettingsPayload([
+                'store' => [
+                    'estimated_minutes' => 4,
+                ],
+
+                'delivery' => [
+                    'delivery_fee' => -1,
+                    'minimum_order' => 1000000,
+                ],
+            ]);
+
+            $this
+                ->actingAs(
+                    $admin,
+                    'sanctum',
+                )
+                ->putJson(
+                    '/api/v1/admin/settings',
+                    $payload,
+                )
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors([
+                    'store.estimated_minutes',
+                    'delivery.delivery_fee',
+                    'delivery.minimum_order',
+                ]);
+
+            $this->assertDatabaseCount(
+                'business_settings',
+                0,
+            );
+
+            $this->assertDatabaseCount(
+                'whats_app_settings',
+                0,
+            );
+        },
+    );
+    it(
+        'rechaza moneda y zona horaria no admitidas',
+        function (): void {
+            /** @var TestCase $this */
+            $admin = User::factory()
+                ->admin()
+                ->create();
+
+            $payload = businessSettingsPayload([
+                'store' => [
+                    'currency' => 'EUR',
+                    'timezone' => 'Zona/Inexistente',
+                ],
+            ]);
+
+            $this
+                ->actingAs(
+                    $admin,
+                    'sanctum',
+                )
+                ->putJson(
+                    '/api/v1/admin/settings',
+                    $payload,
+                )
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors([
+                    'store.currency',
+                    'store.timezone',
+                ]);
+
+            $this->assertDatabaseCount(
+                'business_settings',
+                0,
+            );
+
+            $this->assertDatabaseCount(
+                'whats_app_settings',
+                0,
+            );
+        },
+    );
+    it(
+        'conserva la configuración anterior cuando la actualización es inválida',
+        function (): void {
+            /** @var TestCase $this */
+            $admin = User::factory()
+                ->admin()
+                ->create();
+
+            $initialPayload = businessSettingsPayload([
+                'business' => [
+                    'name' => 'Configuración inicial',
+                ],
+
+                'delivery' => [
+                    'delivery_fee' => 2.50,
+                    'minimum_order' => 8.00,
+                ],
+
+                'whatsapp' => [
+                    'active' => true,
+                    'phone' => '593999111222',
+                    'receipt_template' => 'Plantilla inicial.',
+                ],
+            ]);
+
+            $this
+                ->actingAs(
+                    $admin,
+                    'sanctum',
+                )
+                ->putJson(
+                    '/api/v1/admin/settings',
+                    $initialPayload,
+                )
+                ->assertOk();
+
+            $invalidPayload = businessSettingsPayload([
+                'business' => [
+                    'name' => 'Configuración que no debe guardarse',
+                ],
+
+                'delivery' => [
+                    'pickup_enabled' => false,
+                    'delivery_enabled' => false,
+                    'delivery_fee' => 99.99,
+                ],
+
+                'whatsapp' => [
+                    'active' => true,
+                    'phone' => null,
+                    'receipt_template' => 'Plantilla inválida.',
+                ],
+            ]);
+
+            $this
+                ->actingAs(
+                    $admin,
+                    'sanctum',
+                )
+                ->putJson(
+                    '/api/v1/admin/settings',
+                    $invalidPayload,
+                )
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors([
+                    'delivery',
+                    'whatsapp.phone',
+                ]);
+
+            $this->assertDatabaseHas(
+                'business_settings',
+                [
+                    'business_name' => 'Configuración inicial',
+                    'delivery_fee' => '2.50',
+                    'minimum_order' => '8.00',
+                ],
+            );
+
+            $this->assertDatabaseMissing(
+                'business_settings',
+                [
+                    'business_name' => 'Configuración que no debe guardarse',
+                ],
+            );
+
+            $this->assertDatabaseHas(
+                'whats_app_settings',
+                [
+                    'active' => true,
+                    'phone' => '593999111222',
+                    'receipt_template' => 'Plantilla inicial.',
+                ],
+            );
+
+            expect(
+                BusinessSetting::query()->count(),
+            )->toBe(1);
+
+            expect(
+                WhatsAppSetting::query()->count(),
+            )->toBe(1);
+        },
+    );
 });
