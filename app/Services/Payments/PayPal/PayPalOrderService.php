@@ -41,38 +41,22 @@ final class PayPalOrderService
         string $idempotencyKey,
         array $checkoutContext,
     ): Payment {
-        $cart = $this->loadAndValidateCart(
-            cart: $cart,
-            user: $user,
-        );
-
         $existingPayment = Payment::query()
             ->where('idempotency_key', $idempotencyKey)
             ->first();
 
         if ($existingPayment !== null) {
+            $cart = $this->loadAndValidateCart(
+                cart: $cart,
+                user: $user,
+            );
+
             return $this->resolveExistingPayment(
                 payment: $existingPayment,
                 user: $user,
                 cart: $cart,
             );
         }
-
-        $pricing = $this->pricingService->calculate(
-            cart: $cart,
-            deliveryType: (string) (
-                $checkoutContext['delivery_type']
-                ?? 'pickup'
-            ),
-            paymentMethod: 'card',
-        );
-
-        $amount = $pricing['total'];
-
-        $checkoutContext['_pricing'] = $pricing;
-
-        $cartFingerprint = $this->cartFingerprintService
-            ->generate($cart);
 
         try {
             $payment = DB::transaction(
@@ -81,13 +65,55 @@ final class PayPalOrderService
                     $cart,
                     $idempotencyKey,
                     $checkoutContext,
-                    $amount,
-                    $cartFingerprint,
                 ): Payment {
+                    $lockedCart = Cart::query()
+                        ->whereKey(
+                            $cart->getKey(),
+                        )
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    $lockedCart = $this->loadAndValidateCart(
+                        cart: $lockedCart,
+                        user: $user,
+                    );
+
+                    $existingPayment = Payment::query()
+                        ->where(
+                            'idempotency_key',
+                            $idempotencyKey,
+                        )
+                        ->first();
+
+                    if ($existingPayment !== null) {
+                        return $this->resolveExistingPayment(
+                            payment: $existingPayment,
+                            user: $user,
+                            cart: $lockedCart,
+                        );
+                    }
+
+                    $pricing = $this->pricingService->calculate(
+                        cart: $lockedCart,
+                        deliveryType: (string) (
+                            $checkoutContext['delivery_type']
+                            ?? 'pickup'
+                        ),
+                        paymentMethod: 'card',
+                    );
+
+                    $checkoutContext['_pricing'] = $pricing;
+
+                    $cartFingerprint = $this
+                        ->cartFingerprintService
+                        ->generate(
+                            $lockedCart,
+                        );
+
                     return Payment::query()->create([
                         'idempotency_key' => $idempotencyKey,
                         'user_id' => (int) $user->id,
-                        'cart_id' => (int) $cart->id,
+                        'cart_id' => (int) $lockedCart->id,
                         'order_id' => null,
 
                         'provider' => PaymentProvider::PAYPAL,
@@ -96,7 +122,7 @@ final class PayPalOrderService
                         'provider_capture_id' => null,
                         'provider_status' => null,
 
-                        'amount' => $amount,
+                        'amount' => $pricing['total'],
                         'currency' => $this->currency(),
 
                         'status' => PaymentStatus::CREATED,
@@ -121,6 +147,11 @@ final class PayPalOrderService
             if ($payment === null) {
                 throw $exception;
             }
+
+            $cart = $this->loadAndValidateCart(
+                cart: $cart,
+                user: $user,
+            );
 
             return $this->resolveExistingPayment(
                 payment: $payment,
