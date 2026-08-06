@@ -14,6 +14,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
@@ -106,23 +107,47 @@ return Application::configure(
                 }
 
                 /*
-             * Laravel debe procesar normalmente:
-             * - errores de validación: 422
-             * - errores HTTP: 401, 403, 404, 409, etc.
-             */
+                * Laravel debe procesar normalmente:
+                * - errores de validación: 422
+                * - errores HTTP: 401, 403, 404, 409, etc.
+                */
                 if (
                     $exception instanceof ValidationException
                     || $exception instanceof HttpExceptionInterface
                 ) {
                     return null;
                 }
-
                 if (app()->isProduction()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Ocurrió un error interno en el servidor.',
-                        'code' => 'INTERNAL_SERVER_ERROR',
-                    ], 500);
+                    $requestId = (string) $request->attributes->get(
+                        'request_id',
+                        '',
+                    );
+
+                    Log::error(
+                        'Unhandled API exception.',
+                        [
+                            'request_id' => $requestId !== ''
+                                ? $requestId
+                                : null,
+
+                            'exception' => $exception::class,
+                            'message' => $exception->getMessage(),
+                            'method' => $request->method(),
+                            'path' => $request->path(),
+                            'user_id' => $request->user()?->getAuthIdentifier(),
+                        ],
+                    );
+
+                    return ApiResponse::error(
+                        message: 'Ocurrió un error interno en el servidor.',
+                        status: Response::HTTP_INTERNAL_SERVER_ERROR,
+                        code: 'INTERNAL_SERVER_ERROR',
+                        errors: $requestId !== ''
+                            ? [
+                                'request_id' => $requestId,
+                            ]
+                            : [],
+                    );
                 }
 
                 return null;
