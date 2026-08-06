@@ -487,6 +487,36 @@ final class AdminUserManagementTest extends TestCase
             );
     }
 
+    public function test_inactive_admin_cannot_access_admin_user_management(): void
+    {
+        $admin = $this->userWithRole(
+            $this->adminRole,
+        );
+
+        $admin
+            ->forceFill([
+                'is_active' => false,
+            ])
+            ->save();
+
+        $this
+            ->actingAs($admin)
+            ->getJson('/api/v1/admin/users')
+            ->assertForbidden()
+            ->assertJsonPath(
+                'success',
+                false,
+            )
+            ->assertJsonPath(
+                'code',
+                'USER_INACTIVE',
+            )
+            ->assertJsonPath(
+                'message',
+                'Tu cuenta se encuentra bloqueada. Comunícate con el administrador.',
+            );
+    }
+
     private function userWithRole(
         Role $role,
         array $attributes = [],

@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Support\ApiResponse;
 use Closure;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\PersonalAccessToken;
 use Symfony\Component\HttpFoundation\Response;
 
 final class EnsureUserIsActive
@@ -18,26 +19,23 @@ final class EnsureUserIsActive
         $user = $request->user();
 
         if ($user === null) {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Debes iniciar sesión para acceder a este recurso.',
-                'code' => 'UNAUTHENTICATED',
-            ], Response::HTTP_UNAUTHORIZED);
+            return $next($request);
         }
 
-        if (! $user->is_active) {
-            /*
-             * Revocamos el token usado en esta solicitud.
-             */
-            $user->currentAccessToken()?->delete();
-
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Tu cuenta se encuentra bloqueada. Comunícate con el administrador.',
-                'code' => 'USER_INACTIVE',
-            ], Response::HTTP_FORBIDDEN);
+        if ((bool) $user->is_active) {
+            return $next($request);
         }
 
-        return $next($request);
+        $accessToken = $user->currentAccessToken();
+
+        if ($accessToken instanceof PersonalAccessToken) {
+            $accessToken->delete();
+        }
+
+        return ApiResponse::error(
+            message: 'Tu cuenta se encuentra bloqueada. Comunícate con el administrador.',
+            status: Response::HTTP_FORBIDDEN,
+            code: 'USER_INACTIVE',
+        );
     }
 }

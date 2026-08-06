@@ -9,7 +9,6 @@ use App\Http\Requests\Admin\MachineLearning\GenerateForecastRequest;
 use App\Http\Requests\Admin\MachineLearning\ImportForecastRequest;
 use App\Http\Requests\Admin\MachineLearning\TrainingDatasetRequest;
 use App\Http\Resources\Api\V1\Admin\MachineLearning\MlModelRunResource;
-use App\Support\MachineLearning\MachineLearningErrorResponder;
 use App\Models\User;
 use App\Services\MachineLearning\Dataset\MlTrainingDatasetService;
 use App\Services\MachineLearning\ForecastImportService;
@@ -17,6 +16,7 @@ use App\Services\MachineLearning\MachineLearningClient;
 use App\Services\MachineLearning\MachineLearningRunQueryService;
 use App\Services\MachineLearning\RemoteForecastService;
 use App\Support\ApiResponse;
+use App\Support\MachineLearning\MachineLearningErrorResponder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -86,6 +86,7 @@ final class MachineLearningController
             message: 'Ejecución predictiva recuperada correctamente.',
         );
     }
+
     /**
      * Comprueba que Laravel pueda consultar
      * el modelo desplegado en FastAPI.
@@ -201,7 +202,7 @@ final class MachineLearningController
         );
 
         $run->loadMissing([
-            'predictions' => static fn($query) => $query->orderBy('prediction_date'),
+            'predictions' => static fn ($query) => $query->orderBy('prediction_date'),
 
             'creator.role',
         ]);
@@ -212,6 +213,7 @@ final class MachineLearningController
             status: 201
         );
     }
+
     /**
      * Expone el dataset consolidado únicamente para diagnóstico
      * administrativo y para validar el futuro payload de entrenamiento.
