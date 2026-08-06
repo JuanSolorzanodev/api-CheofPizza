@@ -1755,6 +1755,25 @@ describe(
                     $receipt->file_deleted_at,
                 )->not->toBeNull();
 
+                $this
+                    ->artisan(
+                        'payment-receipts:prune',
+                    )
+                    ->expectsOutput(
+                        'Archivos de comprobantes eliminados: 0',
+                    )
+                    ->assertSuccessful();
+
+                $receipt->refresh();
+
+                expect(
+                    $receipt->file_path,
+                )->toBeNull();
+
+                expect(
+                    $receipt->file_deleted_at,
+                )->not->toBeNull();
+
                 expect(
                     $receipt->status,
                 )->toBe(

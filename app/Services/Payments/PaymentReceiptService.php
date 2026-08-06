@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 use Throwable;
 
 final class PaymentReceiptService
@@ -130,32 +131,20 @@ final class PaymentReceiptService
                         PaymentReceipt::query()
                             ->create([
                                 'uuid' => $uuid,
-
                                 'order_id' => (int) $order->id,
-
                                 'user_id' => (int) $user->id,
-
                                 'disk' => self::DISK,
-
                                 'file_path' => $storedPath,
-
                                 'original_name' => Str::limit(
                                     basename(
-                                        $file
-                                            ->getClientOriginalName(),
+                                        $file->getClientOriginalName(),
                                     ),
                                     255,
                                     '',
                                 ),
-
-                                'mime_type' => (string) $file
-                                    ->getMimeType(),
-
-                                'file_size' => (int) $file
-                                    ->getSize(),
-
+                                'mime_type' => (string) $file->getMimeType(),
+                                'file_size' => (int) $file->getSize(),
                                 'status' => PaymentReceiptStatus::Pending,
-
                                 'submitted_at' => now(),
                             ]);
 
@@ -241,13 +230,9 @@ final class PaymentReceiptService
         return PaymentReceipt::query()
             ->with([
                 'order:id,order_number,user_id,total,payment_method_id,ordered_at',
-
                 'order.user:id,first_name,last_name,email,phone',
-
                 'order.paymentMethod:id,name',
-
                 'user:id,first_name,last_name,email,phone',
-
                 'reviewer:id,first_name,last_name',
             ])
             ->where(
@@ -277,14 +262,13 @@ final class PaymentReceiptService
                 $receiptUuid,
                 $reviewer,
             ): PaymentReceipt {
-                $receipt =
-                    PaymentReceipt::query()
-                        ->where(
-                            'uuid',
-                            $receiptUuid,
-                        )
-                        ->lockForUpdate()
-                        ->firstOrFail();
+                $receipt = PaymentReceipt::query()
+                    ->where(
+                        'uuid',
+                        $receiptUuid,
+                    )
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
                 $this->assertPending(
                     $receipt,
@@ -292,13 +276,9 @@ final class PaymentReceiptService
 
                 $receipt->forceFill([
                     'status' => PaymentReceiptStatus::Approved,
-
                     'rejection_reason' => null,
-
                     'reviewed_at' => now(),
-
                     'reviewed_by' => (int) $reviewer->id,
-
                     'expires_at' => now()->addDays(90),
                 ])->save();
 
@@ -323,14 +303,13 @@ final class PaymentReceiptService
                 $reviewer,
                 $reason,
             ): PaymentReceipt {
-                $receipt =
-                    PaymentReceipt::query()
-                        ->where(
-                            'uuid',
-                            $receiptUuid,
-                        )
-                        ->lockForUpdate()
-                        ->firstOrFail();
+                $receipt = PaymentReceipt::query()
+                    ->where(
+                        'uuid',
+                        $receiptUuid,
+                    )
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
                 $this->assertPending(
                     $receipt,
@@ -338,13 +317,9 @@ final class PaymentReceiptService
 
                 $receipt->forceFill([
                     'status' => PaymentReceiptStatus::Rejected,
-
                     'rejection_reason' => trim($reason),
-
                     'reviewed_at' => now(),
-
                     'reviewed_by' => (int) $reviewer->id,
-
                     'expires_at' => now()->addDays(30),
                 ])->save();
 
@@ -362,21 +337,18 @@ final class PaymentReceiptService
         string $receiptUuid,
         User $user,
     ): PaymentReceipt {
-        $receipt =
-            PaymentReceipt::query()
-                ->with(
-                    'order:id,user_id',
-                )
-                ->where(
-                    'uuid',
-                    $receiptUuid,
-                )
-                ->firstOrFail();
+        $receipt = PaymentReceipt::query()
+            ->with(
+                'order:id,user_id',
+            )
+            ->where(
+                'uuid',
+                $receiptUuid,
+            )
+            ->firstOrFail();
 
         $role = strtolower(
-            (string) $user
-                ->role
-                ?->role_name,
+            (string) $user->role?->role_name,
         );
 
         $isStaff = in_array(
@@ -389,9 +361,7 @@ final class PaymentReceiptService
         );
 
         $isOwner =
-            (int) $receipt
-                ->order
-                ?->user_id
+            (int) $receipt->order?->user_id
             === (int) $user->id;
 
         abort_unless(
@@ -422,8 +392,10 @@ final class PaymentReceiptService
     public function pruneExpiredFiles(): int
     {
         $deleted = 0;
+        $expiredAt = now();
 
         PaymentReceipt::query()
+            ->select('id')
             ->whereNull(
                 'file_deleted_at',
             )
@@ -436,7 +408,7 @@ final class PaymentReceiptService
             ->where(
                 'expires_at',
                 '<=',
-                now(),
+                $expiredAt,
             )
             ->orderBy('id')
             ->chunkById(
@@ -445,33 +417,17 @@ final class PaymentReceiptService
                     Collection $receipts,
                 ) use (
                     &$deleted,
+                    $expiredAt,
                 ): void {
-                    foreach (
-                        $receipts as $receipt
-                    ) {
-                        $path =
-                            (string) $receipt
-                                ->file_path;
-
-                        $disk =
-                            (string) $receipt
-                                ->disk;
-
-                        if ($path !== '') {
-                            Storage::disk(
-                                $disk,
-                            )->delete(
-                                $path,
-                            );
+                    foreach ($receipts as $receipt) {
+                        if (
+                            $this->pruneExpiredReceipt(
+                                receiptId: (int) $receipt->id,
+                                expiredAt: $expiredAt,
+                            )
+                        ) {
+                            $deleted++;
                         }
-
-                        $receipt->forceFill([
-                            'file_path' => null,
-
-                            'file_deleted_at' => now(),
-                        ])->save();
-
-                        $deleted++;
                     }
                 },
             );
@@ -479,14 +435,84 @@ final class PaymentReceiptService
         return $deleted;
     }
 
+    private function pruneExpiredReceipt(
+        int $receiptId,
+        mixed $expiredAt,
+    ): bool {
+        return DB::transaction(
+            function () use (
+                $receiptId,
+                $expiredAt,
+            ): bool {
+                $receipt = PaymentReceipt::query()
+                    ->whereKey($receiptId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (
+                    $receipt === null
+                    || $receipt->file_deleted_at !== null
+                    || $receipt->file_path === null
+                    || $receipt->expires_at === null
+                    || $receipt->expires_at->greaterThan(
+                        $expiredAt,
+                    )
+                ) {
+                    return false;
+                }
+
+                $path = trim(
+                    (string) $receipt->file_path,
+                );
+
+                $disk = trim(
+                    (string) $receipt->disk,
+                );
+
+                if ($disk === '') {
+                    throw new RuntimeException(
+                        sprintf(
+                            'El comprobante [%d] no tiene un disco de almacenamiento válido.',
+                            $receiptId,
+                        ),
+                    );
+                }
+
+                if ($path !== '') {
+                    $storage = Storage::disk(
+                        $disk,
+                    );
+
+                    if (
+                        $storage->exists($path)
+                        && ! $storage->delete($path)
+                    ) {
+                        throw new RuntimeException(
+                            sprintf(
+                                'No fue posible eliminar el archivo del comprobante [%d].',
+                                $receiptId,
+                            ),
+                        );
+                    }
+                }
+
+                $receipt->forceFill([
+                    'file_path' => null,
+                    'file_deleted_at' => now(),
+                ])->save();
+
+                return true;
+            },
+            attempts: 3,
+        );
+    }
+
     private function assertTransferOrder(
         Order $order,
     ): void {
         if (
             strtolower(
-                (string) $order
-                    ->paymentMethod
-                    ?->name,
+                (string) $order->paymentMethod?->name,
             ) !== 'transfer'
         ) {
             throw ValidationException::withMessages([
@@ -501,9 +527,7 @@ final class PaymentReceiptService
         Order $order,
     ): void {
         $status = strtolower(
-            (string) $order
-                ->orderStatus
-                ?->status_name,
+            (string) $order->orderStatus?->status_name,
         );
 
         if (
