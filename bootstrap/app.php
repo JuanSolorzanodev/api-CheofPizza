@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Exceptions\Admin\LastActiveAdminException;
 use App\Http\Middleware\AddRequestId;
+use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\OptionalSanctumAuth;
@@ -13,6 +14,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -25,6 +27,10 @@ return Application::configure(
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: static function (): void {
+            Route::middleware('api')
+                ->group(base_path('routes/health.php'));
+        },
     )
     ->withBroadcasting(
         __DIR__.'/../routes/channels.php',
@@ -37,6 +43,7 @@ return Application::configure(
         ],
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(AddSecurityHeaders::class);
         $middleware->prepend(AddRequestId::class);
         $middleware->prepend(HandleCors::class);
 
