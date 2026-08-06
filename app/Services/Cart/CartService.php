@@ -75,6 +75,16 @@ class CartService
             ->__toString();
     }
 
+    private function isPositiveMoney(
+        int|float|string $value,
+    ): bool {
+        return BigDecimal::of(
+            (string) $value,
+        )->isGreaterThan(
+            BigDecimal::zero(),
+        );
+    }
+
     public function getOrCreateActiveCart(
         ?int $userId,
         ?string $sessionId,
@@ -280,17 +290,13 @@ class CartService
                         )
                         : null;
 
-                    $unitPrice = round(
-                        (float) (
-                            $quote['unit_price']
-                            ?? 0
-                        ),
-                        2
+                    $unitPrice = $this->money(
+                        $quote['unit_price'] ?? 0,
                     );
 
-                    $subTotal = round(
-                        $unitPrice * $quantity,
-                        2
+                    $subTotal = $this->multiplyMoney(
+                        $unitPrice,
+                        $quantity,
                     );
 
                     /*
@@ -301,8 +307,12 @@ class CartService
                  * guarda un ítem con precio cero o negativo.
                  */
                     if (
-                        $unitPrice <= 0 ||
-                        $subTotal <= 0
+                        ! $this->isPositiveMoney(
+                            $unitPrice,
+                        ) ||
+                        ! $this->isPositiveMoney(
+                            $subTotal,
+                        )
                     ) {
                         throw ValidationException::withMessages([
                             'size_id' => 'La pizza seleccionada no tiene un precio válido y no puede agregarse al carrito.',
@@ -342,14 +352,16 @@ class CartService
                         $existing->unit_price =
                             $unitPrice;
 
-                        $existing->subtotal = round(
-                            $newQuantity * $unitPrice,
-                            2
-                        );
+                        $existing->subtotal =
+                            $this->multiplyMoney(
+                                $unitPrice,
+                                $newQuantity,
+                            );
 
                         if (
-                            (float) $existing->subtotal
-                            <= 0
+                            ! $this->isPositiveMoney(
+                                $existing->subtotal,
+                            )
                         ) {
                             throw ValidationException::withMessages([
                                 'size_id' => 'No fue posible calcular un subtotal válido para la pizza.',
@@ -440,12 +452,8 @@ class CartService
                             $key
                         );
 
-                        $extraPrice = round(
-                            (float) (
-                                $line['line_total']
-                                ?? 0
-                            ),
-                            2
+                        $extraPrice = $this->money(
+                            $line['line_total'] ?? 0,
                         );
 
                         /*
@@ -455,7 +463,9 @@ class CartService
                         if (
                             $customization['action']
                             === 'extra' &&
-                            $extraPrice <= 0
+                            ! $this->isPositiveMoney(
+                                $extraPrice,
+                            )
                         ) {
                             throw ValidationException::withMessages([
                                 'customizations' => 'Uno de los ingredientes extra no tiene un precio válido.',
@@ -559,11 +569,9 @@ class CartService
                     $sizeId =
                         (int) $validatedSelection['size_id'];
 
-                    $basePrice =
-                        round(
-                            (float) $validatedSelection['base_price'],
-                            2
-                        );
+                    $basePrice = $this->money(
+                        $validatedSelection['base_price'],
+                    );
 
                     $selectedItems =
                         collect(
@@ -608,7 +616,7 @@ class CartService
                             ->keyBy('id');
 
                     $promotionExtrasTotal =
-                        0.0;
+                        '0.00';
 
                     foreach (
                         $selectedItems as $row
@@ -637,34 +645,23 @@ class CartService
                                     ?->first()
                                     ?->pivot;
 
-                            $promotionExtrasTotal +=
-                                (float) (
-                                    $pivot
-                                        ?->extra_price
-                                    ?? 0
+                            $promotionExtrasTotal =
+                                $this->addMoney(
+                                    $promotionExtrasTotal,
+                                    $pivot?->extra_price ?? 0,
                                 );
                         }
                     }
 
-                    $promotionExtrasTotal =
-                        round(
-                            $promotionExtrasTotal,
-                            2
-                        );
+                    $unitPrice = $this->addMoney(
+                        $basePrice,
+                        $promotionExtrasTotal,
+                    );
 
-                    $unitPrice =
-                        round(
-                            $basePrice +
-                                $promotionExtrasTotal,
-                            2
-                        );
-
-                    $subTotal =
-                        round(
-                            $unitPrice *
-                                $quantity,
-                            2
-                        );
+                    $subTotal = $this->multiplyMoney(
+                        $unitPrice,
+                        $quantity,
+                    );
 
                     if (
                         $unitPrice <= 0 ||
@@ -726,10 +723,9 @@ class CartService
 
                             'unit_price' => $unitPrice,
 
-                            'subtotal' => round(
-                                $newQuantity *
-                                    $unitPrice,
-                                2
+                            'subtotal' => $this->multiplyMoney(
+                                $unitPrice,
+                                $newQuantity,
                             ),
                         ])->save();
 
@@ -814,12 +810,10 @@ class CartService
 
                             $extraPrice =
                                 $customization['action'] === 'extra'
-                                ? (float) (
-                                    $pivot
-                                        ?->extra_price
-                                    ?? 0
+                                ? $this->money(
+                                    $pivot?->extra_price ?? 0,
                                 )
-                                : 0.0;
+                                : '0.00';
 
                             $item
                                 ->cartItemPersonalizations()
@@ -833,10 +827,7 @@ class CartService
 
                                     'applies_to' => 'ALL',
 
-                                    'extra_price' => round(
-                                        $extraPrice,
-                                        2
-                                    ),
+                                    'extra_price' => $extraPrice,
                                 ]);
                         }
                     }
@@ -930,7 +921,7 @@ class CartService
             $cart = $this->loadCart($cart);
 
             $cart->cartItems->each->delete();
-            $cart->total = 0;
+            $cart->total = '0.00';
             $cart->save();
 
             return $this->loadCart($cart);
