@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\MachineLearning\GenerateForecastRequest;
 use App\Http\Requests\Admin\MachineLearning\ImportForecastRequest;
 use App\Http\Requests\Admin\MachineLearning\TrainingDatasetRequest;
 use App\Http\Resources\Api\V1\Admin\MachineLearning\MlModelRunResource;
+use App\Support\MachineLearning\MachineLearningErrorResponder;
 use App\Models\User;
 use App\Services\MachineLearning\Dataset\MlTrainingDatasetService;
 use App\Services\MachineLearning\ForecastImportService;
@@ -85,13 +86,13 @@ final class MachineLearningController
             message: 'Ejecución predictiva recuperada correctamente.',
         );
     }
-
     /**
      * Comprueba que Laravel pueda consultar
      * el modelo desplegado en FastAPI.
      */
     public function serviceModel(
-        MachineLearningClient $client
+        MachineLearningClient $client,
+        MachineLearningErrorResponder $errorResponder,
     ): JsonResponse {
         try {
             $model = $client->model();
@@ -103,8 +104,8 @@ final class MachineLearningController
         } catch (
             MachineLearningServiceException $exception
         ) {
-            return $this->serviceError(
-                $exception
+            return $errorResponder->forecast(
+                $exception,
             );
         }
     }
@@ -118,6 +119,7 @@ final class MachineLearningController
     public function preview(
         GenerateForecastRequest $request,
         RemoteForecastService $service,
+        MachineLearningErrorResponder $errorResponder,
     ): JsonResponse {
         try {
             $forecast = $service->preview(
@@ -137,7 +139,7 @@ final class MachineLearningController
         } catch (
             MachineLearningServiceException $exception
         ) {
-            return $this->serviceError(
+            return $errorResponder->forecast(
                 $exception,
             );
         }
@@ -150,6 +152,7 @@ final class MachineLearningController
     public function generate(
         GenerateForecastRequest $request,
         RemoteForecastService $service,
+        MachineLearningErrorResponder $errorResponder,
     ): JsonResponse {
         /** @var User $admin */
         $admin = $request->user();
@@ -175,7 +178,7 @@ final class MachineLearningController
         } catch (
             MachineLearningServiceException $exception
         ) {
-            return $this->serviceError(
+            return $errorResponder->forecast(
                 $exception,
             );
         }
@@ -198,7 +201,7 @@ final class MachineLearningController
         );
 
         $run->loadMissing([
-            'predictions' => static fn ($query) => $query->orderBy('prediction_date'),
+            'predictions' => static fn($query) => $query->orderBy('prediction_date'),
 
             'creator.role',
         ]);
@@ -209,32 +212,6 @@ final class MachineLearningController
             status: 201
         );
     }
-
-    private function serviceError(
-        MachineLearningServiceException $exception
-    ): JsonResponse {
-        $remoteStatus = $exception->remoteStatus();
-
-        $status = match (true) {
-            $remoteStatus === 401,
-            $remoteStatus === 403 => 502,
-
-            $remoteStatus === 422 => 422,
-
-            default => 503,
-        };
-
-        $code = $remoteStatus === 422
-            ? 'ML_SERVICE_VALIDATION_FAILED'
-            : 'ML_SERVICE_UNAVAILABLE';
-
-        return ApiResponse::error(
-            message: $exception->getMessage(),
-            status: $status,
-            code: $code,
-        );
-    }
-
     /**
      * Expone el dataset consolidado únicamente para diagnóstico
      * administrativo y para validar el futuro payload de entrenamiento.

@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\MachineLearning\MachineLearningTrainingRunQueryService;
 use App\Services\MachineLearning\TrainingWorkflowService;
 use App\Support\ApiResponse;
+use App\Support\MachineLearning\MachineLearningErrorResponder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
@@ -20,6 +21,7 @@ final class MachineLearningTrainingController
 {
     public function registry(
         TrainingWorkflowService $service,
+        MachineLearningErrorResponder $errorResponder,
     ): JsonResponse {
         try {
             return ApiResponse::success(
@@ -30,7 +32,7 @@ final class MachineLearningTrainingController
         } catch (
             MachineLearningServiceException $exception
         ) {
-            return $this->serviceError(
+            return $errorResponder->training(
                 $exception,
             );
         }
@@ -91,6 +93,7 @@ final class MachineLearningTrainingController
     public function preview(
         TrainingDatasetRequest $request,
         TrainingWorkflowService $service,
+        MachineLearningErrorResponder $errorResponder,
     ): JsonResponse {
         try {
             return ApiResponse::success(
@@ -103,7 +106,7 @@ final class MachineLearningTrainingController
         } catch (
             MachineLearningServiceException $exception
         ) {
-            return $this->serviceError(
+            return $errorResponder->training(
                 $exception,
             );
         }
@@ -112,6 +115,7 @@ final class MachineLearningTrainingController
     public function build(
         TrainingDatasetRequest $request,
         TrainingWorkflowService $service,
+        MachineLearningErrorResponder $errorResponder,
     ): JsonResponse {
         /** @var User $admin */
         $admin = $request->user();
@@ -135,7 +139,7 @@ final class MachineLearningTrainingController
         } catch (
             MachineLearningServiceException $exception
         ) {
-            return $this->serviceError(
+            return $errorResponder->training(
                 $exception,
             );
         }
