@@ -17,6 +17,7 @@ class Cart extends Model
         'user_id',
         'cart_status_id',
         'session_id',
+        'active_guest_session_key',
         'total',
     ];
 

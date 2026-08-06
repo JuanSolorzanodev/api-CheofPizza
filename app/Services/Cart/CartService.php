@@ -116,30 +116,40 @@ class CartService
                 }
 
                 $cart = Cart::query()
-                    ->whereNull('user_id')
                     ->where(
-                        'session_id',
+                        'active_guest_session_key',
                         $sessionId,
                     )
-                    ->where(
-                        'cart_status_id',
-                        $activeStatusId,
-                    )
                     ->lockForUpdate()
-                    ->latest('id')
                     ->first();
 
                 if ($cart === null) {
-                    $cart = Cart::query()
-                        ->create([
+                    $now = now();
+
+                    DB::table('carts')
+                        ->insertOrIgnore([
                             'user_id' => null,
 
                             'cart_status_id' => $activeStatusId,
 
                             'session_id' => $sessionId,
 
+                            'active_guest_session_key' => $sessionId,
+
                             'total' => '0.00',
+
+                            'created_at' => $now,
+
+                            'updated_at' => $now,
                         ]);
+
+                    $cart = Cart::query()
+                        ->where(
+                            'active_guest_session_key',
+                            $sessionId,
+                        )
+                        ->lockForUpdate()
+                        ->firstOrFail();
                 }
 
                 return $this->loadCart(
@@ -1207,7 +1217,14 @@ class CartService
             $userCart = $this->loadCart($userCart);
         }
 
-        $this->recalculateCartTotal($userCart);
+        $this->recalculateCartTotal(
+            $userCart,
+        );
+
+        $guestCart->forceFill([
+            'active_guest_session_key' => null,
+        ])->save();
+
         $guestCart->delete();
     }
 }

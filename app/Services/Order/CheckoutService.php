@@ -529,14 +529,19 @@ final class CheckoutService
     }
 
     private function markCartAsOrdered(
-        Cart $cart
+        Cart $cart,
     ): void {
         $orderedStatus = CartStatus::query()
-            ->where('status_name', 'ordered')
+            ->where(
+                'status_name',
+                'ordered',
+            )
             ->firstOrFail();
 
         $cart->forceFill([
             'cart_status_id' => (int) $orderedStatus->id,
+
+            'active_guest_session_key' => null,
         ])->save();
     }
 
