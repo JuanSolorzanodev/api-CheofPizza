@@ -1,0 +1,23 @@
+{
+    frankenphp
+
+    # Railway administra HTTPS mediante su proxy.
+    auto_https off
+
+    # No necesitamos exponer la API administrativa de Caddy.
+    admin off
+}
+
+:{$PORT:8080} {
+    root * /var/www/html/public
+
+    encode zstd br gzip
+
+    php_server {
+        try_files {path} index.php
+    }
+
+    header {
+        -Server
+    }
+}

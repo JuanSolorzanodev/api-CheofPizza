@@ -1,4 +1,4 @@
-FROM php:8.3-cli-bookworm
+FROM dunglas/frankenphp:1-php8.3-bookworm
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -13,13 +13,8 @@ RUN apt-get update \
         curl \
         git \
         unzip \
-        libicu-dev \
-        libzip-dev \
-        libonig-dev \
-        libssl-dev \
         default-mysql-client \
-    && docker-php-ext-configure intl \
-    && docker-php-ext-install -j"$(nproc)" \
+    && install-php-extensions \
         bcmath \
         intl \
         mbstring \
@@ -28,6 +23,7 @@ RUN apt-get update \
         pdo_mysql \
         sockets \
         zip \
+    && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -44,6 +40,8 @@ RUN composer install \
     --no-scripts
 
 COPY . .
+
+COPY Caddyfile /etc/frankenphp/Caddyfile
 
 RUN composer dump-autoload \
         --no-dev \

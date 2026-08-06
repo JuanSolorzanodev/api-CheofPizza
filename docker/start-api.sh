@@ -2,10 +2,13 @@
 
 set -eu
 
-echo "Starting CheofPizza API..."
+echo "Starting CheofPizza API with FrankenPHP..."
 
 sh docker/prepare-runtime.sh
 
-exec php artisan serve \
-    --host=0.0.0.0 \
-    --port="${PORT:-8080}"
+echo "HTTP port: ${PORT:-8080}"
+echo "Healthcheck: /health"
+
+exec frankenphp run \
+    --config /etc/frankenphp/Caddyfile \
+    --adapter caddyfile
