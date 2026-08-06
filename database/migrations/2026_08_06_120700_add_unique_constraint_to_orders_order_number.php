@@ -20,7 +20,7 @@ return new class extends Migration
         if ($duplicatedOrderNumber !== null) {
             throw new \RuntimeException(
                 sprintf(
-                    'No se puede crear el Ã­ndice Ãºnico de orders.order_number porque existen pedidos duplicados con el nÃºmero [%s].',
+                    'No se puede crear el índice único de orders.order_number porque existen pedidos duplicados con el número [%s].',
                     (string) $duplicatedOrderNumber,
                 ),
             );

@@ -64,7 +64,7 @@ final class CheckoutService
      * Crea el pedido definitivo reutilizable tanto por el checkout
      * tradicional como por un pago PayPal ya capturado.
      *
-     * El llamador debe ejecutar este método dentro de una transacciÃ³n.
+     * El llamador debe ejecutar este método dentro de una transacción.
      *
      * @param  array<string, mixed>  $payload
      */
@@ -179,8 +179,8 @@ final class CheckoutService
         );
 
         /*
-         * Los eventos se publican únicamente despuÃ©s del COMMIT.
-         * Si la transacciÃ³n falla, Reverb no recibirÃ¡ un pedido inexistente.
+         * Los eventos se publican únicamente después del COMMIT.
+         * Si la transacción falla, Reverb no recibirá un pedido inexistente.
          */
         DB::afterCommit(
             static function () use ($freshOrder): void {
