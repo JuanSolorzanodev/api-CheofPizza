@@ -9,6 +9,8 @@ use App\Enums\OrderStatusName;
 use App\Enums\PaymentReceiptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\CashSession;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Illuminate\Support\Facades\DB;
 
 final class CashSessionSummaryService
@@ -104,16 +106,16 @@ final class CashSessionSummaryService
                 ],
 
                 'closed_by' => $session->closedBy !== null
-                        ? [
-                            'id' => $session
-                                ->closedBy
-                                ->id,
+                    ? [
+                        'id' => $session
+                            ->closedBy
+                            ->id,
 
-                            'name' => $session
-                                ->closedBy
-                                ->full_name,
-                        ]
-                        : null,
+                        'name' => $session
+                            ->closedBy
+                            ->full_name,
+                    ]
+                    : null,
             ],
 
             /*
@@ -128,25 +130,21 @@ final class CashSessionSummaryService
 
                 'cash_sales' => (float) $cash['amount'],
 
-                'manual_income' => (float) $movements[
-                        'income_amount'
-                    ],
+                'manual_income' => (float) $movements['income_amount'],
 
-                'manual_expense' => (float) $movements[
-                        'expense_amount'
-                    ],
+                'manual_expense' => (float) $movements['expense_amount'],
 
                 'expected_cash' => (float) $expectedCash,
 
                 'counted_cash' => $session->counted_cash !== null
-                        ? (float) $session
-                            ->counted_cash
-                        : null,
+                    ? (float) $session
+                        ->counted_cash
+                    : null,
 
                 'difference' => $session->difference !== null
-                        ? (float) $session
-                            ->difference
-                        : null,
+                    ? (float) $session
+                        ->difference
+                    : null,
             ],
 
             /*
@@ -188,20 +186,12 @@ final class CashSessionSummaryService
                     + $transfer['transactions']
                     + $paypal['transactions'],
 
-                'income_movements' => $movements[
-                        'income_count'
-                    ],
+                'income_movements' => $movements['income_count'],
 
-                'expense_movements' => $movements[
-                        'expense_count'
-                    ],
+                'expense_movements' => $movements['expense_count'],
 
-                'movements_total' => $movements[
-                        'income_count'
-                    ]
-                    + $movements[
-                        'expense_count'
-                    ],
+                'movements_total' => $movements['income_count']
+                    + $movements['expense_count'],
             ],
         ];
     }
@@ -478,8 +468,8 @@ final class CashSessionSummaryService
                 ): string {
                     return $row->type
                         instanceof CashMovementType
-                            ? $row->type->value
-                            : (string) $row->type;
+                        ? $row->type->value
+                        : (string) $row->type;
                 },
             );
 
@@ -517,13 +507,15 @@ final class CashSessionSummaryService
     }
 
     private function money(
-        int|float|string $value
+        int|float|string $value,
     ): string {
-        return number_format(
-            (float) $value,
-            2,
-            '.',
-            '',
-        );
+        return BigDecimal::of(
+            (string) $value,
+        )
+            ->toScale(
+                2,
+                RoundingMode::HALF_UP,
+            )
+            ->__toString();
     }
 }
