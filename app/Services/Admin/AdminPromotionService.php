@@ -7,6 +7,8 @@ namespace App\Services\Admin;
 use App\Models\Promotion;
 use App\Models\PromotionDetail;
 use App\Models\PromotionSizePrice;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -195,26 +197,23 @@ final class AdminPromotionService
 
             'description' => $this->nullableText(
                 $data['description']
-                ?? null
+                    ?? null
             ),
 
             'banner_image_url' => $this->nullableText(
                 $data['banner_image_url']
-                ?? null
+                    ?? null
             ),
 
             'promotion_type' => (string) $data['type'],
 
-            'selection_quantity' => (int) $data[
-                    'selection_quantity'
-                ],
+            'selection_quantity' => (int) $data['selection_quantity'],
 
             'promotion_price' => $isFixedCombo
-                    ? round(
-                        (float) $data['price'],
-                        2
-                    )
-                    : 0,
+                ? $this->money(
+                    $data['price'],
+                )
+                : '0.00',
 
             'starts_at' => $data['starts_at'],
 
@@ -250,17 +249,11 @@ final class AdminPromotionService
                     ->create([
                         'promotion_id' => (int) $promotion->id,
 
-                        'category_id' => (int) $detail[
-                                'category_id'
-                            ],
+                        'category_id' => (int) $detail['category_id'],
 
-                        'size_id' => (int) $detail[
-                                'size_id'
-                            ],
+                        'size_id' => (int) $detail['size_id'],
 
-                        'required_quantity' => (int) $detail[
-                                'required_quantity'
-                            ],
+                        'required_quantity' => (int) $detail['required_quantity'],
                     ]);
             }
 
@@ -275,16 +268,15 @@ final class AdminPromotionService
             $data['size_prices'] ?? []
         )
             ->map(
-                static fn (
+                fn (
                     array $row
                 ): array => [
                     'promotion_id' => (int) $promotion->id,
 
                     'size_id' => (int) $row['size_id'],
 
-                    'fixed_price' => round(
-                        (float) $row['price'],
-                        2
+                    'fixed_price' => $this->money(
+                        $row['price'],
                     ),
 
                     'created_at' => now(),
@@ -384,7 +376,7 @@ final class AdminPromotionService
             (int) (
                 $promotion
                     ->cart_items_count
-                ?? 0
+                    ?? 0
             ) +
             (int) (
                 $promotion
@@ -430,6 +422,19 @@ final class AdminPromotionService
                     'sizes.portion'
                 ),
         ];
+    }
+
+    private function money(
+        int|float|string $value,
+    ): string {
+        return BigDecimal::of(
+            (string) $value,
+        )
+            ->toScale(
+                2,
+                RoundingMode::HALF_UP,
+            )
+            ->__toString();
     }
 
     private function nullableText(
