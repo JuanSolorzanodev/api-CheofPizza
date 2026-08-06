@@ -6,7 +6,6 @@ namespace App\Services\Admin\CashRegister;
 
 use App\Enums\CashMovementType;
 use App\Enums\CashSessionStatus;
-use App\Enums\OrderStatusName;
 use App\Models\CashMovement;
 use App\Models\CashSession;
 use App\Models\User;
@@ -20,6 +19,10 @@ use Illuminate\Validation\ValidationException;
 
 final class CashRegisterService
 {
+    public function __construct(
+        private readonly CashOrderCollectionQueryService $cashOrderQueryService,
+    ) {}
+
     public function current(): ?CashSession
     {
         return CashSession::query()
@@ -180,9 +183,13 @@ final class CashRegisterService
 
                 $closedAt = now();
 
-                $cashSales = $this->cashSalesBetween(
-                    openedAt: $locked->opened_at,
-                    closedAt: $closedAt,
+                $cashSummary = $this->cashOrderQueryService->summary(
+                    session: $locked,
+                    endAt: $closedAt,
+                );
+
+                $cashSales = $this->money(
+                    $cashSummary['amount'],
                 );
 
                 $movementTotals = $this->movementTotals(
@@ -319,64 +326,6 @@ final class CashRegisterService
                 $totals[CashMovementType::Expense->value] ?? 0
             ),
         ];
-    }
-
-    private function cashSalesBetween(
-        mixed $openedAt,
-        mixed $closedAt,
-    ): string {
-        $deliveredOrders = DB::table(
-            'order_status_changes'
-        )
-            ->join(
-                'order_statuses',
-                'order_statuses.id',
-                '=',
-                'order_status_changes.to_order_status_id',
-            )
-            ->where(
-                'order_statuses.status_name',
-                OrderStatusName::Delivered->value,
-            )
-            ->whereBetween(
-                'order_status_changes.changed_at',
-                [$openedAt, $closedAt],
-            )
-            ->selectRaw(
-                '
-                order_status_changes.order_id,
-                MIN(order_status_changes.changed_at) AS delivered_at
-                '
-            )
-            ->groupBy(
-                'order_status_changes.order_id',
-            );
-
-        $amount = DB::table('orders')
-            ->joinSub(
-                $deliveredOrders,
-                'delivered_orders',
-                static function ($join): void {
-                    $join->on(
-                        'delivered_orders.order_id',
-                        '=',
-                        'orders.id',
-                    );
-                },
-            )
-            ->join(
-                'payment_methods',
-                'payment_methods.id',
-                '=',
-                'orders.payment_method_id',
-            )
-            ->where(
-                'payment_methods.name',
-                'cash',
-            )
-            ->sum('orders.total');
-
-        return $this->money($amount);
     }
 
     private function money(

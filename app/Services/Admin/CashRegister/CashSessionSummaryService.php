@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Admin\CashRegister;
 
 use App\Enums\CashMovementType;
-use App\Enums\OrderStatusName;
 use App\Enums\PaymentReceiptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\CashSession;
@@ -15,6 +14,10 @@ use Illuminate\Support\Facades\DB;
 
 final class CashSessionSummaryService
 {
+    public function __construct(
+        private readonly CashOrderCollectionQueryService $cashOrderQueryService,
+    ) {}
+
     /**
      * Devuelve el estado financiero actual de una sesión de caja.
      *
@@ -208,84 +211,17 @@ final class CashSessionSummaryService
         CashSession $session,
         mixed $endAt,
     ): array {
-        $deliveredOrders = DB::table(
-            'order_status_changes'
-        )
-            ->join(
-                'order_statuses',
-                'order_statuses.id',
-                '=',
-                'order_status_changes.to_order_status_id',
-            )
-            ->where(
-                'order_statuses.status_name',
-                OrderStatusName::Delivered->value,
-            )
-            ->whereBetween(
-                'order_status_changes.changed_at',
-                [
-                    $session->opened_at,
-                    $endAt,
-                ],
-            )
-            ->selectRaw(
-                '
-                order_status_changes.order_id,
-                MIN(
-                    order_status_changes.changed_at
-                ) AS delivered_at
-                '
-            )
-            ->groupBy(
-                'order_status_changes.order_id',
-            );
-
-        $row = DB::table('orders')
-            ->joinSub(
-                $deliveredOrders,
-                'delivered_orders',
-                static function ($join): void {
-                    $join->on(
-                        'delivered_orders.order_id',
-                        '=',
-                        'orders.id',
-                    );
-                },
-            )
-            ->join(
-                'payment_methods',
-                'payment_methods.id',
-                '=',
-                'orders.payment_method_id',
-            )
-            ->where(
-                'payment_methods.name',
-                'cash',
-            )
-            ->selectRaw(
-                '
-                COUNT(
-                    DISTINCT orders.id
-                ) AS transactions_count,
-
-                COALESCE(
-                    SUM(orders.total),
-                    0
-                ) AS amount
-                '
-            )
-            ->first();
+        $summary = $this->cashOrderQueryService->summary(
+            session: $session,
+            endAt: $endAt,
+        );
 
         return [
             'amount' => $this->money(
-                $row->amount ?? 0
+                $summary['amount'],
             ),
 
-            'transactions' => (int) (
-                $row
-                    ->transactions_count
-                ?? 0
-            ),
+            'transactions' => $summary['transactions'],
         ];
     }
 
