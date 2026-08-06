@@ -7,13 +7,11 @@ namespace App\Http\Controllers\Api\V1\Orders;
 use App\Http\Requests\Api\V1\Orders\StorePaymentReceiptRequest;
 use App\Http\Resources\Api\V1\PaymentReceiptResource;
 use App\Models\User;
+use App\Services\Payments\PaymentReceiptFileService;
 use App\Services\Payments\PaymentReceiptService;
-use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Storage;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class PaymentReceiptController
@@ -121,6 +119,7 @@ final class PaymentReceiptController
     public function file(
         Request $request,
         string $receiptUuid,
+        PaymentReceiptFileService $fileService,
     ): StreamedResponse {
         /** @var User|null $user */
         $user = $request->user();
@@ -135,127 +134,14 @@ final class PaymentReceiptController
             'role:id,role_name',
         );
 
-        $receipt = $this->service->findVisibleFile(
-            receiptUuid: $receiptUuid,
-            user: $user,
-        );
-
-        /**
-         * El tipo explícito evita falsos positivos de Intelephense
-         * para exists(), mimeType() y readStream().
-         *
-         * @var FilesystemAdapter $disk
-         */
-        $disk = Storage::disk(
-            (string) $receipt->disk,
-        );
-
-        $path = trim(
-            (string) $receipt->file_path,
-        );
-
-        abort_if(
-            $path === '',
-            404,
-            'El comprobante no tiene un archivo asociado.',
-        );
-
-        abort_unless(
-            $disk->exists($path),
-            404,
-            'El archivo del comprobante no existe.',
-        );
-
-        $mimeType = trim(
-            (string) $receipt->mime_type,
-        );
-
-        /*
-         * Normalmente el MIME ya está guardado en la base de datos.
-         * Este bloque funciona únicamente como respaldo.
-         */
-        if ($mimeType === '') {
-            $detectedMimeType = $disk->mimeType(
-                $path,
+        $receipt = $this->service
+            ->findVisibleFile(
+                receiptUuid: $receiptUuid,
+                user: $user,
             );
 
-            $mimeType = is_string($detectedMimeType)
-                && $detectedMimeType !== ''
-                    ? $detectedMimeType
-                    : 'application/octet-stream';
-        }
-
-        $originalName = $this->sanitizeDownloadName(
-            (string) $receipt->original_name,
+        return $fileService->stream(
+            $receipt,
         );
-
-        return response()->stream(
-            function () use (
-                $disk,
-                $path,
-            ): void {
-                $stream = $disk->readStream(
-                    $path,
-                );
-
-                if (! is_resource($stream)) {
-                    throw new RuntimeException(
-                        'No fue posible abrir el comprobante.',
-                    );
-                }
-
-                try {
-                    fpassthru($stream);
-                } finally {
-                    fclose($stream);
-                }
-            },
-            200,
-            [
-                'Content-Type' => $mimeType,
-
-                'Content-Disposition' => sprintf(
-                    'inline; filename="%s"',
-                    $originalName,
-                ),
-
-                'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
-
-                'Pragma' => 'no-cache',
-
-                'Expires' => '0',
-
-                'X-Content-Type-Options' => 'nosniff',
-
-                'X-Frame-Options' => 'SAMEORIGIN',
-
-                'Content-Security-Policy' => "default-src 'none'; frame-ancestors 'self'",
-            ],
-        );
-    }
-
-    /**
-     * Elimina caracteres que podrían alterar el header
-     * Content-Disposition.
-     */
-    private function sanitizeDownloadName(
-        string $name,
-    ): string {
-        $name = str_replace(
-            [
-                '"',
-                "'",
-                "\r",
-                "\n",
-                '\\',
-                '/',
-            ],
-            '',
-            trim($name),
-        );
-
-        return $name !== ''
-            ? $name
-            : 'comprobante';
     }
 }

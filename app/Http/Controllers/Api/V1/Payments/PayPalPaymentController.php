@@ -19,7 +19,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use Throwable;
 
 final class PayPalPaymentController
 {
@@ -89,25 +88,8 @@ final class PayPalPaymentController
             ], $this->resolveHttpStatus(
                 $exception->statusCode,
             ));
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return response()->json([
-                'success' => false,
-
-                'message' => 'Ocurrió un error inesperado al iniciar el pago.',
-
-                'error' => [
-                    'code' => 'UNEXPECTED_PAYMENT_ERROR',
-
-                    'recoverable' => false,
-
-                    'action' => null,
-
-                    'reference' => null,
-                ],
-            ], 500);
         }
+
     }
 
     public function show(
@@ -222,24 +204,6 @@ final class PayPalPaymentController
             ], $this->resolveHttpStatus(
                 $exception->statusCode,
             ));
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return response()->json([
-                'success' => false,
-
-                'message' => 'Ocurrió un error inesperado al confirmar el pago.',
-
-                'error' => [
-                    'code' => 'UNEXPECTED_PAYMENT_ERROR',
-
-                    'recoverable' => false,
-
-                    'action' => null,
-
-                    'reference' => null,
-                ],
-            ], 500);
         }
     }
 
