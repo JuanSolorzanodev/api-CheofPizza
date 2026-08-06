@@ -10,6 +10,8 @@ use App\Enums\OrderStatusName;
 use App\Models\CashMovement;
 use App\Models\CashSession;
 use App\Models\User;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -310,15 +312,11 @@ final class CashRegisterService
 
         return [
             'income' => $this->money(
-                $totals[
-                    CashMovementType::Income->value
-                ] ?? 0
+                $totals[CashMovementType::Income->value] ?? 0
             ),
 
             'expense' => $this->money(
-                $totals[
-                    CashMovementType::Expense->value
-                ] ?? 0
+                $totals[CashMovementType::Expense->value] ?? 0
             ),
         ];
     }
@@ -382,13 +380,15 @@ final class CashRegisterService
     }
 
     private function money(
-        int|float|string $value
+        int|float|string $value,
     ): string {
-        return number_format(
-            (float) $value,
-            2,
-            '.',
-            '',
-        );
+        return BigDecimal::of(
+            (string) $value,
+        )
+            ->toScale(
+                2,
+                RoundingMode::HALF_UP,
+            )
+            ->__toString();
     }
 }

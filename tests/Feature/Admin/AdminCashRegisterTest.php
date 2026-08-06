@@ -654,3 +654,37 @@ it(
         CarbonImmutable::setTestNow();
     },
 );
+
+it(
+    'rejects an opening amount with more than two decimal places',
+    function (): void {
+        /** @var TestCase $this */
+        $admin = User::factory()
+            ->admin()
+            ->create();
+
+        $this
+            ->actingAs(
+                $admin,
+                'sanctum',
+            )
+            ->postJson(
+                '/api/v1/admin/cash-register/open',
+                [
+                    'opening_amount' => '10.125',
+                    'opening_note' => 'Importe inválido',
+                ],
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'opening_amount',
+            ]);
+
+        $this->assertDatabaseMissing(
+            'cash_sessions',
+            [
+                'opened_by' => $admin->id,
+            ],
+        );
+    },
+);
