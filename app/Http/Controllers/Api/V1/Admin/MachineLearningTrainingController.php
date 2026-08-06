@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\MachineLearning\TrainingDatasetRequest;
 use App\Http\Resources\Api\V1\Admin\MachineLearning\MlTrainingRunResource;
 use App\Models\MlTrainingRun;
 use App\Models\User;
+use App\Services\MachineLearning\MachineLearningTrainingRunQueryService;
 use App\Services\MachineLearning\TrainingWorkflowService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -37,6 +38,7 @@ final class MachineLearningTrainingController
 
     public function index(
         Request $request,
+        MachineLearningTrainingRunQueryService $queryService,
     ): JsonResponse {
         $perPage = max(
             1,
@@ -49,12 +51,9 @@ final class MachineLearningTrainingController
             ),
         );
 
-        $runs = MlTrainingRun::query()
-            ->with('creator.role')
-            ->latest()
-            ->paginate(
-                $perPage,
-            );
+        $runs = $queryService->paginate(
+            perPage: $perPage,
+        );
 
         return ApiResponse::success(
             data: MlTrainingRunResource::collection(
@@ -65,11 +64,8 @@ final class MachineLearningTrainingController
 
             meta: [
                 'current_page' => $runs->currentPage(),
-
                 'last_page' => $runs->lastPage(),
-
                 'per_page' => $runs->perPage(),
-
                 'total' => $runs->total(),
             ],
         );
@@ -77,9 +73,10 @@ final class MachineLearningTrainingController
 
     public function show(
         MlTrainingRun $trainingRun,
+        MachineLearningTrainingRunQueryService $queryService,
     ): JsonResponse {
-        $trainingRun->loadMissing(
-            'creator.role',
+        $trainingRun = $queryService->loadDetails(
+            $trainingRun,
         );
 
         return ApiResponse::success(
@@ -87,7 +84,7 @@ final class MachineLearningTrainingController
                 $trainingRun,
             ),
 
-            message: 'Ejecución de entrenamiento recuperada correctamente.',
+            message: 'Previsualización de entrenamiento generada correctamente.',
         );
     }
 
@@ -155,14 +152,10 @@ final class MachineLearningTrainingController
 
             return ApiResponse::success(
                 data: [
-                    'registry' => $result[
-                            'remote'
-                        ],
+                    'registry' => $result['remote'],
 
                     'training_run' => new MlTrainingRunResource(
-                        $result[
-                            'training_run'
-                        ],
+                        $result['training_run'],
                     ),
                 ],
 
@@ -195,19 +188,13 @@ final class MachineLearningTrainingController
 
             return ApiResponse::success(
                 data: [
-                    'registry' => $result[
-                            'remote'
-                        ],
+                    'registry' => $result['remote'],
 
-                    'training_run' => $result[
-                            'training_run'
-                        ] === null
-                            ? null
-                            : new MlTrainingRunResource(
-                                $result[
-                                    'training_run'
-                                ],
-                            ),
+                    'training_run' => $result['training_run'] === null
+                        ? null
+                        : new MlTrainingRunResource(
+                            $result['training_run'],
+                        ),
                 ],
 
                 message: 'Rollback del modelo ejecutado correctamente.',
@@ -227,18 +214,14 @@ final class MachineLearningTrainingController
         $remoteStatus =
             $exception->remoteStatus();
 
-        $status = match (
-            $remoteStatus
-        ) {
+        $status = match ($remoteStatus) {
             409 => 409,
             422 => 422,
             401, 403 => 502,
             default => 503,
         };
 
-        $code = match (
-            $remoteStatus
-        ) {
+        $code = match ($remoteStatus) {
             409 => 'ML_MODEL_ROLLBACK_UNAVAILABLE',
 
             422 => 'ML_SERVICE_VALIDATION_FAILED',
