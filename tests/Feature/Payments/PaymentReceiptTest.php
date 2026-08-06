@@ -615,6 +615,93 @@ describe(
         );
 
         it(
+            'impide aprobar un comprobante de un pedido cancelado',
+            function (): void {
+                /** @var \Tests\TestCase $this */
+                $customer = paymentReceiptUser(
+                    'customer',
+                );
+
+                $operator = paymentReceiptUser(
+                    'operator',
+                );
+
+                $order = paymentReceiptOrder(
+                    customer: $customer,
+                );
+
+                $this
+                    ->actingAs(
+                        $customer,
+                        'sanctum',
+                    )
+                    ->post(
+                        "/api/v1/my/orders/{$order->id}/payment-receipts",
+                        [
+                            'receipt' => fakePaymentReceiptImage(
+                                'comprobante-cancelado.jpg',
+                            ),
+                        ],
+                        [
+                            'Accept' => 'application/json',
+                        ],
+                    )
+                    ->assertCreated();
+
+                $receipt = PaymentReceipt::query()
+                    ->where(
+                        'order_id',
+                        (int) $order->id,
+                    )
+                    ->firstOrFail();
+
+                $cancelledStatus = OrderStatus::query()
+                    ->where(
+                        'status_name',
+                        'cancelled',
+                    )
+                    ->firstOrFail();
+
+                $order->forceFill([
+                    'order_status_id' => (int) $cancelledStatus->id,
+                ])->save();
+
+                $this
+                    ->actingAs(
+                        $operator,
+                        'sanctum',
+                    )
+                    ->patchJson(
+                        "/api/v1/operator/payment-receipts/{$receipt->uuid}/approve",
+                    )
+                    ->assertUnprocessable()
+                    ->assertJsonValidationErrors([
+                        'receipt',
+                    ])
+                    ->assertJsonPath(
+                        'errors.receipt.0',
+                        'No se puede revisar un comprobante de un pedido finalizado o cancelado.',
+                    );
+
+                $receipt->refresh();
+
+                expect(
+                    $receipt->status,
+                )->toBe(
+                    PaymentReceiptStatus::Pending,
+                );
+
+                expect(
+                    $receipt->reviewed_at,
+                )->toBeNull();
+
+                expect(
+                    $receipt->reviewed_by,
+                )->toBeNull();
+            },
+        );
+
+        it(
             'impide que un cliente apruebe un comprobante',
             function (): void {
                 /** @var \Tests\TestCase $this */
@@ -759,6 +846,100 @@ describe(
                 expect(
                     $receipt->expires_at,
                 )->not->toBeNull();
+            },
+        );
+
+        it(
+            'impide rechazar un comprobante de un pedido entregado',
+            function (): void {
+                /** @var \Tests\TestCase $this */
+                $customer = paymentReceiptUser(
+                    'customer',
+                );
+
+                $operator = paymentReceiptUser(
+                    'operator',
+                );
+
+                $order = paymentReceiptOrder(
+                    customer: $customer,
+                );
+
+                $this
+                    ->actingAs(
+                        $customer,
+                        'sanctum',
+                    )
+                    ->post(
+                        "/api/v1/my/orders/{$order->id}/payment-receipts",
+                        [
+                            'receipt' => fakePaymentReceiptImage(
+                                'comprobante-entregado.jpg',
+                            ),
+                        ],
+                        [
+                            'Accept' => 'application/json',
+                        ],
+                    )
+                    ->assertCreated();
+
+                $receipt = PaymentReceipt::query()
+                    ->where(
+                        'order_id',
+                        (int) $order->id,
+                    )
+                    ->firstOrFail();
+
+                $deliveredStatus = OrderStatus::query()
+                    ->where(
+                        'status_name',
+                        'delivered',
+                    )
+                    ->firstOrFail();
+
+                $order->forceFill([
+                    'order_status_id' => (int) $deliveredStatus->id,
+                ])->save();
+
+                $this
+                    ->actingAs(
+                        $operator,
+                        'sanctum',
+                    )
+                    ->patchJson(
+                        "/api/v1/operator/payment-receipts/{$receipt->uuid}/reject",
+                        [
+                            'reason' => 'El valor transferido no coincide.',
+                        ],
+                    )
+                    ->assertUnprocessable()
+                    ->assertJsonValidationErrors([
+                        'receipt',
+                    ])
+                    ->assertJsonPath(
+                        'errors.receipt.0',
+                        'No se puede revisar un comprobante de un pedido finalizado o cancelado.',
+                    );
+
+                $receipt->refresh();
+
+                expect(
+                    $receipt->status,
+                )->toBe(
+                    PaymentReceiptStatus::Pending,
+                );
+
+                expect(
+                    $receipt->rejection_reason,
+                )->toBeNull();
+
+                expect(
+                    $receipt->reviewed_at,
+                )->toBeNull();
+
+                expect(
+                    $receipt->reviewed_by,
+                )->toBeNull();
             },
         );
 

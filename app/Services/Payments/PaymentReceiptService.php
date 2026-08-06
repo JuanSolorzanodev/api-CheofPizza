@@ -99,8 +99,8 @@ final class PaymentReceiptService
 
                     $extension = strtolower(
                         $file->guessExtension()
-                        ?: $file->getClientOriginalExtension()
-                        ?: 'bin',
+                            ?: $file->getClientOriginalExtension()
+                            ?: 'bin',
                     );
 
                     $directory = sprintf(
@@ -257,15 +257,48 @@ final class PaymentReceiptService
         string $receiptUuid,
         User $reviewer,
     ): PaymentReceipt {
+        $receiptReference = PaymentReceipt::query()
+            ->select([
+                'id',
+                'order_id',
+            ])
+            ->where(
+                'uuid',
+                $receiptUuid,
+            )
+            ->firstOrFail();
+
         return DB::transaction(
             function () use (
-                $receiptUuid,
+                $receiptReference,
                 $reviewer,
             ): PaymentReceipt {
+                $order = Order::query()
+                    ->with([
+                        'paymentMethod:id,name',
+                        'orderStatus:id,status_name',
+                    ])
+                    ->whereKey(
+                        (int) $receiptReference->order_id,
+                    )
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $this->assertTransferOrder(
+                    $order,
+                );
+
+                $this->assertOrderAcceptsReceiptReview(
+                    $order,
+                );
+
                 $receipt = PaymentReceipt::query()
+                    ->whereKey(
+                        (int) $receiptReference->id,
+                    )
                     ->where(
-                        'uuid',
-                        $receiptUuid,
+                        'order_id',
+                        (int) $order->id,
                     )
                     ->lockForUpdate()
                     ->firstOrFail();
@@ -276,9 +309,13 @@ final class PaymentReceiptService
 
                 $receipt->forceFill([
                     'status' => PaymentReceiptStatus::Approved,
+
                     'rejection_reason' => null,
+
                     'reviewed_at' => now(),
+
                     'reviewed_by' => (int) $reviewer->id,
+
                     'expires_at' => now()->addDays(90),
                 ])->save();
 
@@ -297,16 +334,49 @@ final class PaymentReceiptService
         User $reviewer,
         string $reason,
     ): PaymentReceipt {
+        $receiptReference = PaymentReceipt::query()
+            ->select([
+                'id',
+                'order_id',
+            ])
+            ->where(
+                'uuid',
+                $receiptUuid,
+            )
+            ->firstOrFail();
+
         return DB::transaction(
             function () use (
-                $receiptUuid,
+                $receiptReference,
                 $reviewer,
                 $reason,
             ): PaymentReceipt {
+                $order = Order::query()
+                    ->with([
+                        'paymentMethod:id,name',
+                        'orderStatus:id,status_name',
+                    ])
+                    ->whereKey(
+                        (int) $receiptReference->order_id,
+                    )
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $this->assertTransferOrder(
+                    $order,
+                );
+
+                $this->assertOrderAcceptsReceiptReview(
+                    $order,
+                );
+
                 $receipt = PaymentReceipt::query()
+                    ->whereKey(
+                        (int) $receiptReference->id,
+                    )
                     ->where(
-                        'uuid',
-                        $receiptUuid,
+                        'order_id',
+                        (int) $order->id,
                     )
                     ->lockForUpdate()
                     ->firstOrFail();
@@ -317,9 +387,13 @@ final class PaymentReceiptService
 
                 $receipt->forceFill([
                     'status' => PaymentReceiptStatus::Rejected,
+
                     'rejection_reason' => trim($reason),
+
                     'reviewed_at' => now(),
+
                     'reviewed_by' => (int) $reviewer->id,
+
                     'expires_at' => now()->addDays(30),
                 ])->save();
 
@@ -543,6 +617,35 @@ final class PaymentReceiptService
             throw ValidationException::withMessages([
                 'receipt' => [
                     'Este pedido ya no acepta nuevos comprobantes.',
+                ],
+            ]);
+        }
+    }
+
+    private function assertOrderAcceptsReceiptReview(
+        Order $order,
+    ): void {
+        $status = strtolower(
+            trim(
+                (string) $order
+                    ->orderStatus
+                    ?->status_name,
+            ),
+        );
+
+        if (
+            in_array(
+                $status,
+                [
+                    'cancelled',
+                    'delivered',
+                ],
+                true,
+            )
+        ) {
+            throw ValidationException::withMessages([
+                'receipt' => [
+                    'No se puede revisar un comprobante de un pedido finalizado o cancelado.',
                 ],
             ]);
         }
