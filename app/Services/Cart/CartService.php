@@ -7,10 +7,12 @@ use App\Models\CartItem;
 use App\Models\CartStatus;
 use App\Models\Ingredient;
 use App\Models\PersonalizationAction;
+use App\Models\User;
 use App\Services\Builder\BuilderQuoteService;
 use App\Services\Promotion\PublicPromotionService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -22,58 +24,130 @@ class CartService
         private readonly PublicPromotionService $promotionService
     ) {}
 
-    public function getOrCreateActiveCart(?int $userId, ?string $sessionId): Cart
-    {
-        $activeStatusId = $this->activeStatusIdOrFail();
-        $sessionId = $sessionId ?: $this->newSessionId();
+    public function getOrCreateActiveCart(
+        ?int $userId,
+        ?string $sessionId,
+    ): Cart {
+        $activeStatusId =
+            $this->activeStatusIdOrFail();
 
-        if ($userId) {
-            $userCart = Cart::where('user_id', $userId)
-                ->where('cart_status_id', $activeStatusId)
-                ->latest('id')
-                ->first();
+        $sessionId = $sessionId
+            ?: $this->newSessionId();
 
-            if (! $userCart) {
-                $userCart = Cart::create([
-                    'user_id' => $userId,
-                    'cart_status_id' => $activeStatusId,
-                    'session_id' => $sessionId,
-                    'total' => 0,
-                ]);
-            } elseif (! $userCart->session_id) {
-                $userCart->session_id = $sessionId;
-                $userCart->save();
-            }
+        return DB::transaction(
+            function () use (
+                $userId,
+                $sessionId,
+                $activeStatusId,
+            ): Cart {
+                if ($userId !== null) {
+                    /*
+                 * Serializa las solicitudes que intenten recuperar
+                 * o fusionar el carrito del mismo usuario.
+                 */
+                    $user = DB::table('users')
+                        ->select('id')
+                        ->where('id', $userId)
+                        ->lockForUpdate()
+                        ->first();
 
-            $guestCart = Cart::whereNull('user_id')
-                ->where('session_id', $sessionId)
-                ->where('cart_status_id', $activeStatusId)
-                ->latest('id')
-                ->first();
+                    if ($user === null) {
+                        throw (new ModelNotFoundException)
+                            ->setModel(
+                                User::class,
+                                [$userId],
+                            );
+                    }
 
-            if ($guestCart && $guestCart->id !== $userCart->id) {
-                $this->mergeGuestCartIntoUserCart($guestCart, $userCart);
-            }
+                    $userCart = Cart::query()
+                        ->where('user_id', $userId)
+                        ->where(
+                            'cart_status_id',
+                            $activeStatusId,
+                        )
+                        ->latest('id')
+                        ->first();
 
-            return $this->loadCart($userCart);
-        }
+                    if ($userCart === null) {
+                        $userCart = Cart::query()
+                            ->create([
+                                'user_id' => $userId,
 
-        $cart = Cart::whereNull('user_id')
-            ->where('session_id', $sessionId)
-            ->where('cart_status_id', $activeStatusId)
-            ->latest('id')
-            ->first();
+                                'cart_status_id' => $activeStatusId,
 
-        if (! $cart) {
-            $cart = Cart::create([
-                'user_id' => null,
-                'cart_status_id' => $activeStatusId,
-                'session_id' => $sessionId,
-                'total' => 0,
-            ]);
-        }
+                                'session_id' => $sessionId,
 
-        return $this->loadCart($cart);
+                                'total' => '0.00',
+                            ]);
+                    } elseif (
+                        $userCart->session_id === null
+                    ) {
+                        $userCart->forceFill([
+                            'session_id' => $sessionId,
+                        ])->save();
+                    }
+
+                    $guestCart = Cart::query()
+                        ->whereNull('user_id')
+                        ->where(
+                            'session_id',
+                            $sessionId,
+                        )
+                        ->where(
+                            'cart_status_id',
+                            $activeStatusId,
+                        )
+                        ->latest('id')
+                        ->first();
+
+                    if (
+                        $guestCart !== null &&
+                        $guestCart->id !== $userCart->id
+                    ) {
+                        $this->mergeGuestCartIntoUserCart(
+                            guestCart: $guestCart,
+                            userCart: $userCart,
+                        );
+                    }
+
+                    return $this->loadCart(
+                        $userCart->fresh(),
+                    );
+                }
+
+                $cart = Cart::query()
+                    ->whereNull('user_id')
+                    ->where(
+                        'session_id',
+                        $sessionId,
+                    )
+                    ->where(
+                        'cart_status_id',
+                        $activeStatusId,
+                    )
+                    ->lockForUpdate()
+                    ->latest('id')
+                    ->first();
+
+                if ($cart === null) {
+                    $cart = Cart::query()
+                        ->create([
+                            'user_id' => null,
+
+                            'cart_status_id' => $activeStatusId,
+
+                            'session_id' => $sessionId,
+
+                            'total' => '0.00',
+                        ]);
+                }
+
+                return $this->loadCart(
+                    $cart,
+                );
+            },
+            attempts: 3,
+        );
     }
 
     /**
@@ -966,10 +1040,50 @@ class CartService
         return null;
     }
 
-    private function mergeGuestCartIntoUserCart(Cart $guestCart, Cart $userCart): void
-    {
-        $guestCart = $this->loadCart($guestCart);
-        $userCart = $this->loadCart($userCart);
+    private function mergeGuestCartIntoUserCart(
+        Cart $guestCart,
+        Cart $userCart,
+    ): void {
+        /*
+     * Los carritos se bloquean siempre por ID ascendente
+     * para reducir el riesgo de deadlocks.
+     */
+        $lockedCarts = Cart::query()
+            ->whereKey([
+                $guestCart->id,
+                $userCart->id,
+            ])
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('id');
+
+        /** @var Cart|null $lockedGuestCart */
+        $lockedGuestCart = $lockedCarts->get(
+            $guestCart->id,
+        );
+
+        /** @var Cart|null $lockedUserCart */
+        $lockedUserCart = $lockedCarts->get(
+            $userCart->id,
+        );
+
+        if (
+            $lockedGuestCart === null ||
+            $lockedUserCart === null
+        ) {
+            throw new RuntimeException(
+                'No fue posible bloquear los carritos para realizar la fusión.',
+            );
+        }
+
+        $guestCart = $this->loadCart(
+            $lockedGuestCart,
+        );
+
+        $userCart = $this->loadCart(
+            $lockedUserCart,
+        );
 
         foreach ($guestCart->cartItems as $guestItem) {
             if ($guestItem->item_type === 'promotion') {
@@ -1001,13 +1115,35 @@ class CartService
                 );
 
                 if ($existingPromotion) {
-                    $existingPromotion->quantity = (int) $existingPromotion->quantity + (int) $guestItem->quantity;
-                    $existingPromotion->unit_price = (float) $guestItem->unit_price;
-                    $existingPromotion->subtotal = round(((float) $existingPromotion->quantity) * (float) $existingPromotion->unit_price, 2);
+                    $mergedQuantity =
+                        (int) $existingPromotion->quantity
+                        + (int) $guestItem->quantity;
+
+                    if ($mergedQuantity > 10) {
+                        throw ValidationException::withMessages([
+                            'quantity' => 'La cantidad total de esta promoción no puede superar 10.',
+                        ]);
+                    }
+
+                    $existingPromotion->quantity =
+                        $mergedQuantity;
+
+                    $existingPromotion->unit_price =
+                        (float) $guestItem->unit_price;
+
+                    $existingPromotion->subtotal = round(
+                        (float) $existingPromotion->quantity
+                            * (float) $existingPromotion->unit_price,
+                        2,
+                    );
+
                     $existingPromotion->save();
+
                     $guestItem->delete();
                 } else {
-                    $guestItem->cart_id = $userCart->id;
+                    $guestItem->cart_id =
+                        $userCart->id;
+
                     $guestItem->save();
                 }
 
@@ -1036,13 +1172,35 @@ class CartService
             );
 
             if ($existing) {
-                $existing->quantity = (int) $existing->quantity + (int) $guestItem->quantity;
-                $existing->unit_price = (float) $guestItem->unit_price;
-                $existing->subtotal = round(((float) $existing->quantity) * (float) $existing->unit_price, 2);
+                $mergedQuantity =
+                    (int) $existing->quantity
+                    + (int) $guestItem->quantity;
+
+                if ($mergedQuantity > 10) {
+                    throw ValidationException::withMessages([
+                        'quantity' => 'La cantidad total para esta configuración no puede superar 10 pizzas.',
+                    ]);
+                }
+
+                $existing->quantity =
+                    $mergedQuantity;
+
+                $existing->unit_price =
+                    (float) $guestItem->unit_price;
+
+                $existing->subtotal = round(
+                    (float) $existing->quantity
+                        * (float) $existing->unit_price,
+                    2,
+                );
+
                 $existing->save();
+
                 $guestItem->delete();
             } else {
-                $guestItem->cart_id = $userCart->id;
+                $guestItem->cart_id =
+                    $userCart->id;
+
                 $guestItem->save();
             }
 
