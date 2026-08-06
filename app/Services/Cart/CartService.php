@@ -241,8 +241,8 @@ class CartService
                     $cart,
                     $payload
                 ): Cart {
-                    $cart = $this->loadCart(
-                        $cart
+                    $cart = $this->lockCartForMutation(
+                        $cart,
                     );
 
                     $payload =
@@ -510,8 +510,8 @@ class CartService
                     $payload
                 ): Cart {
                     $cart =
-                        $this->loadCart(
-                            $cart
+                        $this->lockCartForMutation(
+                            $cart,
                         );
 
                     $promotion =
@@ -856,7 +856,7 @@ class CartService
                     $cartItemId,
                     $quantity,
                 ): Cart {
-                    $cart = $this->loadCart(
+                    $cart = $this->lockCartForMutation(
                         $cart,
                     );
 
@@ -898,7 +898,9 @@ class CartService
     public function removeItem(Cart $cart, int $cartItemId): Cart
     {
         return $cart->getConnection()->transaction(function () use ($cart, $cartItemId) {
-            $cart = $this->loadCart($cart);
+            $cart = $this->lockCartForMutation(
+                $cart,
+            );
 
             /** @var CartItem|null $item */
             $item = $cart->cartItems->firstWhere('id', $cartItemId);
@@ -918,7 +920,9 @@ class CartService
     public function clear(Cart $cart): Cart
     {
         return $cart->getConnection()->transaction(function () use ($cart) {
-            $cart = $this->loadCart($cart);
+            $cart = $this->lockCartForMutation(
+                $cart,
+            );
 
             $cart->cartItems->each->delete();
             $cart->total = '0.00';
@@ -933,6 +937,27 @@ class CartService
     ): Cart {
         return $this->loadCart(
             $cart,
+        );
+    }
+
+    /**
+     * Serializa todas las operaciones que modifican el mismo carrito.
+     *
+     * El bloqueo se mantiene hasta que finaliza la transacción iniciada
+     * por el método público que realizó la mutación.
+     */
+    private function lockCartForMutation(
+        Cart $cart,
+    ): Cart {
+        $lockedCart = Cart::query()
+            ->whereKey(
+                $cart->getKey(),
+            )
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        return $this->loadCart(
+            $lockedCart,
         );
     }
 
