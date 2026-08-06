@@ -6,6 +6,8 @@ namespace App\Services\Order;
 
 use App\Models\Cart;
 use App\Services\Settings\BusinessSettingService;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Illuminate\Validation\ValidationException;
 
 final class CheckoutPricingService
@@ -131,6 +133,23 @@ final class CheckoutPricingService
         bool $deliveryEnabled,
     ): void {
         if (
+            ! in_array(
+                $deliveryType,
+                [
+                    'pickup',
+                    'delivery',
+                ],
+                true,
+            )
+        ) {
+            throw ValidationException::withMessages([
+                'delivery_type' => [
+                    'El tipo de entrega seleccionado no es válido.',
+                ],
+            ]);
+        }
+
+        if (
             $deliveryType === 'pickup'
             && ! $pickupEnabled
         ) {
@@ -159,6 +178,25 @@ final class CheckoutPricingService
         bool $transferEnabled,
         bool $cashEnabled,
     ): void {
+        if (
+            ! in_array(
+                $paymentMethod,
+                [
+                    'cash',
+                    'transfer',
+                    'card',
+                    'paypal',
+                ],
+                true,
+            )
+        ) {
+            throw ValidationException::withMessages([
+                'payment_method' => [
+                    'El método de pago seleccionado no es válido.',
+                ],
+            ]);
+        }
+
         if (
             $paymentMethod === 'cash'
             && ! $cashEnabled
@@ -224,10 +262,9 @@ final class CheckoutPricingService
     private static function moneyToCents(
         mixed $value,
     ): int {
-        $normalized =
-            trim(
-                (string) $value,
-            );
+        $normalized = trim(
+            (string) $value,
+        );
 
         if (
             $normalized === ''
@@ -236,19 +273,36 @@ final class CheckoutPricingService
             return 0;
         }
 
-        return (int) round(
-            (float) $normalized * 100,
-        );
+        return BigDecimal::of(
+            $normalized,
+        )
+            ->toScale(
+                2,
+                RoundingMode::HALF_UP,
+            )
+            ->multipliedBy(100)
+            ->toInt();
     }
 
     private static function centsToMoney(
         int $cents,
     ): string {
-        return number_format(
-            $cents / 100,
-            2,
-            '.',
-            '',
+        $sign = $cents < 0
+            ? '-'
+            : '';
+
+        $absoluteCents = abs(
+            $cents,
+        );
+
+        return sprintf(
+            '%s%d.%02d',
+            $sign,
+            intdiv(
+                $absoluteCents,
+                100,
+            ),
+            $absoluteCents % 100,
         );
     }
 }
