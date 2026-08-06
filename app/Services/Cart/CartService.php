@@ -772,6 +772,14 @@ class CartService
         });
     }
 
+    public function loadForResponse(
+        Cart $cart,
+    ): Cart {
+        return $this->loadCart(
+            $cart,
+        );
+    }
+
     private function loadCart(Cart $cart): Cart
     {
         $relations = [

@@ -1,103 +1,136 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1\Public;
 
 use App\Http\Requests\Api\V1\Public\CartAddPizzaRequest;
 use App\Http\Requests\Api\V1\Public\CartAddPromotionRequest;
 use App\Http\Requests\Api\V1\Public\CartUpdateQuantityRequest;
 use App\Http\Resources\Api\V1\CartResource;
+use App\Models\Cart;
 use App\Services\Cart\CartService;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
-class CartController
+final class CartController
 {
-    public function __construct(private readonly CartService $cartService) {}
+    public function __construct(
+        private readonly CartService $cartService,
+    ) {}
 
-    public function show(Request $request)
-    {
-        $cart = $this->resolveCart($request);
-
-        return (new CartResource($cart))
-            ->response()
-            ->header('X-Cart-Session', $cart->session_id);
+    public function show(
+        Request $request,
+    ): Response {
+        return $this->cartResponse(
+            $this->resolveCart($request),
+        );
     }
 
-    public function addPizza(CartAddPizzaRequest $request)
-    {
-        $cart = $this->resolveCart($request);
-
-        $cart = $this->cartService->addPizza($cart, $request->validated());
-
-        return (new CartResource($cart))
-            ->response()
-            ->header('X-Cart-Session', $cart->session_id);
-    }
-
-    public function addPromotion(CartAddPromotionRequest $request)
-    {
-        $cart = $this->resolveCart($request);
-
-        $cart = $this->cartService->addPromotion($cart, $request->validated());
-
-        return (new CartResource($cart))
-            ->response()
-            ->header('X-Cart-Session', $cart->session_id);
-    }
-
-    public function updateQuantity(CartUpdateQuantityRequest $request, int $itemId)
-    {
-        $cart = $this->resolveCart($request);
-
-        $cart = $this->cartService->updateQuantity(
-            $cart,
-            $itemId,
-            (int) $request->validated('quantity')
+    public function addPizza(
+        CartAddPizzaRequest $request,
+    ): Response {
+        $cart = $this->cartService->addPizza(
+            cart: $this->resolveCart($request),
+            payload: $request->validated(),
         );
 
-        return (new CartResource($cart))
-            ->response()
-            ->header('X-Cart-Session', $cart->session_id);
+        return $this->cartResponse(
+            $cart,
+        );
     }
 
-    public function remove(Request $request, int $itemId)
-    {
-        $cart = $this->resolveCart($request);
+    public function addPromotion(
+        CartAddPromotionRequest $request,
+    ): Response {
+        $cart = $this->cartService->addPromotion(
+            cart: $this->resolveCart($request),
+            payload: $request->validated(),
+        );
 
-        $cart = $this->cartService->removeItem($cart, $itemId);
-
-        return (new CartResource($cart))
-            ->response()
-            ->header('X-Cart-Session', $cart->session_id);
+        return $this->cartResponse(
+            $cart,
+        );
     }
 
-    public function clear(Request $request)
-    {
-        $cart = $this->resolveCart($request);
+    public function updateQuantity(
+        CartUpdateQuantityRequest $request,
+        int $itemId,
+    ): Response {
+        $cart = $this->cartService->updateQuantity(
+            cart: $this->resolveCart($request),
+            cartItemId: $itemId,
+            quantity: (int) $request->validated(
+                'quantity',
+            ),
+        );
 
-        $cart = $this->cartService->clear($cart);
-
-        return (new CartResource($cart))
-            ->response()
-            ->header('X-Cart-Session', $cart->session_id);
+        return $this->cartResponse(
+            $cart,
+        );
     }
 
-    private function resolveCart(Request $request)
-    {
-        $sessionId = $request->header('X-Cart-Session');
+    public function remove(
+        Request $request,
+        int $itemId,
+    ): Response {
+        $cart = $this->cartService->removeItem(
+            cart: $this->resolveCart($request),
+            cartItemId: $itemId,
+        );
+
+        return $this->cartResponse(
+            $cart,
+        );
+    }
+
+    public function clear(
+        Request $request,
+    ): Response {
+        $cart = $this->cartService->clear(
+            $this->resolveCart($request),
+        );
+
+        return $this->cartResponse(
+            $cart,
+        );
+    }
+
+    private function resolveCart(
+        Request $request,
+    ): Cart {
+        $sessionId = $request->header(
+            'X-Cart-Session',
+        );
+
         $userId = $request->user()?->id;
 
-        $cart = $this->cartService->getOrCreateActiveCart($userId, $sessionId);
+        return $this->cartService
+            ->getOrCreateActiveCart(
+                userId: $userId !== null
+                    ? (int) $userId
+                    : null,
 
-        return $cart->load([
-            'cartStatus',
-            'cartItems.pizza.category',
-            'cartItems.pizzaSecond.category',
-            'cartItems.promotion.promotionDetails.category',
-            'cartItems.promotion.promotionDetails.size',
-            'cartItems.size',
-            'cartItems.cartPromotionItems.pizza.category',
-            'cartItems.cartItemPersonalizations.ingredient',
-            'cartItems.cartItemPersonalizations.personalizationAction',
-        ]);
+                sessionId: is_string($sessionId)
+                    ? $sessionId
+                    : null,
+            );
+    }
+
+    private function cartResponse(
+        Cart $cart,
+    ): Response {
+        $cart = $cart->relationLoaded('cartItems')
+            ? $cart
+            : $this->cartService->loadForResponse(
+                $cart,
+            );
+
+        return (new CartResource($cart))
+            ->response()
+            ->header(
+                'X-Cart-Session',
+                (string) $cart->session_id,
+            );
     }
 }
