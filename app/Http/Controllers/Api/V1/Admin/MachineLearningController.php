@@ -9,49 +9,39 @@ use App\Http\Requests\Admin\MachineLearning\GenerateForecastRequest;
 use App\Http\Requests\Admin\MachineLearning\ImportForecastRequest;
 use App\Http\Requests\Admin\MachineLearning\TrainingDatasetRequest;
 use App\Http\Resources\Api\V1\Admin\MachineLearning\MlModelRunResource;
-use App\Models\MlModelRun;
 use App\Models\User;
 use App\Services\MachineLearning\Dataset\MlTrainingDatasetService;
 use App\Services\MachineLearning\ForecastImportService;
 use App\Services\MachineLearning\MachineLearningClient;
-use App\Services\MachineLearning\RemoteForecastPersistenceService;
+use App\Services\MachineLearning\MachineLearningRunQueryService;
+use App\Services\MachineLearning\RemoteForecastService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class MachineLearningController
 {
-    public function latest(): JsonResponse
-    {
-        $run = MlModelRun::query()
-            ->with([
-                'predictions' => static fn ($query) => $query->orderBy('prediction_date'),
-
-                'creator.role',
-            ])
-            ->where(
-                'status',
-                MlModelRun::STATUS_COMPLETED
-            )
-            ->where('is_active', true)
-            ->latest('generated_at')
-            ->first();
+    public function latest(
+        MachineLearningRunQueryService $queryService,
+    ): JsonResponse {
+        $run = $queryService->findLatestActive();
 
         if ($run === null) {
             return ApiResponse::success(
                 data: null,
-                message: 'Todavía no existe un pronóstico predictivo activo.'
+                message: 'Todavía no existe un pronóstico predictivo activo.',
             );
         }
 
         return ApiResponse::success(
             data: new MlModelRunResource($run),
-            message: 'Pronóstico activo recuperado correctamente.'
+            message: 'Pronóstico activo recuperado correctamente.',
         );
     }
 
     public function history(
-        Request $request
+        Request $request,
+        MachineLearningRunQueryService $queryService,
     ): JsonResponse {
         $perPage = max(
             1,
@@ -59,50 +49,40 @@ final class MachineLearningController
                 50,
                 $request->integer(
                     'per_page',
-                    15
-                )
-            )
+                    15,
+                ),
+            ),
         );
 
-        $runs = MlModelRun::query()
-            ->with('creator.role')
-            ->latest('generated_at')
-            ->paginate($perPage);
+        $runs = $queryService->paginateHistory(
+            perPage: $perPage,
+        );
 
         return ApiResponse::success(
             data: MlModelRunResource::collection(
-                $runs->getCollection()
+                $runs->getCollection(),
             ),
-
             message: 'Historial de modelos recuperado correctamente.',
-
             meta: [
                 'current_page' => $runs->currentPage(),
-
                 'last_page' => $runs->lastPage(),
-
                 'per_page' => $runs->perPage(),
-
                 'total' => $runs->total(),
-            ]
+            ],
         );
     }
 
     public function show(
-        string $uuid
+        string $uuid,
+        MachineLearningRunQueryService $queryService,
     ): JsonResponse {
-        $run = MlModelRun::query()
-            ->with([
-                'predictions' => static fn ($query) => $query->orderBy('prediction_date'),
-
-                'creator.role',
-            ])
-            ->where('uuid', $uuid)
-            ->firstOrFail();
+        $run = $queryService->findByUuidOrFail(
+            uuid: $uuid,
+        );
 
         return ApiResponse::success(
             data: new MlModelRunResource($run),
-            message: 'Ejecución predictiva recuperada correctamente.'
+            message: 'Ejecución predictiva recuperada correctamente.',
         );
     }
 
@@ -137,28 +117,28 @@ final class MachineLearningController
      */
     public function preview(
         GenerateForecastRequest $request,
-        MachineLearningClient $client
+        RemoteForecastService $service,
     ): JsonResponse {
         try {
-            $forecast = $client->predict(
+            $forecast = $service->preview(
                 startDate: (string) $request->validated(
-                    'start_date'
+                    'start_date',
                 ),
 
                 days: (int) $request->validated(
-                    'days'
+                    'days',
                 ),
             );
 
             return ApiResponse::success(
                 data: $forecast,
-                message: 'Pronóstico remoto generado correctamente.'
+                message: 'Pronóstico remoto generado correctamente.',
             );
         } catch (
             MachineLearningServiceException $exception
         ) {
             return $this->serviceError(
-                $exception
+                $exception,
             );
         }
     }
@@ -169,44 +149,34 @@ final class MachineLearningController
      */
     public function generate(
         GenerateForecastRequest $request,
-        MachineLearningClient $client,
-        RemoteForecastPersistenceService $persistenceService,
+        RemoteForecastService $service,
     ): JsonResponse {
         /** @var User $admin */
         $admin = $request->user();
 
         try {
-            $forecast = $client->predict(
+            $run = $service->generate(
                 startDate: (string) $request->validated(
-                    'start_date'
+                    'start_date',
                 ),
 
                 days: (int) $request->validated(
-                    'days'
+                    'days',
                 ),
-            );
 
-            $run = $persistenceService->persist(
-                forecast: $forecast,
                 admin: $admin,
             );
-
-            $run->loadMissing([
-                'predictions' => static fn ($query) => $query->orderBy('prediction_date'),
-
-                'creator.role',
-            ]);
 
             return ApiResponse::success(
                 data: new MlModelRunResource($run),
                 message: 'Pronóstico generado y guardado correctamente.',
-                status: 201
+                status: 201,
             );
         } catch (
             MachineLearningServiceException $exception
         ) {
             return $this->serviceError(
-                $exception
+                $exception,
             );
         }
     }
@@ -294,9 +264,7 @@ final class MachineLearningController
                 ),
 
                 includeEmptyDays: filter_var(
-                    $validated[
-                        'include_empty_days'
-                    ] ?? true,
+                    $validated['include_empty_days'] ?? true,
                     FILTER_VALIDATE_BOOL,
                     FILTER_NULL_ON_FAILURE,
                 ) ?? true,
