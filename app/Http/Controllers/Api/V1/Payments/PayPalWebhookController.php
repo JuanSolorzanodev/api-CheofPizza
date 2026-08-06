@@ -11,7 +11,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
-use Throwable;
 
 final class PayPalWebhookController
 {
@@ -119,18 +118,21 @@ final class PayPalWebhookController
                 'message' => 'No fue posible verificar el webhook de PayPal.',
                 'code' => 'INVALID_PAYPAL_WEBHOOK_SIGNATURE',
             ], 400);
-        } catch (Throwable $exception) {
-            report($exception);
+        } catch (RuntimeException $exception) {
+            Log::warning(
+                'PayPal webhook signature rejected.',
+                [
+                    'event_id' => $request->input('id'),
+                    'event_type' => $request->input('event_type'),
+                    'message' => $exception->getMessage(),
+                ],
+            );
 
-            /*
-             * Un fallo interno es temporal.
-             * Respondemos 500 para que PayPal pueda reintentar el evento.
-             */
             return response()->json([
                 'success' => false,
-                'message' => 'No fue posible registrar el webhook de PayPal.',
-                'code' => 'PAYPAL_WEBHOOK_REGISTRATION_FAILED',
-            ], 500);
+                'message' => 'No fue posible verificar el webhook de PayPal.',
+                'code' => 'INVALID_PAYPAL_WEBHOOK_SIGNATURE',
+            ], 400);
         }
     }
 }
