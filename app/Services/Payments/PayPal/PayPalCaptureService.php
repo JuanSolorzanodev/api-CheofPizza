@@ -108,7 +108,8 @@ final class PayPalCaptureService
             ]);
         }
 
-        $payment->markAsApproved(
+        $payment = $this->markPaymentAsApprovedSafely(
+            payment: $payment,
             providerStatus: $remoteStatus,
             providerMetadata: [
                 'approval' => [
@@ -117,6 +118,15 @@ final class PayPalCaptureService
                 ],
             ],
         );
+
+        if (
+            $payment->isCompleted()
+            && $payment->order_id !== null
+        ) {
+            return $this->loadOrder(
+                (int) $payment->order_id,
+            );
+        }
 
         try {
             $captureResponse = $this
@@ -192,6 +202,50 @@ final class PayPalCaptureService
             payment: $payment,
             captureResponse: $captureResponse,
             pricingSnapshot: $pricingSnapshot,
+        );
+    }
+
+    /**
+     * Evita degradar un pago completado por un webhook o una captura
+     * concurrente mientras esta solicitud validaba la orden remota.
+     *
+     * @param  array<string, mixed>  $providerMetadata
+     */
+    private function markPaymentAsApprovedSafely(
+        Payment $payment,
+        string $providerStatus,
+        array $providerMetadata,
+    ): Payment {
+        return DB::transaction(
+            function () use (
+                $payment,
+                $providerStatus,
+                $providerMetadata,
+            ): Payment {
+                $lockedPayment = Payment::query()
+                    ->whereKey(
+                        $payment->id,
+                    )
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($lockedPayment->isCompleted()) {
+                    return $lockedPayment;
+                }
+
+                $this->validatePaymentForCapture(
+                    $lockedPayment,
+                );
+
+                $lockedPayment->markAsApproved(
+                    providerStatus: $providerStatus,
+                    providerMetadata: $providerMetadata,
+                );
+
+                return $lockedPayment->fresh()
+                    ?? $lockedPayment;
+            },
+            attempts: 3,
         );
     }
 
