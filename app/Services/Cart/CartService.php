@@ -10,6 +10,8 @@ use App\Models\PersonalizationAction;
 use App\Models\User;
 use App\Services\Builder\BuilderQuoteService;
 use App\Services\Promotion\PublicPromotionService;
+use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +25,55 @@ class CartService
         private readonly BuilderQuoteService $quoteService,
         private readonly PublicPromotionService $promotionService
     ) {}
+
+    private function money(
+        int|float|string $value,
+    ): string {
+        return BigDecimal::of(
+            (string) $value,
+        )
+            ->toScale(
+                2,
+                RoundingMode::HALF_UP,
+            )
+            ->__toString();
+    }
+
+    private function addMoney(
+        int|float|string $left,
+        int|float|string $right,
+    ): string {
+        return BigDecimal::of(
+            (string) $left,
+        )
+            ->plus(
+                BigDecimal::of(
+                    (string) $right,
+                ),
+            )
+            ->toScale(
+                2,
+                RoundingMode::HALF_UP,
+            )
+            ->__toString();
+    }
+
+    private function multiplyMoney(
+        int|float|string $amount,
+        int $quantity,
+    ): string {
+        return BigDecimal::of(
+            (string) $amount,
+        )
+            ->multipliedBy(
+                $quantity,
+            )
+            ->toScale(
+                2,
+                RoundingMode::HALF_UP,
+            )
+            ->__toString();
+    }
 
     public function getOrCreateActiveCart(
         ?int $userId,
@@ -116,30 +167,40 @@ class CartService
                 }
 
                 $cart = Cart::query()
-                    ->whereNull('user_id')
                     ->where(
-                        'session_id',
+                        'active_guest_session_key',
                         $sessionId,
                     )
-                    ->where(
-                        'cart_status_id',
-                        $activeStatusId,
-                    )
                     ->lockForUpdate()
-                    ->latest('id')
                     ->first();
 
                 if ($cart === null) {
-                    $cart = Cart::query()
-                        ->create([
+                    $now = now();
+
+                    DB::table('carts')
+                        ->insertOrIgnore([
                             'user_id' => null,
 
                             'cart_status_id' => $activeStatusId,
 
                             'session_id' => $sessionId,
 
+                            'active_guest_session_key' => $sessionId,
+
                             'total' => '0.00',
+
+                            'created_at' => $now,
+
+                            'updated_at' => $now,
                         ]);
+
+                    $cart = Cart::query()
+                        ->where(
+                            'active_guest_session_key',
+                            $sessionId,
+                        )
+                        ->lockForUpdate()
+                        ->firstOrFail();
                 }
 
                 return $this->loadCart(
@@ -791,26 +852,56 @@ class CartService
             );
     }
 
-    public function updateQuantity(Cart $cart, int $cartItemId, int $quantity): Cart
-    {
-        return $cart->getConnection()->transaction(function () use ($cart, $cartItemId, $quantity) {
-            $cart = $this->loadCart($cart);
+    public function updateQuantity(
+        Cart $cart,
+        int $cartItemId,
+        int $quantity,
+    ): Cart {
+        return $cart
+            ->getConnection()
+            ->transaction(
+                function () use (
+                    $cart,
+                    $cartItemId,
+                    $quantity,
+                ): Cart {
+                    $cart = $this->loadCart(
+                        $cart,
+                    );
 
-            /** @var CartItem|null $item */
-            $item = $cart->cartItems->firstWhere('id', $cartItemId);
+                    /** @var CartItem|null $item */
+                    $item = $cart->cartItems
+                        ->firstWhere(
+                            'id',
+                            $cartItemId,
+                        );
 
-            if (! $item) {
-                throw (new ModelNotFoundException)->setModel(CartItem::class, [$cartItemId]);
-            }
+                    if ($item === null) {
+                        throw (new ModelNotFoundException)
+                            ->setModel(
+                                CartItem::class,
+                                [$cartItemId],
+                            );
+                    }
 
-            $item->quantity = $quantity;
-            $item->subtotal = round(((float) $item->unit_price) * $quantity, 2);
-            $item->save();
+                    $item->forceFill([
+                        'quantity' => $quantity,
 
-            $this->recalculateCartTotal($cart);
+                        'subtotal' => $this->multiplyMoney(
+                            $item->unit_price,
+                            $quantity,
+                        ),
+                    ])->save();
 
-            return $this->loadCart($cart);
-        });
+                    $this->recalculateCartTotal(
+                        $cart,
+                    );
+
+                    return $this->loadCart(
+                        $cart,
+                    );
+                },
+            );
     }
 
     public function removeItem(Cart $cart, int $cartItemId): Cart
@@ -874,12 +965,24 @@ class CartService
         return $cart->fresh($relations) ?? $cart;
     }
 
-    private function recalculateCartTotal(Cart $cart): void
-    {
-        $total = (float) $cart->cartItems()->sum('subtotal');
+    private function recalculateCartTotal(
+        Cart $cart,
+    ): void {
+        $total = $cart->cartItems()
+            ->pluck('subtotal')
+            ->reduce(
+                fn (
+                    string $carry,
+                    mixed $subtotal,
+                ): string => $this->addMoney(
+                    $carry,
+                    $subtotal,
+                ),
+                '0.00',
+            );
 
         $cart->forceFill([
-            'total' => round($total, 2),
+            'total' => $total,
         ])->save();
     }
 
@@ -1129,13 +1232,15 @@ class CartService
                         $mergedQuantity;
 
                     $existingPromotion->unit_price =
-                        (float) $guestItem->unit_price;
+                        $this->money(
+                            $guestItem->unit_price,
+                        );
 
-                    $existingPromotion->subtotal = round(
-                        (float) $existingPromotion->quantity
-                            * (float) $existingPromotion->unit_price,
-                        2,
-                    );
+                    $existingPromotion->subtotal =
+                        $this->multiplyMoney(
+                            $existingPromotion->unit_price,
+                            $mergedQuantity,
+                        );
 
                     $existingPromotion->save();
 
@@ -1186,14 +1291,15 @@ class CartService
                     $mergedQuantity;
 
                 $existing->unit_price =
-                    (float) $guestItem->unit_price;
+                    $this->money(
+                        $guestItem->unit_price,
+                    );
 
-                $existing->subtotal = round(
-                    (float) $existing->quantity
-                        * (float) $existing->unit_price,
-                    2,
-                );
-
+                $existing->subtotal =
+                    $this->multiplyMoney(
+                        $existing->unit_price,
+                        $mergedQuantity,
+                    );
                 $existing->save();
 
                 $guestItem->delete();
@@ -1207,7 +1313,14 @@ class CartService
             $userCart = $this->loadCart($userCart);
         }
 
-        $this->recalculateCartTotal($userCart);
+        $this->recalculateCartTotal(
+            $userCart,
+        );
+
+        $guestCart->forceFill([
+            'active_guest_session_key' => null,
+        ])->save();
+
         $guestCart->delete();
     }
 }
