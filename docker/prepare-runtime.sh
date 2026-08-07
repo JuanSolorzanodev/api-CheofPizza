@@ -19,7 +19,22 @@ mkdir -p \
     storage/framework/sessions \
     storage/framework/views \
     storage/logs \
+    storage/app/firebase \
     bootstrap/cache
+
+if [ -n "${FIREBASE_CREDENTIALS_BASE64:-}" ]; then
+    FIREBASE_CREDENTIALS_PATH="/var/www/html/storage/app/firebase/firebase-service-account.json"
+
+    printf '%s' "${FIREBASE_CREDENTIALS_BASE64}" \
+        | base64 -d \
+        > "${FIREBASE_CREDENTIALS_PATH}"
+
+    chmod 600 "${FIREBASE_CREDENTIALS_PATH}"
+
+    export FIREBASE_CREDENTIALS="${FIREBASE_CREDENTIALS_PATH}"
+
+    echo "Firebase credentials prepared successfully."
+fi
 
 php artisan config:clear
 php artisan route:clear
