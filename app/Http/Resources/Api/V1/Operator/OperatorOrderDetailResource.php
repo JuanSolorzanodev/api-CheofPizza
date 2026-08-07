@@ -6,6 +6,7 @@ namespace App\Http\Resources\Api\V1\Operator;
 
 use App\Enums\OrderStatusName;
 use App\Http\Resources\Api\V1\PaymentReceiptResource;
+use App\Models\Order;
 use App\Services\Order\OrderStatusTransitionService;
 use App\Services\Order\WhatsAppCustomerConfirmationLinkService;
 use App\Services\Order\WhatsAppDeliveryDispatchLinkService;
@@ -13,7 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\Order
+ * @mixin Order
  */
 final class OperatorOrderDetailResource extends JsonResource
 {

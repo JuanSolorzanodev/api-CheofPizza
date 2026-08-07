@@ -89,14 +89,14 @@ return Application::configure(
         $exceptions->shouldRenderJsonWhen(
             static fn (
                 Request $request,
-                \Throwable $exception
+                Throwable $exception
             ): bool => $request->is('api/*')
                 || $request->expectsJson(),
         );
 
         $exceptions->render(
             static function (
-                \Throwable $exception,
+                Throwable $exception,
                 Request $request
             ) {
                 if (

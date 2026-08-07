@@ -406,7 +406,7 @@ function mockTrainingHttpClient(
     callable $configure,
 ): MachineLearningClientContract {
     /** @var MachineLearningClientContract&MockInterface $client */
-    $client = \Mockery::mock(
+    $client = Mockery::mock(
         MachineLearningClientContract::class,
     );
 

@@ -822,9 +822,9 @@ final class PublicPromotionService
             ) => $query
                 ->orderBy('id')
                 ->with([
-                'category',
-                'size',
-            ]),
+                    'category',
+                    'size',
+                ]),
 
             'sizePrices' => static fn (
                 $query

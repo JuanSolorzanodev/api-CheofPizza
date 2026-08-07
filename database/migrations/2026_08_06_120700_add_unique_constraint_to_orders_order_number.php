@@ -18,7 +18,7 @@ return new class extends Migration
             ->value('order_number');
 
         if ($duplicatedOrderNumber !== null) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 sprintf(
                     'No se puede crear el índice único de orders.order_number porque existen pedidos duplicados con el número [%s].',
                     (string) $duplicatedOrderNumber,

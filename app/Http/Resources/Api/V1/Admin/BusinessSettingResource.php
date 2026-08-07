@@ -78,7 +78,7 @@ final class BusinessSettingResource extends JsonResource
                 'phone' => $this->whatsapp->phone,
 
                 'receipt_template' => $this->whatsapp
-                ->receipt_template,
+                    ->receipt_template,
             ],
 
             'updated_at' => $this->updated_at?->toISOString(),

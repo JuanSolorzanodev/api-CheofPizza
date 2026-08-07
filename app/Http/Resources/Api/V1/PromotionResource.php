@@ -108,26 +108,26 @@ final class PromotionResource extends JsonResource
             ),
 
             'selection_rules' => [
-            'type' => (string) $this
-                ->promotion_type,
+                'type' => (string) $this
+                    ->promotion_type,
 
-            'allows_extras' => true,
+                'allows_extras' => true,
 
-            'allows_remove_ingredients' => true,
+                'allows_remove_ingredients' => true,
 
-            'allows_half_and_half' => false,
+                'allows_half_and_half' => false,
 
-            'allows_any_category' => $this->promotion_type ===
-                Promotion::TYPE_SIZE_FIXED_PRICE,
+                'allows_any_category' => $this->promotion_type ===
+                    Promotion::TYPE_SIZE_FIXED_PRICE,
 
-            'requires_size_selection' => $this->promotion_type ===
-                Promotion::TYPE_SIZE_FIXED_PRICE,
+                'requires_size_selection' => $this->promotion_type ===
+                    Promotion::TYPE_SIZE_FIXED_PRICE,
 
-            'selection_count' => $selectionCount,
+                'selection_count' => $selectionCount,
 
-            'max_extras_per_pizza' => 8,
+                'max_extras_per_pizza' => 8,
 
-            'allow_duplicate_ingredients_as_extra' => false,
+                'allow_duplicate_ingredients_as_extra' => false,
             ],
         ];
     }

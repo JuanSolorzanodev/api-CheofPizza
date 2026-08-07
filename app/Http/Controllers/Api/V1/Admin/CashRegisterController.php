@@ -11,6 +11,7 @@ use App\Http\Requests\Api\V1\Admin\CashRegister\StoreCashMovementRequest;
 use App\Http\Resources\Api\V1\Admin\CashRegister\CashMovementResource;
 use App\Http\Resources\Api\V1\Admin\CashRegister\CashSessionResource;
 use App\Models\CashSession;
+use App\Models\User;
 use App\Services\Admin\CashRegister\CashRegisterService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -38,7 +39,7 @@ final class CashRegisterController
         OpenCashSessionRequest $request,
         CashRegisterService $service,
     ): JsonResponse {
-        /** @var \App\Models\User $admin */
+        /** @var User $admin */
         $admin = $request->user();
 
         return ApiResponse::success(
@@ -60,7 +61,7 @@ final class CashRegisterController
         CashSession $cashSession,
         CashRegisterService $service,
     ): JsonResponse {
-        /** @var \App\Models\User $admin */
+        /** @var User $admin */
         $admin = $request->user();
 
         return ApiResponse::success(
@@ -127,7 +128,7 @@ final class CashRegisterController
         CashSession $cashSession,
         CashRegisterService $service,
     ): JsonResponse {
-        /** @var \App\Models\User $admin */
+        /** @var User $admin */
         $admin = $request->user();
 
         return ApiResponse::success(

@@ -166,12 +166,12 @@ final class AdminPromotionResource extends JsonResource
             ),
 
             'usage' => [
-            'cart_items' => $cartItems,
+                'cart_items' => $cartItems,
 
-            'order_items' => $orderItems,
+                'order_items' => $orderItems,
 
-            'total' => $cartItems +
-                $orderItems,
+                'total' => $cartItems +
+                    $orderItems,
             ],
 
             'can_delete' => (bool) (

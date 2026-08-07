@@ -101,34 +101,34 @@ final class MlTrainingDatasetService
             ),
 
             'summary' => [
-            'records' => $collectedDays,
+                'records' => $collectedDays,
 
-            'active_days' => $activeDaysCount,
+                'active_days' => $activeDaysCount,
 
-            'empty_days' => $collectedDays
-                - $activeDaysCount,
+                'empty_days' => $collectedDays
+                    - $activeDaysCount,
 
-            'total_delivered_orders' => (int) $rows->sum(
-                'delivered_orders',
-            ),
-
-            'total_cancelled_orders' => (int) $rows->sum(
-                'cancelled_orders',
-            ),
-
-            'total_pizzas_sold' => (int) $rows->sum(
-                'total_pizzas_sold',
-            ),
-
-            'total_net_sales' => round(
-                (float) $rows->sum(
-                    static fn (
-                        MlDailyFeature $feature
-                    ): float => (float) $feature
-                        ->net_sales,
+                'total_delivered_orders' => (int) $rows->sum(
+                    'delivered_orders',
                 ),
-                2,
-            ),
+
+                'total_cancelled_orders' => (int) $rows->sum(
+                    'cancelled_orders',
+                ),
+
+                'total_pizzas_sold' => (int) $rows->sum(
+                    'total_pizzas_sold',
+                ),
+
+                'total_net_sales' => round(
+                    (float) $rows->sum(
+                        static fn (
+                            MlDailyFeature $feature
+                        ): float => (float) $feature
+                            ->net_sales,
+                    ),
+                    2,
+                ),
             ],
 
             'records' => $rows

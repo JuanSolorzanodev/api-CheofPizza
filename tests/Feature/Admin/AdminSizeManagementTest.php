@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Cart;
+use App\Models\CartItem;
+use App\Models\CartStatus;
 use App\Models\Category;
 use App\Models\CategorySizePrice;
 use App\Models\Ingredient;
 use App\Models\IngredientSizePrice;
 use App\Models\IngredientType;
+use App\Models\Pizza;
 use App\Models\Size;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -539,7 +543,7 @@ final class AdminSizeManagementTest extends TestCase
             ->customer()
             ->create();
 
-        $activeStatusId = \App\Models\CartStatus::query()
+        $activeStatusId = CartStatus::query()
             ->firstOrCreate([
                 'status_name' => 'active',
             ])
@@ -550,7 +554,7 @@ final class AdminSizeManagementTest extends TestCase
             'description' => null,
         ]);
 
-        $pizza = \App\Models\Pizza::query()->create([
+        $pizza = Pizza::query()->create([
             'category_id' => $category->id,
             'pizza_name' => 'Pizza carrito',
             'description' => null,
@@ -558,14 +562,14 @@ final class AdminSizeManagementTest extends TestCase
             'is_visible' => true,
         ]);
 
-        $cart = \App\Models\Cart::query()->create([
+        $cart = Cart::query()->create([
             'user_id' => $customer->id,
             'cart_status_id' => $activeStatusId,
             'session_id' => null,
             'total' => '10.00',
         ]);
 
-        \App\Models\CartItem::query()->create([
+        CartItem::query()->create([
             'cart_id' => $cart->id,
             'item_type' => 'pizza',
             'pizza_id' => $pizza->id,

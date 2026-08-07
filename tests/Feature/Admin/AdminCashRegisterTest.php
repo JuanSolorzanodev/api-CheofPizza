@@ -12,6 +12,7 @@ use App\Models\PaymentMethod;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 uses(RefreshDatabase::class);
@@ -242,7 +243,7 @@ it(
             ->create();
 
         CashSession::query()->create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'uuid' => (string) Str::uuid(),
 
             'opened_by' => $admin->id,
 

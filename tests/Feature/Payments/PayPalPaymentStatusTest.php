@@ -73,11 +73,11 @@ function createPayPalStatusPayment(
         'status' => $status,
 
         'checkout_context' => [
-        'delivery_type' => 'pickup',
+            'delivery_type' => 'pickup',
 
-        'address' => null,
+            'address' => null,
 
-        'delivery_location' => null,
+            'delivery_location' => null,
         ],
 
         'cart_fingerprint' => hash(

@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Tests\TestCase;
 
 beforeEach(function (): void {
     Storage::fake(
@@ -125,7 +126,7 @@ describe(
         it(
             'requiere autenticación para subir un comprobante',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -158,7 +159,7 @@ describe(
         it(
             'permite al dueño subir un comprobante privado',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -242,7 +243,7 @@ describe(
         it(
             'impide subir un comprobante a un pedido ajeno',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $owner = paymentReceiptUser(
                     'customer',
                 );
@@ -283,7 +284,7 @@ describe(
         it(
             'solo acepta comprobantes para pedidos por transferencia',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -324,7 +325,7 @@ describe(
         it(
             'rechaza formatos no permitidos',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -366,7 +367,7 @@ describe(
         it(
             'rechaza archivos mayores a cinco megabytes',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -408,7 +409,7 @@ describe(
         it(
             'impide tener dos comprobantes pendientes',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -469,7 +470,7 @@ describe(
         it(
             'permite al operador aprobar un comprobante',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -552,7 +553,7 @@ describe(
         it(
             'permite al administrador aprobar un comprobante',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -617,7 +618,7 @@ describe(
         it(
             'impide aprobar un comprobante de un pedido cancelado',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -704,7 +705,7 @@ describe(
         it(
             'impide que un cliente apruebe un comprobante',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -761,7 +762,7 @@ describe(
         it(
             'permite al operador rechazar con un motivo',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -852,7 +853,7 @@ describe(
         it(
             'impide rechazar un comprobante de un pedido entregado',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -946,7 +947,7 @@ describe(
         it(
             'exige un motivo válido para rechazar',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1013,7 +1014,7 @@ describe(
         it(
             'permite volver a subir después de un rechazo',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1120,7 +1121,7 @@ describe(
         it(
             'impide subir otro comprobante después de aprobarlo',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1202,7 +1203,7 @@ describe(
         it(
             'devuelve el comprobante más reciente del pedido',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1256,7 +1257,7 @@ describe(
         it(
             'devuelve el historial de comprobantes del pedido',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1361,7 +1362,7 @@ describe(
         it(
             'impide consultar el historial de un pedido ajeno',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $owner = paymentReceiptUser(
                     'customer',
                 );
@@ -1389,7 +1390,7 @@ describe(
         it(
             'permite al dueño visualizar el archivo privado',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1449,7 +1450,7 @@ describe(
         it(
             'impide visualizar el archivo de otro cliente',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $owner = paymentReceiptUser(
                     'customer',
                 );
@@ -1505,7 +1506,7 @@ describe(
         it(
             'lista los comprobantes pendientes para el operador',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1563,7 +1564,7 @@ describe(
         it(
             'impide aprobar dos veces el mismo comprobante',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1648,7 +1649,7 @@ describe(
         it(
             'impide rechazar un comprobante ya aprobado',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1729,7 +1730,7 @@ describe(
         it(
             'impide aprobar un comprobante ya rechazado',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
@@ -1816,7 +1817,7 @@ describe(
         it(
             'valida la paginación del listado pendiente',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $operator = paymentReceiptUser(
                     'operator',
                 );
@@ -1851,7 +1852,7 @@ describe(
         it(
             'elimina archivos vencidos y conserva el registro histórico',
             function (): void {
-                /** @var \Tests\TestCase $this */
+                /** @var TestCase $this */
                 $customer = paymentReceiptUser(
                     'customer',
                 );
