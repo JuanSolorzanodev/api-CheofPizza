@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+$paymentReceiptsDriver = env(
+    'PAYMENT_RECEIPTS_DRIVER',
+    'local',
+);
+
 return [
 
     /*
@@ -22,10 +27,6 @@ return [
     |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
-    |
-    | Los comprobantes bancarios utilizan un disco privado independiente.
-    | Las imágenes públicas tradicionales siguen usando el disco "public".
-    |
     */
 
     'disks' => [
@@ -55,39 +56,75 @@ return [
         | Comprobantes de transferencia
         |--------------------------------------------------------------------------
         |
-        | En desarrollo:
-        | storage/app/private/payment-receipts
+        | Desarrollo:
+        | PAYMENT_RECEIPTS_DRIVER=local
         |
-        | En Railway:
-        | PAYMENTS_RECEIPTS_ROOT debe apuntar al volumen persistente.
+        | Producción / Railway:
+        | PAYMENT_RECEIPTS_DRIVER=s3
+        |
+        | Railway Storage Buckets son privados y compatibles con S3.
         |
         */
 
-        'payment_receipts' => [
-            'driver' => 'local',
+        'payment_receipts' => $paymentReceiptsDriver === 's3'
+            ? [
+                'driver' => 's3',
 
-            'root' => env(
-                'PAYMENT_RECEIPTS_ROOT',
-                storage_path(
-                    'app/private/payment-receipts',
+                'key' => env(
+                    'AWS_ACCESS_KEY_ID',
                 ),
-            ),
 
-            'visibility' => 'private',
+                'secret' => env(
+                    'AWS_SECRET_ACCESS_KEY',
+                ),
 
-            'throw' => true,
+                'region' => env(
+                    'AWS_DEFAULT_REGION',
+                    'auto',
+                ),
 
-            'report' => true,
-        ],
+                'bucket' => env(
+                    'AWS_S3_BUCKET_NAME',
+                    env('AWS_BUCKET'),
+                ),
+
+                'endpoint' => env(
+                    'AWS_ENDPOINT_URL',
+                    env('AWS_ENDPOINT'),
+                ),
+
+                'use_path_style_endpoint' => env(
+                    'AWS_USE_PATH_STYLE_ENDPOINT',
+                    false,
+                ),
+
+                'visibility' => 'private',
+
+                'throw' => true,
+
+                'report' => true,
+            ]
+            : [
+                'driver' => 'local',
+
+                'root' => env(
+                    'PAYMENT_RECEIPTS_ROOT',
+                    storage_path(
+                        'app/private/payment-receipts',
+                    ),
+                ),
+
+                'visibility' => 'private',
+
+                'throw' => true,
+
+                'report' => true,
+            ],
 
         /*
         |--------------------------------------------------------------------------
         | Archivos públicos
         |--------------------------------------------------------------------------
-        |
-        | Este disco se conserva para cualquier archivo público que utilice
-        | storage/app/public y public/storage.
-        |
         */
 
         'public' => [
@@ -98,7 +135,7 @@ return [
             ),
 
             'url' => env('APP_URL')
-            .'/storage',
+                .'/storage',
 
             'visibility' => 'public',
 
@@ -109,8 +146,11 @@ return [
 
         /*
         |--------------------------------------------------------------------------
-        | Amazon S3 o almacenamiento compatible
+        | Amazon S3 / almacenamiento compatible con S3
         |--------------------------------------------------------------------------
+        |
+        | Compatible también con Railway Storage Buckets.
+        |
         */
 
         's3' => [
@@ -126,10 +166,12 @@ return [
 
             'region' => env(
                 'AWS_DEFAULT_REGION',
+                'auto',
             ),
 
             'bucket' => env(
-                'AWS_BUCKET',
+                'AWS_S3_BUCKET_NAME',
+                env('AWS_BUCKET'),
             ),
 
             'url' => env(
@@ -137,7 +179,8 @@ return [
             ),
 
             'endpoint' => env(
-                'AWS_ENDPOINT',
+                'AWS_ENDPOINT_URL',
+                env('AWS_ENDPOINT'),
             ),
 
             'use_path_style_endpoint' => env(
@@ -156,8 +199,7 @@ return [
     | Symbolic Links
     |--------------------------------------------------------------------------
     |
-    | Solo aplica al disco público. Los comprobantes privados nunca deben
-    | exponerse mediante public/storage.
+    | Los comprobantes privados nunca se exponen mediante public/storage.
     |
     */
 
